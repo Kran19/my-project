@@ -1,0 +1,533 @@
+<?php
+// app/Helpers/CartHelper.php
+namespace App\Helpers;
+
+use App\Models\ProductVariant;
+use App\Models\Cart;
+use App\Models\CartItem;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
+
+class CartHelper
+{
+    protected $cartKey = 'guest_cart';
+    protected $cartExpiry = 43200; // 30 days in minutes
+
+    public function addToCart($variantId, $quantity = 1, $attributes = [])
+    {
+        if (Auth::guard('customer')->check()) {
+            return $this->addToDatabaseCart($variantId, $quantity, $attributes );
+        }
+
+        return $this->addToLocalCart($variantId, $quantity, $attributes);
+    }
+
+    private function addToDatabaseCart($variantId, $quantity, $attributes)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        // Check if cart exists for customer
+        $cart = Cart::firstOrCreate(
+            ['customer_id' => $customer->id, 'status' => 'active'],
+            ['session_id' => session()->getId()]
+        );
+
+        // Get variant
+        $variant = ProductVariant::findOrFail($variantId);
+
+        // Check stock
+        if ($variant->stock_quantity < $quantity) {
+            throw new \Exception('Insufficient stock available');
+        }
+
+        // Check if item already exists in cart
+        $existingItem = $cart->items()
+            ->where('product_variant_id', $variantId)
+            ->first();
+
+        if ($existingItem) {
+            // Update quantity
+            $newQuantity = $existingItem->quantity + $quantity;
+
+            // Check stock again with new quantity
+            if ($variant->stock_quantity < $newQuantity) {
+                throw new \Exception('Insufficient stock available');
+            }
+
+            $existingItem->update([
+                'quantity' => $newQuantity,
+                'total' => $variant->price * $newQuantity
+            ]);
+        } else {
+            // Create new cart item
+            $cart->items()->create([
+                'product_variant_id' => $variantId,
+                'quantity' => $quantity,
+                'unit_price' => $variant->price,
+                'total' => $variant->price * $quantity,
+                'attributes' => json_encode($attributes)
+            ]);
+        }
+
+        $this->recalculateCartTotals($cart);
+
+        return [
+            'success' => true,
+            'message' => 'Product added to cart',
+            'cart_count' => $this->getCartCount(),
+            'cart' => $this->formatCartResponse($cart)
+        ];
+    }
+
+    private function addToLocalCart($variantId, $quantity, $attributes)
+    {
+        $cart = $this->getLocalCart();
+
+        // Get variant
+        $variant = ProductVariant::with([
+            'product',
+            'images',
+            'primaryImage.media'
+        ])->findOrFail($variantId);
+
+        if (!$variant) {
+            throw new \Exception('Product variant not found');
+        }
+
+        // Check stock
+        if ($variant->stock_quantity < $quantity) {
+            throw new \Exception('Insufficient stock available');
+        }
+
+        // Check if item already exists
+        $itemExists = false;
+        foreach ($cart['items'] as &$item) {
+            if (
+                $item['variant_id'] == $variantId &&
+                json_encode($item['attributes']) == json_encode($attributes)
+            ) {
+                $item['quantity'] += $quantity;
+                $item['total'] = $item['unit_price'] * $item['quantity'];
+                $itemExists = true;
+                break;
+            }
+        }
+
+        if (!$itemExists) {
+            $cart['items'][] = [
+                'id' => uniqid('cart_'),
+                'variant_id' => $variantId,
+                'product_id' => $variant->product_id,
+                'product_name' => $variant->product->name,
+                'sku' => $variant->sku,
+                'unit_price' => $variant->price,
+                'quantity' => $quantity,
+                'total' => $variant->price * $quantity,
+                'attributes' => $attributes,
+                'image' => $variant->display_image,
+                'stock_quantity' => $variant->stock_quantity
+            ];
+        }
+
+        $cart = $this->recalculateLocalCartTotals($cart);
+        $this->saveLocalCart($cart);
+
+        return [
+            'success' => true,
+            'message' => 'Product added to cart',
+            'cart_count' => $this->getCartCount(),
+            'cart' => $cart
+        ];
+    }
+
+    public function getCart()
+    {
+        if (Auth::guard('customer')->check()) {
+            return $this->getDatabaseCart();
+        }
+
+        return $this->getLocalCart();
+    }
+
+    private function getDatabaseCart()
+    {
+        $customer = Auth::guard('customer')->user();
+
+        $cart = Cart::with([
+            'items.variant.product',
+            'items.variant.images',
+            'items.variant.primaryImage.media'
+        ])
+            ->where('customer_id', $customer->id)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$cart) {
+            return $this->createEmptyCartResponse();
+        }
+
+        return $this->formatCartResponse($cart);
+    }
+
+    private function getLocalCart()
+    {
+        $cartJson = Cookie::get($this->cartKey);
+
+        if ($cartJson) {
+            $cart = json_decode($cartJson, true);
+        }
+
+        if (empty($cart) || !is_array($cart)) {
+            $cart = $this->createEmptyLocalCart();
+        }
+
+        return $cart;
+    }
+
+    public function formatCartResponse($cart)
+    {
+        return [
+            'id' => $cart->id ?? null,
+            'session_id' => $cart->session_id ?? session()->getId(),
+            'items' => isset($cart->items) ? $cart->items->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'variant_id' => $item->product_variant_id,
+                    'product_id' => $item->variant->product_id,
+                    'product_name' => $item->variant->product->name,
+                    'sku' => $item->variant->sku,
+                    'stock_quantity' => $item->variant->stock_quantity,
+                    'unit_price' => (float) $item->unit_price,
+                    'quantity' => $item->quantity,
+                    'total' => (float) $item->total,
+                    'attributes' => json_decode($item->attributes, true) ?? [],
+                    'image' => $item->variant->display_image,
+                ];
+            })->toArray() : ($cart['items'] ?? []),
+            'items_count' => isset($cart->items) ? (int) $cart->items->sum('quantity') : ($cart['items_count'] ?? 0),
+            'subtotal' => (float) ($cart->subtotal ?? $cart['subtotal'] ?? 0),
+            'tax_total' => (float) ($cart->tax_total ?? $cart['tax_total'] ?? 0),
+            'shipping_total' => (float) ($cart->shipping_total ?? $cart['shipping_total'] ?? 0),
+            'discount_total' => (float) ($cart->discount_total ?? $cart['discount_total'] ?? 0),
+            'grand_total' => (float) ($cart->grand_total ?? $cart['grand_total'] ?? 0),
+            'is_logged_in' => Auth::guard('customer')->check()
+        ];
+    }
+
+    // Public method for recalculating cart totals
+    public function recalculateCartTotals($cart)
+    {
+        if (is_array($cart)) {
+            return $this->recalculateLocalCartTotals($cart);
+        }
+
+        // Database cart
+        $subtotal = $cart->items()->sum('total');
+
+        // Calculate tax (simplified - 18% GST)
+        $taxTotal = $subtotal * 0.18;
+
+        // Calculate shipping
+        $shippingTotal = $this->calculateShipping($subtotal);
+
+        $grandTotal = $subtotal + $taxTotal + $shippingTotal;
+
+        $cart->update([
+            'subtotal' => $subtotal,
+            'tax_total' => $taxTotal,
+            'shipping_total' => $shippingTotal,
+            'grand_total' => $grandTotal
+        ]);
+    }
+
+    private function calculateShipping($subtotal)
+    {
+        // Free shipping for orders above ₹999
+        return $subtotal >= 999 ? 0 : 50;
+    }
+
+    private function recalculateLocalCartTotals($cart)
+    {
+        $subtotal = 0;
+        $itemsCount = 0;
+
+        foreach ($cart['items'] as $item) {
+            $subtotal += $item['total'];
+            $itemsCount += $item['quantity'];
+        }
+
+        $taxTotal = $subtotal * 0.18;
+        $shippingTotal = $this->calculateShipping($subtotal);
+
+        $cart['subtotal'] = round($subtotal, 2);
+        $cart['tax_total'] = round($taxTotal, 2);
+        $cart['shipping_total'] = round($shippingTotal, 2);
+        $cart['grand_total'] = round($subtotal + $taxTotal + $shippingTotal, 2);
+        $cart['items_count'] = $itemsCount;
+
+        return $cart;
+    }
+
+    public function saveLocalCart($cart)
+    {
+        $cart['updated_at'] = now()->timestamp;
+        $cartJson = json_encode($cart);
+
+        Cookie::queue(
+            Cookie::make($this->cartKey, $cartJson, $this->cartExpiry, null, null, false, false)
+        );
+
+        return $cart;
+    }
+
+    private function createEmptyLocalCart()
+    {
+        return [
+            'session_id' => session()->getId(),
+            'items' => [],
+            'items_count' => 0,
+            'subtotal' => 0,
+            'tax_total' => 0,
+            'shipping_total' => 0,
+            'grand_total' => 0,
+            'created_at' => now()->timestamp,
+            'updated_at' => now()->timestamp
+        ];
+    }
+
+    public function createEmptyCartResponse()
+    {
+        return [
+            'items' => [],
+            'items_count' => 0,
+            'subtotal' => 0,
+            'tax_total' => 0,
+            'shipping_total' => 0,
+            'grand_total' => 0
+        ];
+    }
+
+    public function syncCart()
+    {
+        if (!Auth::guard('customer')->check()) {
+            return false;
+        }
+
+        $localCart = $this->getLocalCart();
+
+        if (empty($localCart['items'])) {
+            return true;
+        }
+
+        try {
+            $customer = Auth::guard('customer')->user();
+
+            // Get or create database cart
+            $dbCart = Cart::firstOrCreate(
+                ['customer_id' => $customer->id, 'status' => 'active'],
+                ['session_id' => session()->getId()]
+            );
+
+            // Add local cart items to database
+            foreach ($localCart['items'] as $item) {
+                $variant = ProductVariant::find($item['variant_id']);
+
+                if ($variant) {
+                    // Check if item already exists
+                    $existingItem = $dbCart->items()
+                        ->where('product_variant_id', $item['variant_id'])
+                        ->first();
+
+                    if ($existingItem) {
+                        $existingItem->update([
+                            'quantity' => $existingItem->quantity + $item['quantity'],
+                            'total' => $existingItem->unit_price * ($existingItem->quantity + $item['quantity'])
+                        ]);
+                    } else {
+                        $dbCart->items()->create([
+                            'product_variant_id' => $item['variant_id'],
+                            'quantity' => $item['quantity'],
+                            'unit_price' => $item['unit_price'],
+                            'total' => $item['total'],
+                            'attributes' => json_encode($item['attributes'])
+                        ]);
+                    }
+                }
+            }
+
+            // Recalculate totals
+            $this->recalculateCartTotals($dbCart);
+
+            // Clear local cart
+            $this->clearLocalCart();
+
+            return true;
+
+        } catch (\Exception $e) {
+            \Log::error('Cart sync failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function clearLocalCart()
+    {
+        Cookie::queue(Cookie::forget($this->cartKey));
+    }
+
+    public function getCartCount()
+    {
+        $cart = $this->getCart();
+        return $cart['items_count'] ?? 0;
+    }
+
+    // New methods for cart operations
+    public function updateItemQuantity($itemId, $quantity)
+    {
+        if (Auth::guard('customer')->check()) {
+            return $this->updateDatabaseItemQuantity($itemId, $quantity);
+        }
+
+        return $this->updateLocalItemQuantity($itemId, $quantity);
+    }
+
+    private function updateDatabaseItemQuantity($itemId, $quantity)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        $cartItem = CartItem::with('variant', 'cart')
+            ->whereHas('cart', function ($query) use ($customer) {
+                $query->where('customer_id', $customer->id)
+                      ->where('status', 'active');
+            })
+            ->find($itemId);
+
+        if (!$cartItem) {
+            throw new \Exception('Item not found in cart');
+        }
+
+        // Check stock
+        if ($cartItem->variant->stock_quantity < $quantity) {
+            throw new \Exception('Only ' . $cartItem->variant->stock_quantity . ' items available');
+        }
+
+        $cartItem->quantity = $quantity;
+        $cartItem->total = $cartItem->unit_price * $quantity;
+        $cartItem->save();
+
+        $this->recalculateCartTotals($cartItem->cart);
+
+        return $this->formatCartResponse($cartItem->cart);
+    }
+
+    private function updateLocalItemQuantity($itemId, $quantity)
+    {
+        $cart = $this->getLocalCart();
+
+        $itemFound = false;
+        foreach ($cart['items'] as &$item) {
+            if ($item['id'] == $itemId) {
+                // Check stock
+                $variant = ProductVariant::find($item['variant_id']);
+                if (!$variant || $variant->stock_quantity < $quantity) {
+                    $stock = $variant ? $variant->stock_quantity : 0;
+                    throw new \Exception('Only ' . $stock . ' items available');
+                }
+
+                $item['quantity'] = $quantity;
+                $item['total'] = $item['unit_price'] * $quantity;
+                $itemFound = true;
+                break;
+            }
+        }
+
+        if (!$itemFound) {
+            throw new \Exception('Item not found in cart');
+        }
+
+        $cart = $this->recalculateLocalCartTotals($cart);
+        $this->saveLocalCart($cart);
+
+        return $cart;
+    }
+
+    public function removeItem($itemId)
+    {
+        if (Auth::guard('customer')->check()) {
+            return $this->removeDatabaseItem($itemId);
+        }
+
+        return $this->removeLocalItem($itemId);
+    }
+
+    private function removeDatabaseItem($itemId)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        $cartItem = CartItem::with('cart')
+            ->whereHas('cart', function ($query) use ($customer) {
+                $query->where('customer_id', $customer->id)
+                      ->where('status', 'active');
+            })
+            ->find($itemId);
+
+        if (!$cartItem) {
+            throw new \Exception('Item not found in cart');
+        }
+
+        $cart = $cartItem->cart;
+        $cartItem->delete();
+
+        $this->recalculateCartTotals($cart);
+
+        return $this->formatCartResponse($cart);
+    }
+
+    private function removeLocalItem($itemId)
+    {
+        $cart = $this->getLocalCart();
+
+        $newItems = [];
+        foreach ($cart['items'] as $item) {
+            if ($item['id'] != $itemId) {
+                $newItems[] = $item;
+            }
+        }
+
+        $cart['items'] = $newItems;
+
+        if (empty($cart['items'])) {
+            $cart = $this->createEmptyLocalCart();
+        } else {
+            $cart = $this->recalculateLocalCartTotals($cart);
+        }
+
+        $this->saveLocalCart($cart);
+
+        return $cart;
+    }
+
+    public function clearCart()
+    {
+        if (Auth::guard('customer')->check()) {
+            return $this->clearDatabaseCart();
+        }
+
+        return $this->clearLocalCart();
+    }
+
+    private function clearDatabaseCart()
+    {
+        $customer = Auth::guard('customer')->user();
+
+        $cart = Cart::where('customer_id', $customer->id)
+            ->where('status', 'active')
+            ->first();
+
+        if ($cart) {
+            $cart->items()->delete();
+            $this->recalculateCartTotals($cart);
+        }
+
+        return $this->createEmptyCartResponse();
+    }
+}
