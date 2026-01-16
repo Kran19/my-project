@@ -66,26 +66,26 @@ $navItems = [
         'route' => 'admin.taxes.index',
     ],
 
-    'inventory' => [
-        'title' => 'Inventory',
-        'icon' => 'fas fa-boxes',
-        'route' => 'admin.inventory.index',
-        'submenu' => [
-            'stock_levels' => [
-                'title' => 'Stock Levels',
-                'route' => 'admin.inventory.index',
-            ],
-            'adjust' => [
-                'title' => 'Adjust Stock',
-                'route' => 'admin.inventory.update',
-                'params' => ['id' => 1],
-            ],
-            'history' => [
-                'title' => 'History',
-                'route' => 'admin.inventory.history',
-            ],
-        ],
-    ],
+    // 'inventory' => [
+    //     'title' => 'Inventory',
+    //     'icon' => 'fas fa-boxes',
+    //     'route' => 'admin.inventory.index',
+    //     'submenu' => [
+    //         'stock_levels' => [
+    //             'title' => 'Stock Levels',
+    //             'route' => 'admin.inventory.index',
+    //         ],
+    //         'adjust' => [
+    //             'title' => 'Adjust Stock',
+    //             'route' => 'admin.inventory.update',
+    //             'params' => ['id' => 1],
+    //         ],
+    //         'history' => [
+    //             'title' => 'History',
+    //             'route' => 'admin.inventory.history',
+    //         ],
+    //     ],
+    // ],
 
     'orders' => [
         'title' => 'Orders',

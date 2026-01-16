@@ -93,7 +93,7 @@ class BrandController extends Controller
                     'created_at_formatted' => $brand->created_at->format('M d, Y'),
                     'updated_at' => $brand->updated_at,
                 ];
-            });
+            })->values()->all();
 
             return $this->apiResponse(true, [
                 'data' => $transformedData,

@@ -150,11 +150,11 @@ class SettingsHelper
     public static function storeInfo(): array
     {
         return [
-            'name' => self::get('store_name', 'My eCommerce Store'),
-            'email' => self::get('store_email', 'contact@myecommercestore.com'),
-            'phone' => self::get('store_phone', '+1 (555) 123-4567'),
-            'address' => self::get('store_address', '123 Commerce Street, Business City, BC 12345'),
-            'currency' => self::get('currency', 'USD'),
+            'name' => self::get('store_name', 'Verve Jewels'),
+            'email' => self::get('store_email', 'contact@vervejewels.com'),
+            'phone' => self::get('store_phone', '+91 98765 43210'),
+            'address' => self::get('store_address', 'Suite 405, Jaipur Jewelry Mart, MI Road, Jaipur, Rajasthan 302001, India'),
+            'currency' => self::get('currency', 'INR'),
             'currency_symbol' => self::currencySymbol()
         ];
     }
@@ -165,9 +165,9 @@ class SettingsHelper
     public static function seoSettings(): array
     {
         return [
-            'meta_title' => self::get('meta_title', 'My eCommerce Store - Best Online Shopping'),
-            'meta_description' => self::get('meta_description', 'Shop the best products online with fast delivery and great customer service.'),
-            'meta_keywords' => self::get('meta_keywords', 'ecommerce, online shopping, products, deals'),
+            'meta_title' => self::get('meta_title', 'Verve Jewels - Exquisite Indian Imitation & Fashion Jewelry'),
+            'meta_description' => self::get('meta_description', 'Discover stunning Indian imitation jewelry at Verve Jewels. From traditional Kundan sets to modern fashion jewelry, find the perfect piece for every occasion with fast delivery across India.'),
+            'meta_keywords' => self::get('meta_keywords', 'imitation jewelry, indian jewelry, kundan, polki, fashion accessories, wedding jewelry, online jewelry india'),
             'google_analytics' => self::get('google_analytics', '')
         ];
     }
@@ -178,10 +178,9 @@ class SettingsHelper
     public static function paymentSettings(): array
     {
         return [
-            'paypal_enabled' => self::get('paypal_enabled', true),
-            'paypal_client_id' => self::get('paypal_client_id', ''),
-            'stripe_enabled' => self::get('stripe_enabled', true),
-            'stripe_publishable_key' => self::get('stripe_publishable_key', ''),
+            'razorpay_enabled' => self::get('razorpay_enabled', true),
+            'razorpay_key_id' => self::get('razorpay_key_id', ''),
+            'razorpay_key_secret' => self::get('razorpay_key_secret', ''),
             'cod_enabled' => self::get('cod_enabled', true)
         ];
     }
@@ -192,9 +191,9 @@ class SettingsHelper
     public static function shippingSettings(): array
     {
         return [
-            'default_shipping_rate' => self::get('default_shipping_rate', 5.99),
-            'tax_rate' => self::get('tax_rate', 8.5),
-            'free_shipping_min' => self::get('free_shipping_min', 50.00)
+            'default_shipping_rate' => self::get('default_shipping_rate', 99.00),
+            'tax_rate' => self::get('tax_rate', 3.0),
+            'free_shipping_min' => self::get('free_shipping_min', 999.00)
         ];
     }
 }

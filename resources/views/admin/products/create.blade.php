@@ -132,7 +132,7 @@
                     <div>
                         <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price <span class="text-red-500">*</span></label>
                         <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
                             <input type="number" name="price" id="price" value="{{ old('price') }}" step="0.01" min="0"
                                 class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                         </div>
@@ -142,7 +142,7 @@
                     <div>
                         <label for="compare_price" class="block text-sm font-medium text-gray-700 mb-1">Compare at Price</label>
                         <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
                             <input type="number" name="compare_price" id="compare_price" value="{{ old('compare_price') }}" step="0.01" min="0"
                                 class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                         </div>
@@ -151,7 +151,7 @@
                     <div>
                         <label for="cost_price" class="block text-sm font-medium text-gray-700 mb-1">Cost Price</label>
                         <div class="relative">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
                             <input type="number" name="cost_price" id="cost_price" value="{{ old('cost_price') }}" step="0.01" min="0"
                                 class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                         </div>
@@ -292,6 +292,18 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <div>
+                        <label for="tag_ids" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                        <select name="tag_ids[]" id="tag_ids" multiple class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 h-32">
+                            @foreach($tags as $tag)
+                                <option value="{{ $tag->id }}" {{ (is_array(old('tag_ids')) && in_array($tag->id, old('tag_ids'))) ? 'selected' : '' }}>
+                                    {{ $tag->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Hold Ctrl (Windows) or Cmd (Mac) to select multiple tags.</p>
+                    </div>
                 </div>
             </div>
 
@@ -325,7 +337,7 @@
                         <select name="tax_class_id" id="tax_class_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">None</option>
                             @foreach($taxClasses as $tax)
-                                <option value="{{ $tax->id }}" {{ old('tax_class_id') == $tax->id ? 'selected' : '' }}>{{ $tax->name }} ({{ $tax->rate }}%)</option>
+                                <option value="{{ $tax->id }}" {{ old('tax_class_id') == $tax->id ? 'selected' : '' }}>{{ $tax->name }} ({{ number_format($tax->total_rate, 2) }}%)</option>
                             @endforeach
                         </select>
                     </div>

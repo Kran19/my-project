@@ -22,7 +22,7 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $query = Product::with(['mainCategory', 'brand', 'defaultVariant.images']);
+        $query = Product::with(['mainCategory', 'brand', 'defaultVariant.images', 'taxClass']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -51,7 +51,7 @@ class ProductController extends Controller
     public function create()
     {
         $categories = Category::with('children')->whereNull('parent_id')->get();
-        $brands = Brand::where('status', 'active')->get();
+        $brands = Brand::where('status', 1)->get();
         $taxClasses = TaxClass::all();
         $tags = Tag::all();
 
@@ -99,7 +99,7 @@ class ProductController extends Controller
         ])->findOrFail($id);
         
         $categories = Category::with('children')->whereNull('parent_id')->get();
-        $brands = Brand::where('status', 'active')->get();
+        $brands = Brand::where('status', 1)->get();
         $taxClasses = TaxClass::all();
         $tags = Tag::all();
         

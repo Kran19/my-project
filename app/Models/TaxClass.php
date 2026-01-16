@@ -40,4 +40,9 @@ class TaxClass extends Model
     {
         return $this->hasOne(TaxRate::class)->where('is_active', true)->orderBy('priority');
     }
+
+    public function getTotalRateAttribute()
+    {
+        return $this->rates()->where('is_active', true)->sum('rate');
+    }
 }

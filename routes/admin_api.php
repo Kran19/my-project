@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Admin\OfferController;
+use App\Http\Controllers\Api\Admin\InventoryController;
 
 
 
@@ -268,6 +269,17 @@ Route::prefix('admin')->middleware('api')->group(function () {
             // Bulk actions
             Route::post('/bulk-update', [ProductController::class, 'bulkUpdate']);
             Route::post('/bulk-delete', [ProductController::class, 'bulkDelete']);
+        });
+
+
+        // Inventory Routes
+        Route::prefix('inventory')->group(function () {
+            Route::get('/', [InventoryController::class, 'index']);
+            Route::get('/statistics', [InventoryController::class, 'statistics']);
+            Route::get('/history', [InventoryController::class, 'history']);
+            Route::get('/history/statistics', [InventoryController::class, 'historyStatistics']);
+            Route::post('/update', [InventoryController::class, 'updateStock']);
+            Route::post('/bulk-update', [InventoryController::class, 'bulkUpdateStock']);
         });
 
 

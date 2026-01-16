@@ -32,6 +32,7 @@ class JewelryStoreSeeder extends Seeder
         $this->seedCategoryAttributes();
         $this->seedProductsAndVariants();
         $this->seedProductRelationships();
+        $this->call(SettingsSeeder::class);
 
         // Enable foreign key checks
         DB::statement('SET FOREIGN_KEY_CHECKS=1');

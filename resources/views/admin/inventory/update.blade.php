@@ -27,42 +27,30 @@
                 <h4 class="text-md font-semibold text-gray-700 mb-3">Step 1: Select Products</h4>
                 <div class="flex space-x-4 mb-4">
                     <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Category</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
                         <select id="bulkCategoryFilter" onchange="filterBulkProducts()"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="">All Categories</option>
-                            <option value="electronics">Electronics</option>
-                            <option value="clothing">Clothing</option>
-                            <option value="jewelry">Jewelry</option>
-                            <option value="home-kitchen">Home & Kitchen</option>
-                            <option value="wearables">Wearables</option>
-                            <option value="accessories">Accessories</option>
-                            <option value="fitness">Fitness</option>
                         </select>
                     </div>
                     <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Brand</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
                         <select id="bulkBrandFilter" onchange="filterBulkProducts()"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="">All Brands</option>
-                            <option value="nike">Nike</option>
-                            <option value="adidas">Adidas</option>
-                            <option value="apple">Apple</option>
-                            <option value="samsung">Samsung</option>
-                            <option value="sony">Sony</option>
-                            <option value="logitech">Logitech</option>
                         </select>
                     </div>
                 </div>
                 <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
                     <div id="bulkProductsList" class="space-y-2">
                         <!-- Products will be loaded here -->
+                        <div class="text-center py-4 text-gray-500">Loading products...</div>
                     </div>
                 </div>
                 <div class="flex justify-between items-center mt-3">
                     <span id="selectedCount" class="text-sm text-gray-600">0 products selected</span>
                     <button type="button" onclick="selectAllBulkProducts()" class="text-sm text-indigo-600 hover:text-indigo-800">
-                        Select All
+                        Select Visible
                     </button>
                 </div>
             </div>
@@ -171,94 +159,125 @@
 
 @push('scripts')
 <script>
-// Use the same inventory data from index.php
-window.inventoryData = [
-    {
-        id: 1,
-        name: "Apple AirPods Pro",
-        sku: "APP-AIRPRO",
-        category: "electronics",
-        brand: "apple",
-        current_stock: 20,
-        min_stock: 5,
-        status: "in_stock",
-        image: "",
-        last_updated: "2025-01-01 10:00"
-    },
-    {
-        id: 2,
-        name: "Nike Running Shoes",
-        sku: "NIKE-RUN-01",
-        category: "clothing",
-        brand: "nike",
-        current_stock: 8,
-        min_stock: 3,
-        status: "low_stock",
-        image: "",
-        last_updated: "2025-01-01 12:00"
-    },
-    {
-        id: 3,
-        name: "Samsung Galaxy Watch",
-        sku: "SAM-WATCH-4",
-        category: "wearables",
-        brand: "samsung",
-        current_stock: 0,
-        min_stock: 2,
-        status: "out_of_stock",
-        image: "",
-        last_updated: "2025-01-01 14:00"
+const axiosInstance = axios.create({
+    headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': `Bearer ${window.ADMIN_API_TOKEN || "{{ session('admin_api_token') }}"}`
     }
-];
+});
 
 let bulkSelectedProducts = new Set();
+let loadedProducts = [];
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    fetchDropdowns();
+    loadBulkProducts();
+    loadRecentAdjustments();
+    
+    // Listen for changes
+    document.querySelectorAll('input[name="bulkUpdateType"]').forEach(radio => {
+        radio.addEventListener('change', updateQuantityLabel);
+    });
+    
+    document.getElementById('bulkUpdateQuantity').addEventListener('input', updateBulkPreview);
+});
+
+async function fetchDropdowns() {
+    try {
+        const [catRes, brandRes] = await Promise.all([
+            axiosInstance.get('/api/admin/categories/dropdown'),
+            axiosInstance.get('/api/admin/brands/dropdown')
+        ]);
+
+        const catSelect = document.getElementById('bulkCategoryFilter');
+        catRes.data.data.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.textContent = cat.name;
+            catSelect.appendChild(opt);
+        });
+
+        const brandSelect = document.getElementById('bulkBrandFilter');
+        brandRes.data.data.forEach(brand => {
+            const opt = document.createElement('option');
+            opt.value = brand.id;
+            opt.textContent = brand.name;
+            brandSelect.appendChild(opt);
+        });
+    } catch (error) {
+        console.error('Error fetching dropdowns:', error);
+    }
+}
 
 // Load products for bulk update
-function loadBulkProducts() {
+async function loadBulkProducts() {
     const productList = document.getElementById('bulkProductsList');
-    productList.innerHTML = '';
     
-    const categoryFilter = document.getElementById('bulkCategoryFilter').value;
-    const brandFilter = document.getElementById('bulkBrandFilter').value;
+    const categoryId = document.getElementById('bulkCategoryFilter').value;
+    const brandId = document.getElementById('bulkBrandFilter').value;
     
-    // Filter products
-    const filteredProducts = window.inventoryData.filter(product => {
-        if (categoryFilter && product.category !== categoryFilter) return false;
-        if (brandFilter && product.brand !== brandFilter) return false;
-        return true;
-    });
-    
-    // Populate product list
-    filteredProducts.forEach(product => {
-        const isSelected = bulkSelectedProducts.has(product.id);
-        const productDiv = document.createElement('div');
-        productDiv.className = 'flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50';
-        productDiv.innerHTML = `
-            <div class="flex items-center space-x-3">
-                <input type="checkbox" value="${product.id}" 
-                    ${isSelected ? 'checked' : ''}
-                    onchange="toggleBulkProduct(${product.id})"
-                    class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                <div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
-                    ${product.image ? 
-                        `<img src="${product.image}" class="w-full h-full object-cover">` : 
-                        `<i class="fas fa-box text-gray-400 text-xs"></i>`
+    try {
+        const response = await axiosInstance.get('/api/admin/inventory', {
+            params: {
+                category_id: categoryId,
+                brand_id: brandId,
+                size: 100 // Load up to 100 for selection
+            }
+        });
+
+        if (response.data.success) {
+            loadedProducts = response.data.data.data;
+            productList.innerHTML = '';
+            
+            if (loadedProducts.length === 0) {
+                productList.innerHTML = '<div class="text-center py-4 text-gray-500">No products found</div>';
+                return;
+            }
+
+            loadedProducts.forEach(product => {
+                const isSelected = bulkSelectedProducts.has(product.id);
+                const productDiv = document.createElement('div');
+                productDiv.className = 'flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer';
+                productDiv.onclick = (e) => {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = productDiv.querySelector('input');
+                        checkbox.checked = !checkbox.checked;
+                        toggleBulkProduct(product.id);
                     }
-                </div>
-                <div>
-                    <p class="font-medium text-gray-900 text-sm">${product.name}</p>
-                    <p class="text-xs text-gray-500">${product.sku}</p>
-                </div>
-            </div>
-            <div class="text-right">
-                <p class="text-sm font-medium ${product.status === 'in_stock' ? 'text-emerald-600' : product.status === 'low_stock' ? 'text-amber-600' : 'text-rose-600'}">
-                    ${product.current_stock} in stock
-                </p>
-                <p class="text-xs text-gray-500">Min: ${product.min_stock}</p>
-            </div>
-        `;
-        productList.appendChild(productDiv);
-    });
+                };
+                
+                productDiv.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" value="${product.id}" 
+                            ${isSelected ? 'checked' : ''}
+                            onchange="toggleBulkProduct(${product.id})"
+                            onclick="event.stopPropagation()"
+                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                            ${product.image ? 
+                                `<img src="${product.image}" class="w-full h-full object-cover">` : 
+                                `<i class="fas fa-box text-gray-400 text-xs"></i>`
+                            }
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900 text-sm">${product.name}</p>
+                            <p class="text-xs text-gray-500">${product.sku}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-medium ${product.stock_status === 'in_stock' ? 'text-emerald-600' : product.stock_status === 'low_stock' ? 'text-amber-600' : 'text-rose-600'}">
+                            ${product.current_stock} in stock
+                        </p>
+                    </div>
+                `;
+                productList.appendChild(productDiv);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading products:', error);
+        productList.innerHTML = '<div class="text-center py-4 text-rose-500">Failed to load products</div>';
+    }
     
     updateSelectedCount();
 }
@@ -308,7 +327,8 @@ function filterBulkProducts() {
 // Update bulk preview
 function updateBulkPreview() {
     const quantity = parseInt(document.getElementById('bulkUpdateQuantity').value) || 0;
-    const updateType = document.querySelector('input[name="bulkUpdateType"]:checked').value;
+    const updateTypeRadio = document.querySelector('input[name="bulkUpdateType"]:checked');
+    const updateType = updateTypeRadio ? updateTypeRadio.value : 'add';
     const previewDiv = document.getElementById('bulkUpdatePreview');
     
     if (bulkSelectedProducts.size === 0 || quantity <= 0) {
@@ -321,9 +341,9 @@ function updateBulkPreview() {
     let previewHTML = '<div class="space-y-3">';
     
     // Get selected products
-    const selectedProducts = window.inventoryData.filter(p => bulkSelectedProducts.has(p.id));
+    const selectedProductsArr = loadedProducts.filter(p => bulkSelectedProducts.has(p.id));
     
-    selectedProducts.forEach(product => {
+    selectedProductsArr.forEach(product => {
         let newStock = product.current_stock;
         let changeText = '';
         
@@ -335,7 +355,7 @@ function updateBulkPreview() {
             case 'remove':
                 if (quantity > product.current_stock) {
                     newStock = 0;
-                    changeText = `-${product.current_stock} (insufficient)`;
+                    changeText = `-${product.current_stock} (max available)`;
                 } else {
                     newStock = product.current_stock - quantity;
                     changeText = `-${quantity}`;
@@ -348,7 +368,7 @@ function updateBulkPreview() {
         }
         
         const stockClass = newStock <= 0 ? 'text-rose-600' : 
-                          newStock <= product.min_stock ? 'text-amber-600' : 'text-emerald-600';
+                          newStock <= 10 ? 'text-amber-600' : 'text-emerald-600';
         
         previewHTML += `
             <div class="flex justify-between items-center p-2 bg-white border border-gray-200 rounded">
@@ -405,8 +425,8 @@ function resetBulkForm() {
     toastr.info('Form has been reset');
 }
 
-// Handle bulk form submission
-document.getElementById('bulkUpdateForm').addEventListener('submit', function(e) {
+// Handle form submission
+document.getElementById('bulkUpdateForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     if (bulkSelectedProducts.size === 0) {
@@ -415,196 +435,91 @@ document.getElementById('bulkUpdateForm').addEventListener('submit', function(e)
     }
     
     const quantity = parseInt(document.getElementById('bulkUpdateQuantity').value);
-    if (!quantity || quantity <= 0) {
-        toastr.error('Please enter a valid quantity');
-        return;
-    }
-    
     const updateType = document.querySelector('input[name="bulkUpdateType"]:checked').value;
     const reason = document.getElementById('bulkUpdateReason').value;
     const reference = document.getElementById('bulkReference').value;
     const notes = document.getElementById('bulkUpdateNotes').value;
     
-    // Check for insufficient stock in remove operations
-    if (updateType === 'remove') {
-        const insufficientProducts = [];
-        bulkSelectedProducts.forEach(productId => {
-            const product = window.inventoryData.find(p => p.id === productId);
-            if (product && quantity > product.current_stock) {
-                insufficientProducts.push(product.name);
-            }
-        });
-        
-        if (insufficientProducts.length > 0) {
-            Swal.fire({
-                title: 'Insufficient Stock',
-                html: `
-                    <div class="text-left">
-                        <p class="mb-3">Cannot remove ${quantity} items from:</p>
-                        <ul class="list-disc pl-5 text-sm text-gray-600">
-                            ${insufficientProducts.map(p => `<li>${p}</li>`).join('')}
-                        </ul>
-                        <p class="mt-3 text-sm text-gray-500">These products will be set to 0 stock.</p>
-                    </div>
-                `,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Proceed Anyway',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    applyBulkUpdate(updateType, quantity, reason, reference, notes);
-                }
-            });
-            return;
-        }
-    }
-    
-    applyBulkUpdate(updateType, quantity, reason, reference, notes);
-});
-
-function applyBulkUpdate(updateType, quantity, reason, reference, notes) {
-    let updatedCount = 0;
-    let errors = [];
-    
-    bulkSelectedProducts.forEach(productId => {
-        const productIndex = window.inventoryData.findIndex(p => p.id === productId);
-        if (productIndex !== -1) {
-            const product = window.inventoryData[productIndex];
-            let newStock = product.current_stock;
-            
-            switch(updateType) {
-                case 'add':
-                    newStock = product.current_stock + quantity;
-                    break;
-                case 'remove':
-                    newStock = Math.max(0, product.current_stock - quantity);
-                    break;
-                case 'set':
-                    newStock = quantity;
-                    break;
-            }
-            
-            // Update stock
-            window.inventoryData[productIndex].current_stock = newStock;
-            
-            // Update status
-            if (newStock <= 0) {
-                window.inventoryData[productIndex].status = 'out_of_stock';
-            } else if (newStock <= product.min_stock) {
-                window.inventoryData[productIndex].status = 'low_stock';
-            } else {
-                window.inventoryData[productIndex].status = 'in_stock';
-            }
-            
-            // Update timestamp
-            window.inventoryData[productIndex].last_updated = new Date().toISOString().slice(0, 16).replace('T', ' ');
-            
-            updatedCount++;
-            
-            // Add to history
-            const historyEntry = {
-                id: Date.now(),
-                product_id: productId,
-                product_name: product.name,
-                old_stock: product.current_stock,
-                new_stock: newStock,
-                action: updateType,
-                quantity: quantity,
-                reason: reason,
-                reference: reference,
-                notes: notes,
-                updated_by: 'Admin',
-                updated_at: new Date().toISOString()
-            };
-            
-            // Save to localStorage
-            let history = JSON.parse(localStorage.getItem('stockHistory') || '[]');
-            history.unshift(historyEntry);
-            localStorage.setItem('stockHistory', JSON.stringify(history.slice(0, 100)));
-        }
-    });
-    
-    // Show success message
-    Swal.fire({
-        title: 'Success!',
-        text: `Updated stock for ${updatedCount} product(s)`,
-        icon: 'success',
-        confirmButtonText: 'OK'
-    }).then(() => {
-        // Reset form
-        resetBulkForm();
-        
-        // Reload recent adjustments
-        loadRecentAdjustments();
-    });
-}
-
-// Load recent adjustments
-function loadRecentAdjustments() {
-    const container = document.getElementById('recentAdjustments');
-    let history = JSON.parse(localStorage.getItem('stockHistory') || '[]');
-    
-    // Get recent adjustments (last 5)
-    const recent = history.slice(0, 5);
-    
-    if (recent.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-8 text-gray-500">
-                <i class="fas fa-exchange-alt text-4xl mb-3 opacity-50"></i>
-                <p>No recent stock adjustments</p>
-            </div>
-        `;
+    if (isNaN(quantity) || quantity < 0) {
+        toastr.error('Please enter a valid quantity');
         return;
     }
     
-    container.innerHTML = '';
-    
-    recent.forEach(entry => {
-        const date = new Date(entry.updated_at);
-        const actionIcon = entry.action === 'add' ? 
-            '<i class="fas fa-plus-circle text-emerald-500"></i>' : 
-            entry.action === 'remove' ? 
-            '<i class="fas fa-minus-circle text-rose-500"></i>' : 
-            '<i class="fas fa-equals-circle text-indigo-500"></i>';
-        
-        const actionText = entry.action === 'add' ? 'Stock Added' : 
-                          entry.action === 'remove' ? 'Stock Removed' : 'Stock Set';
-        
-        const adjustmentDiv = document.createElement('div');
-        adjustmentDiv.className = 'p-4 border border-gray-200 rounded-lg hover:bg-gray-50';
-        adjustmentDiv.innerHTML = `
-            <div class="flex justify-between items-start mb-2">
-                <div class="flex items-center space-x-2">
-                    ${actionIcon}
-                    <span class="font-medium text-gray-800">${entry.product_name}</span>
-                </div>
-                <span class="text-sm text-gray-500">${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-            </div>
-            <div class="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                    <span class="text-gray-500">Action:</span>
-                    <span class="ml-2 font-medium">${actionText}</span>
-                </div>
-                <div>
-                    <span class="text-gray-500">Change:</span>
-                    <span class="ml-2 font-medium ${entry.action === 'add' ? 'text-emerald-600' : entry.action === 'remove' ? 'text-rose-600' : 'text-indigo-600'}">
-                        ${entry.action === 'add' ? '+' : entry.action === 'remove' ? '-' : '='}${entry.quantity}
-                    </span>
-                </div>
-                <div>
-                    <span class="text-gray-500">New Stock:</span>
-                    <span class="ml-2 font-bold">${entry.new_stock}</span>
-                </div>
-            </div>
-            <div class="mt-2 text-sm text-gray-600">
-                <span class="text-gray-500">Reason:</span> ${entry.reason}
-                ${entry.reference ? ` • Ref: ${entry.reference}` : ''}
-            </div>
-            ${entry.notes ? `<div class="mt-1 text-sm text-gray-500">${entry.notes}</div>` : ''}
-        `;
-        container.appendChild(adjustmentDiv);
+    const { isConfirmed } = await Swal.fire({
+        title: 'Confirm Bulk Update',
+        text: `Are you sure you want to update stock for ${bulkSelectedProducts.size} products?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, apply update',
+        cancelButtonText: 'Cancel'
     });
+    
+    if (isConfirmed) {
+        try {
+            const response = await axiosInstance.post('/api/admin/inventory/bulk-update', {
+                variant_ids: Array.from(bulkSelectedProducts),
+                quantity: quantity,
+                type: updateType,
+                reason: reason,
+                notes: notes + (reference ? ` | Ref: ${reference}` : '')
+            });
+            
+            if (response.data.success) {
+                toastr.success('Bulk stock update successful');
+                resetBulkForm();
+                loadRecentAdjustments();
+            }
+        } catch (error) {
+            console.error('Error applying bulk update:', error);
+            toastr.error(error.response?.data?.message || 'Failed to apply bulk update');
+        }
+    }
+});
+
+// Load recent adjustments
+async function loadRecentAdjustments() {
+    const container = document.getElementById('recentAdjustments');
+    
+    try {
+        const response = await axiosInstance.get('/api/admin/inventory/history', {
+            params: { per_page: 5 }
+        });
+        
+        if (response.data.success && response.data.data.data.length > 0) {
+            const history = response.data.data.data;
+            container.innerHTML = '';
+            
+            history.forEach(entry => {
+                const actionColor = entry.action === 'add' ? 'text-emerald-600' : 
+                                  entry.action === 'remove' ? 'text-rose-600' : 'text-indigo-600';
+                const actionIcon = entry.action === 'add' ? 'fa-plus-circle' : 
+                                 entry.action === 'remove' ? 'fa-minus-circle' : 'fa-exchange-alt';
+                
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors cursor-pointer';
+                entryDiv.onclick = () => window.location.href = "{{ route('admin.inventory.history') }}";
+                
+                entryDiv.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <div class="p-2 bg-white rounded-lg shadow-sm">
+                            <i class="fas ${actionIcon} ${actionColor} text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">${entry.product_name}</p>
+                            <p class="text-xs text-gray-500">${entry.updated_at} • ${entry.updated_by}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold ${actionColor}">${entry.action === 'add' ? '+' : entry.action === 'remove' ? '-' : ''}${entry.quantity}</p>
+                        <p class="text-xs text-gray-400">Reason: ${entry.reason}</p>
+                    </div>
+                `;
+                container.appendChild(entryDiv);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading recent adjustments:', error);
+    }
 }
 
 // Initialize page

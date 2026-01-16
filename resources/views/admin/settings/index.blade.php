@@ -43,13 +43,13 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Store Name</label>
                     <input type="text" data-key="store_name"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Store Email</label>
                     <input type="email" data-key="store_email"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                 </div>
             </div>
 
@@ -57,7 +57,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
                     <input type="text" data-key="store_phone"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                        class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                 </div>
 
                 <div>
@@ -76,7 +76,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Store Address</label>
                 <textarea data-key="store_address"
-                    class="w-full border border-gray-300 rounded-lg px-4 py-3 min-h-[100px] focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                    class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 min-h-[100px] focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
             </div>
         </div>
     </div>
@@ -85,25 +85,121 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-800">SEO Settings</h3>
+            <p class="text-sm text-gray-500 mt-1">Search engine optimization preferences</p>
         </div>
-
         <div class="p-6 space-y-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
                 <input type="text" data-key="meta_title"
-                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
-
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
                 <textarea data-key="meta_description"
-                    class="w-full border border-gray-300 rounded-lg px-4 py-3 min-h-[100px] focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                    class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 min-h-[100px] focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
             </div>
-
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Meta Keywords</label>
                 <input type="text" data-key="meta_keywords"
-                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+        </div>
+    </div>
+
+    {{-- PAYMENT --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Payment Settings</h3>
+            <p class="text-sm text-gray-500 mt-1">Configure your payment gateways and checkout options</p>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div>
+                    <h4 class="font-medium text-gray-800">Cash on Delivery</h4>
+                    <p class="text-sm text-gray-500">Allow customers to pay upon delivery</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" data-key="cod_enabled" name="cod_enabled" class="setting-input sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+            </div>
+
+            <div class="border-t border-gray-100 pt-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h4 class="font-medium text-gray-800">Razorpay (Indian Payments)</h4>
+                        <p class="text-sm text-gray-500">Accept UPI, Cards, and Netbanking</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" data-key="razorpay_enabled" name="razorpay_enabled" class="setting-input sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+                <div id="razorpayFields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Razorpay Key ID</label>
+                        <input type="text" data-key="razorpay_key_id"
+                            class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Razorpay Key Secret</label>
+                        <input type="password" data-key="razorpay_key_secret"
+                            class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- SHIPPING & TAX --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Shipping & Taxes</h3>
+            <p class="text-sm text-gray-500 mt-1">Set default rates and tax configurations</p>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Standard Shipping Rate (₹)</label>
+                    <input type="number" data-key="default_shipping_rate" step="0.01"
+                        class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Free Shipping Minimum (₹)</label>
+                    <input type="number" data-key="free_shipping_min" step="0.01"
+                        class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tax Rate GST (%)</label>
+                    <input type="number" data-key="tax_rate" step="0.1"
+                        class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- APPEARANCE --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Appearance Settings</h3>
+            <p class="text-sm text-gray-500 mt-1">Customize the look and feel of your store</p>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Theme Primary Color</label>
+                    <div class="flex space-x-2">
+                        <input type="color" data-key="theme_color" name="theme_color"
+                            class="setting-input h-12 w-12 border border-gray-300 rounded-lg cursor-pointer">
+                        <input type="text" name="theme_color_text" placeholder="#000000"
+                            class="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Store Logo URL</label>
+                    <input type="text" data-key="logo_url"
+                        class="setting-input w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
             </div>
         </div>
     </div>
@@ -149,11 +245,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Toggle payment fields
     document.addEventListener('change', function(e) {
-        if (e.target.name === 'paypal_enabled') {
-            document.getElementById('paypalFields').classList.toggle('hidden', !e.target.checked);
-        }
-        if (e.target.name === 'stripe_enabled') {
-            document.getElementById('stripeFields').classList.toggle('hidden', !e.target.checked);
+        if (e.target.name === 'razorpay_enabled') {
+            document.getElementById('razorpayFields').classList.toggle('hidden', !e.target.checked);
         }
         if (e.target.name === 'theme_color') {
             const textInput = document.querySelector('input[name="theme_color_text"]');
@@ -252,15 +345,11 @@ function populateForm(data) {
         });
     }
 
-    // Show/hide payment fields based on checkbox state
-    const paypalEnabled = document.querySelector('input[name="paypal_enabled"]')?.checked;
-    const stripeEnabled = document.querySelector('input[name="stripe_enabled"]')?.checked;
+    // Show/hide razorpay fields based on checkbox state
+    const razorpayEnabled = document.querySelector('input[name="razorpay_enabled"]')?.checked;
 
-    if (paypalEnabled !== undefined) {
-        document.getElementById('paypalFields').classList.toggle('hidden', !paypalEnabled);
-    }
-    if (stripeEnabled !== undefined) {
-        document.getElementById('stripeFields').classList.toggle('hidden', !stripeEnabled);
+    if (razorpayEnabled !== undefined) {
+        document.getElementById('razorpayFields').classList.toggle('hidden', !razorpayEnabled);
     }
 }
 

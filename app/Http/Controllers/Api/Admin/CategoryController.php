@@ -77,7 +77,7 @@ class CategoryController extends Controller
                     'created_at' => $category->created_at->format('Y-m-d H:i:s'),
                     'updated_at' => $category->updated_at->format('Y-m-d H:i:s'),
                 ];
-            });
+            })->values()->all();
 
             return $this->apiResponse(true, [
                 'data' => $transformedData,

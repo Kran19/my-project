@@ -105,7 +105,7 @@
                         <span>Dashboard</span>
                     </a>
 
-                    <a href="{{ route('customer.wishlist') }}"
+                    <a href="{{ route('customer.wishlist.index') }}"
                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-amber-50">
                         <i class="fas fa-heart"></i>
                         <span>My Wishlist</span>
@@ -275,7 +275,7 @@
                     <div class="bg-amber-50 p-6 rounded-xl">
                         <h3 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
                         <div class="space-y-3">
-                           
+
                             <a href="{{ route('customer.account.change-password') }}" class="flex items-center gap-3 text-amber-600 hover:text-amber-800">
                                 <i class="fas fa-lock"></i>
                                 <span>Change Password</span>
@@ -284,7 +284,7 @@
                                 <i class="fas fa-map-marker-alt"></i>
                                 <span>Manage Addresses</span>
                             </a>
-                            <a href="{{ route('customer.wishlist') }}" class="flex items-center gap-3 text-amber-600 hover:text-amber-800">
+                            <a href="{{ route('customer.wishlist.index') }}" class="flex items-center gap-3 text-amber-600 hover:text-amber-800">
                                 <i class="fas fa-heart"></i>
                                 <span>View Wishlist</span>
                             </a>

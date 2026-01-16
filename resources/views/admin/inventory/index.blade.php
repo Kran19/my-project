@@ -128,13 +128,6 @@
                 <select id="filterCategory" onchange="filterInventory()"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">All Categories</option>
-                    <option value="electronics">Electronics</option>
-                    <option value="clothing">Clothing</option>
-                    <option value="jewelry">Jewelry</option>
-                    <option value="home-kitchen">Home & Kitchen</option>
-                    <option value="wearables">Wearables</option>
-                    <option value="accessories">Accessories</option>
-                    <option value="fitness">Fitness</option>
                 </select>
             </div>
             <div>
@@ -142,12 +135,6 @@
                 <select id="filterBrand" onchange="filterInventory()"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">All Brands</option>
-                    <option value="nike">Nike</option>
-                    <option value="adidas">Adidas</option>
-                    <option value="apple">Apple</option>
-                    <option value="samsung">Samsung</option>
-                    <option value="zara">Zara</option>
-                    <option value="tanishq">Tanishq</option>
                 </select>
             </div>
             <div>
@@ -310,205 +297,40 @@
 
 @push('scripts')
 <script>
-    // Inventory data - extending products data with inventory-specific fields
-    window.inventoryData = [
-        {
-            id: 1,
-            name: "Wireless Bluetooth Headphones",
-            sku: "ELEC-WBH-001",
-            category: "Electronics",
-            brand: "Sony",
-            current_stock: 45,
-            min_stock: 10,
-            status: "in_stock",
-            last_updated: "2024-01-15 14:30",
-            price: 79.99,
-            image: "https://picsum.photos/100?random=1",
-            variants: 0,
-            location: "Warehouse A"
-        },
-        {
-            id: 2,
-            name: "Smart Fitness Watch",
-            sku: "WRB-SFW-002",
-            category: "Wearables",
-            brand: "Apple",
-            current_stock: 23,
-            min_stock: 5,
-            status: "in_stock",
-            last_updated: "2024-01-14 11:20",
-            price: 199.99,
-            image: "https://picsum.photos/100?random=2",
-            variants: 2,
-            location: "Warehouse B"
-        },
-        {
-            id: 3,
-            name: "Organic Cotton T-Shirt",
-            sku: "CLO-OCT-003",
-            category: "Clothing",
-            brand: "Nike",
-            current_stock: 0,
-            min_stock: 20,
-            status: "out_of_stock",
-            last_updated: "2024-01-13 09:15",
-            price: 29.99,
-            image: "https://picsum.photos/100?random=3",
-            variants: 3,
-            location: "Warehouse A"
-        },
-        {
-            id: 4,
-            name: "Stainless Steel Water Bottle",
-            sku: "ACC-SSW-004",
-            category: "Accessories",
-            brand: "Hydro Flask",
-            current_stock: 78,
-            min_stock: 15,
-            status: "in_stock",
-            last_updated: "2024-01-12 16:45",
-            price: 24.99,
-            image: "https://picsum.photos/100?random=4",
-            variants: 0,
-            location: "Warehouse C"
-        },
-        {
-            id: 5,
-            name: "Wireless Phone Charger",
-            sku: "ELEC-WPC-005",
-            category: "Electronics",
-            brand: "Samsung",
-            current_stock: 34,
-            min_stock: 8,
-            status: "in_stock",
-            last_updated: "2024-01-11 10:30",
-            price: 39.99,
-            image: "https://picsum.photos/100?random=5",
-            variants: 1,
-            location: "Warehouse B"
-        },
-        {
-            id: 6,
-            name: "Yoga Mat Premium",
-            sku: "FIT-YMP-006",
-            category: "Fitness",
-            brand: "Lululemon",
-            current_stock: 12,
-            min_stock: 10,
-            status: "low_stock",
-            last_updated: "2024-01-10 14:20",
-            price: 49.99,
-            image: "https://picsum.photos/100?random=6",
-            variants: 0,
-            location: "Warehouse A"
-        },
-        {
-            id: 7,
-            name: "Ceramic Coffee Mug Set",
-            sku: "HOM-CCM-007",
-            category: "Home & Kitchen",
-            brand: "Crate & Barrel",
-            current_stock: 56,
-            min_stock: 20,
-            status: "in_stock",
-            last_updated: "2024-01-09 13:15",
-            price: 34.99,
-            image: "https://picsum.photos/100?random=7",
-            variants: 2,
-            location: "Warehouse C"
-        },
-        {
-            id: 8,
-            name: "LED Desk Lamp",
-            sku: "HOM-LDL-008",
-            category: "Home & Office",
-            brand: "IKEA",
-            current_stock: 0,
-            min_stock: 5,
-            status: "out_of_stock",
-            last_updated: "2024-01-08 11:45",
-            price: 45.99,
-            image: "https://picsum.photos/100?random=8",
-            variants: 0,
-            location: "Warehouse B"
-        },
-        {
-            id: 9,
-            name: "Gaming Mouse",
-            sku: "ELEC-GM-009",
-            category: "Electronics",
-            brand: "Logitech",
-            current_stock: 8,
-            min_stock: 10,
-            status: "low_stock",
-            last_updated: "2024-01-07 15:30",
-            price: 59.99,
-            image: "https://picsum.photos/100?random=9",
-            variants: 3,
-            location: "Warehouse A"
-        },
-        {
-            id: 10,
-            name: "Running Shoes",
-            sku: "CLO-RS-010",
-            category: "Clothing",
-            brand: "Adidas",
-            current_stock: 15,
-            min_stock: 25,
-            status: "low_stock",
-            last_updated: "2024-01-06 09:20",
-            price: 89.99,
-            image: "https://picsum.photos/100?random=10",
-            variants: 5,
-            location: "Warehouse B"
-        },
-        {
-            id: 11,
-            name: "Blender",
-            sku: "HOM-BL-011",
-            category: "Home & Kitchen",
-            brand: "Ninja",
-            current_stock: 32,
-            min_stock: 10,
-            status: "in_stock",
-            last_updated: "2024-01-05 14:10",
-            price: 129.99,
-            image: "https://picsum.photos/100?random=11",
-            variants: 2,
-            location: "Warehouse C"
-        },
-        {
-            id: 12,
-            name: "Backpack",
-            sku: "ACC-BP-012",
-            category: "Accessories",
-            brand: "JanSport",
-            current_stock: 67,
-            min_stock: 15,
-            status: "in_stock",
-            last_updated: "2024-01-04 16:40",
-            price: 39.99,
-            image: "https://picsum.photos/100?random=12",
-            variants: 4,
-            location: "Warehouse A"
+    const axiosInstance = axios.create({
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Authorization': `Bearer ${window.ADMIN_API_TOKEN || "{{ session('admin_api_token') }}"}`
         }
-    ];
+    });
+
+    // Debounce helper
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
 
     let currentUpdateType = 'add';
     let stockUpdateProduct = null;
     let inventoryTable;
 
     // Initialize stats
-    function updateStats() {
-        const totalProducts = inventoryData.length;
-        const inStock = inventoryData.filter(p => p.status === 'in_stock').length;
-        const lowStock = inventoryData.filter(p => p.status === 'low_stock').length;
-        const outOfStock = inventoryData.filter(p => p.status === 'out_of_stock').length;
-
-        document.getElementById('totalProducts').textContent = totalProducts;
-        document.getElementById('inStockCount').textContent = inStock;
-        document.getElementById('lowStockCount').textContent = lowStock;
-        document.getElementById('outOfStockCount').textContent = outOfStock;
+    async function updateStats() {
+        try {
+            const response = await axiosInstance.get('/api/admin/inventory/statistics');
+            if (response.data.success) {
+                const stats = response.data.data;
+                document.getElementById('totalProducts').textContent = stats.total_items;
+                document.getElementById('inStockCount').textContent = stats.in_stock;
+                document.getElementById('lowStockCount').textContent = stats.low_stock;
+                document.getElementById('outOfStockCount').textContent = stats.out_of_stock;
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -516,10 +338,25 @@
 
         // Initialize Tabulator
         inventoryTable = new Tabulator("#inventoryTable", {
-            data: inventoryData,
+            ajaxURL: "/api/admin/inventory",
+            ajaxConfig: {
+                headers: {
+                    'Authorization': `Bearer ${window.ADMIN_API_TOKEN || "{{ session('admin_api_token') }}"}`,
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            },
+            ajaxResponse: function(url, params, response) {
+                if (!response.success || !response.data) {
+                    return { last_page: 1, data: [] };
+                }
+                return {
+                    last_page: response.data.meta?.last_page || 1,
+                    data: Array.isArray(response.data.data) ? response.data.data : []
+                };
+            },
             layout: "fitColumns",
             responsiveLayout: "hide",
-            pagination: "local",
+            pagination: "remote",
             paginationSize: 10,
             movableColumns: true,
             paginationSizeSelector: [10, 20, 50, 100],
@@ -577,7 +414,7 @@
                 },
                 {
                     title: "Category",
-                    field: "category",
+                    field: "category_name",
                     sorter: "string",
                     width: 150,
                     responsive: 0,
@@ -586,7 +423,7 @@
                 },
                 {
                     title: "Brand",
-                    field: "brand",
+                    field: "brand_name",
                     sorter: "string",
                     width: 120,
                     responsive: 0,
@@ -623,7 +460,7 @@
                     width: 140,
                     responsive: 0,
                     hozAlign: "center",
-                    headerFilter: "select",
+                    headerFilter: "list",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -706,7 +543,35 @@
 
         // Initialize controls
         initInventoryControls();
+        fetchDropdowns();
     });
+
+        async function fetchDropdowns() {
+            try {
+                const [catRes, brandRes] = await Promise.all([
+                    axiosInstance.get('/api/admin/categories/dropdown'),
+                    axiosInstance.get('/api/admin/brands/dropdown')
+                ]);
+
+            const catSelect = document.getElementById('filterCategory');
+            catRes.data.data.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                catSelect.appendChild(opt);
+            });
+
+            const brandSelect = document.getElementById('filterBrand');
+            brandRes.data.data.forEach(brand => {
+                const opt = document.createElement('option');
+                opt.value = brand.id;
+                opt.textContent = brand.name;
+                brandSelect.appendChild(opt);
+            });
+        } catch (error) {
+            console.error('Error fetching dropdowns:', error);
+        }
+    }
 
     function initInventoryControls() {
         // Search functionality
@@ -725,25 +590,32 @@
         // Filter functionality
         window.filterInventory = function () {
             const status = document.getElementById('filterStatus').value;
-            const category = document.getElementById('filterCategory').value;
-            const brand = document.getElementById('filterBrand').value;
+            const categoryId = document.getElementById('filterCategory').value;
+            const brandId = document.getElementById('filterBrand').value;
+            const search = document.getElementById('searchInventory').value;
 
             const filters = [];
 
             if (status) {
-                filters.push({ field: "status", type: "=", value: status });
+                filters.push({ field: "stock_status", type: "=", value: status });
             }
 
-            if (category) {
-                filters.push({ field: "category", type: "=", value: category });
+            if (categoryId) {
+                filters.push({ field: "category_id", type: "=", value: categoryId });
             }
 
-            if (brand) {
-                filters.push({ field: "brand", type: "=", value: brand });
+            if (brandId) {
+                filters.push({ field: "brand_id", type: "=", value: brandId });
+            }
+
+            if (search) {
+                filters.push({ field: "search", type: "like", value: search });
             }
 
             inventoryTable.setFilter(filters);
         };
+
+        document.getElementById('searchInventory').addEventListener('keyup', debounce(window.filterInventory, 300));
 
         // Column visibility
         const columnVisibilityBtn = document.getElementById('columnVisibilityBtn');
@@ -813,26 +685,20 @@
     }
 
     // Update stock function
-    function updateStock(productId) {
-        const product = inventoryData.find(p => p.id === productId);
-        if (!product) return;
+    function updateStock(variantId) {
+        const row = inventoryTable.getRow(variantId);
+        if (!row) return;
+        const variant = row.getData();
 
-        stockUpdateProduct = product;
+        stockUpdateProduct = variant;
         currentUpdateType = 'add';
 
-        document.getElementById('updateProductId').value = product.id;
-        document.getElementById('updateProductName').textContent = product.name;
-        document.getElementById('updateProductSku').textContent = `SKU: ${product.sku}`;
-        document.getElementById('currentStockValue').textContent = product.current_stock;
+        document.getElementById('updateProductId').value = variant.id;
+        document.getElementById('updateProductName').textContent = variant.name;
+        document.getElementById('updateProductSku').textContent = `SKU: ${variant.sku}`;
+        document.getElementById('currentStockValue').textContent = variant.current_stock;
         document.getElementById('updateQuantity').value = '';
         document.getElementById('updateNotes').value = '';
-
-        // Reset buttons
-        document.getElementById('btnAdd').classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
-        document.getElementById('btnRemove').classList.remove('bg-rose-50', 'text-rose-700', 'border-rose-300');
-        document.getElementById('btnSet').classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-300');
-        document.getElementById('btnRemove').classList.add('border-gray-300');
-        document.getElementById('btnSet').classList.add('border-gray-300');
 
         setUpdateType('add');
         document.getElementById('stockUpdateModal').classList.remove('hidden');
@@ -912,96 +778,51 @@
     }
 
     // Handle form submission
-    document.getElementById('stockUpdateForm').addEventListener('submit', function (e) {
+    document.getElementById('stockUpdateForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const productId = document.getElementById('updateProductId').value;
+        const variantId = document.getElementById('updateProductId').value;
         const quantity = parseInt(document.getElementById('updateQuantity').value);
         const reason = document.getElementById('updateReason').value;
         const notes = document.getElementById('updateNotes').value;
 
-        if (!quantity || quantity <= 0) {
+        if (isNaN(quantity) || quantity < 0) {
             toastr.error('Please enter a valid quantity');
             return;
         }
 
-        if (currentUpdateType === 'remove') {
-            const currentStock = stockUpdateProduct.current_stock;
-            if (quantity > currentStock) {
-                Swal.fire({
-                    title: 'Insufficient Stock',
-                    text: `Cannot remove ${quantity} items. Only ${currentStock} available in stock.`,
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-                return;
-            }
-        }
-
-        Swal.fire({
+        const typeLabel = currentUpdateType === 'add' ? 'addition' : currentUpdateType === 'remove' ? 'removal' : 'set';
+        
+        const { isConfirmed } = await Swal.fire({
             title: 'Confirm Stock Update',
-            text: `Are you sure you want to ${currentUpdateType === 'add' ? 'add' : currentUpdateType === 'remove' ? 'remove' : 'set'} ${quantity} items?`,
+            text: `Are you sure you want to perform this stock ${typeLabel}?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, update stock',
             cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Find product in inventory data
-                const productIndex = inventoryData.findIndex(p => p.id == productId);
-                if (productIndex !== -1) {
-                    const product = inventoryData[productIndex];
-                    let newStock = product.current_stock;
-
-                    switch (currentUpdateType) {
-                        case 'add':
-                            newStock = product.current_stock + quantity;
-                            break;
-                        case 'remove':
-                            newStock = product.current_stock - quantity;
-                            break;
-                        case 'set':
-                            newStock = quantity;
-                            break;
-                    }
-
-                    // Update stock
-                    inventoryData[productIndex].current_stock = newStock;
-
-                    // Update status based on new stock
-                    if (newStock <= 0) {
-                        inventoryData[productIndex].status = 'out_of_stock';
-                    } else if (newStock <= product.min_stock) {
-                        inventoryData[productIndex].status = 'low_stock';
-                    } else {
-                        inventoryData[productIndex].status = 'in_stock';
-                    }
-
-                    // Update last updated timestamp
-                    inventoryData[productIndex].last_updated = new Date().toISOString().slice(0, 16).replace('T', ' ');
-
-                    // Update Tabulator
-                    inventoryTable.replaceData(inventoryData);
-
-                    // Update stats
-                    updateStats();
-
-                    // Close modal
-                    closeStockModal();
-
-                    // Show success message
-                    Swal.fire({
-                        title: 'Success!',
-                        text: `Stock updated successfully. New stock: ${newStock}`,
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    });
-
-                    // Add to stock history (in a real app, this would be saved to database)
-                    addToStockHistory(productId, product.name, product.current_stock, newStock, currentUpdateType, quantity, reason, notes);
-                }
-            }
         });
+
+        if (isConfirmed) {
+            try {
+                const response = await axiosInstance.post('/api/admin/inventory/update', {
+                    variant_id: variantId,
+                    quantity: quantity,
+                    type: currentUpdateType,
+                    reason: reason,
+                    notes: notes
+                });
+
+                if (response.data.success) {
+                    toastr.success('Stock updated successfully');
+                    closeStockModal();
+                    inventoryTable.setData(); // Refresh table
+                    updateStats(); // Refresh stats
+                }
+            } catch (error) {
+                console.error('Error updating stock:', error);
+                toastr.error(error.response?.data?.message || 'Failed to update stock');
+            }
+        }
     });
 
     // Stock history tracking
@@ -1027,63 +848,74 @@
     }
 
     // View stock history
-    function viewStockHistory(productId) {
-        const product = inventoryData.find(p => p.id === productId);
-        if (!product) return;
+    async function viewStockHistory(variantId) {
+        const row = inventoryTable.getRow(variantId);
+        if (!row) return;
+        const variant = row.getData();
 
-        let history = JSON.parse(localStorage.getItem('stockHistory') || '[]');
-        const productHistory = history.filter(h => h.product_id == productId);
-
-        if (productHistory.length === 0) {
-            Swal.fire({
-                title: 'No Stock History',
-                text: `No stock history found for ${product.name}`,
-                icon: 'info',
-                confirmButtonText: 'OK'
+        try {
+            const response = await axiosInstance.get('/api/admin/inventory/history', {
+                params: { variant_id: variantId }
             });
-            return;
+
+            if (response.data.success) {
+                const history = response.data.data.data;
+
+                if (history.length === 0) {
+                    Swal.fire({
+                        title: 'No Stock History',
+                        text: `No stock history found for ${variant.name}`,
+                        icon: 'info',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+
+                let historyHTML = `<div class="text-left space-y-3 max-h-96 overflow-y-auto">`;
+
+                history.forEach(entry => {
+                    const actionIcon = entry.action === 'add' ? '⬆️' : entry.action === 'remove' ? '⬇️' : '⚡';
+                    const actionColor = entry.action === 'add' ? 'text-emerald-600' : entry.action === 'remove' ? 'text-rose-600' : 'text-indigo-600';
+
+                    historyHTML += `
+                    <div class="p-3 border border-gray-200 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium ${actionColor}">${actionIcon} ${entry.action.toUpperCase()}</span>
+                            <span class="text-sm text-gray-500">${entry.updated_at}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <span class="text-gray-500">From:</span>
+                                <span class="font-medium ml-1">${entry.old_stock}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">To:</span>
+                                <span class="font-medium ml-1">${entry.new_stock}</span>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600 mt-2">
+                            <span class="text-gray-500">Reason:</span> ${entry.reason}
+                        </div>
+                        ${entry.notes ? `<div class="text-sm text-gray-500 mt-1">${entry.notes}</div>` : ''}
+                        <div class="text-xs text-gray-400 mt-1">Updated by: ${entry.updated_by}</div>
+                    </div>
+                `;
+                });
+
+                historyHTML += `</div>`;
+
+                Swal.fire({
+                    title: `Stock History: ${variant.name}`,
+                    html: historyHTML,
+                    width: '600px',
+                    showConfirmButton: false,
+                    showCloseButton: true
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching stock history:', error);
+            toastr.error('Failed to fetch stock history');
         }
-
-        let historyHTML = `<div class="text-left space-y-3 max-h-96 overflow-y-auto">`;
-
-        productHistory.forEach(entry => {
-            const date = new Date(entry.updated_at);
-            const actionIcon = entry.action === 'add' ? '⬆️' : entry.action === 'remove' ? '⬇️' : '⚡';
-            const actionColor = entry.action === 'add' ? 'text-emerald-600' : entry.action === 'remove' ? 'text-rose-600' : 'text-indigo-600';
-
-            historyHTML += `
-            <div class="p-3 border border-gray-200 rounded-lg">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="font-medium ${actionColor}">${actionIcon} ${entry.action.toUpperCase()}</span>
-                    <span class="text-sm text-gray-500">${date.toLocaleDateString()}</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                        <span class="text-gray-500">From:</span>
-                        <span class="font-medium ml-1">${entry.old_stock}</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-500">To:</span>
-                        <span class="font-medium ml-1">${entry.new_stock}</span>
-                    </div>
-                </div>
-                <div class="text-sm text-gray-600 mt-2">
-                    <span class="text-gray-500">Reason:</span> ${entry.reason}
-                </div>
-                ${entry.notes ? `<div class="text-sm text-gray-500 mt-1">${entry.notes}</div>` : ''}
-            </div>
-        `;
-        });
-
-        historyHTML += `</div>`;
-
-        Swal.fire({
-            title: `Stock History: ${product.name}`,
-            html: historyHTML,
-            width: '600px',
-            showConfirmButton: false,
-            showCloseButton: true
-        });
     }
 
     // View product details
@@ -1254,91 +1086,39 @@
         }
     }
 
-    function applyBulkUpdate(selectedRows, options) {
+    async function applyBulkUpdate(selectedRows, options) {
         const selectedIds = selectedRows.map(row => row.getData().id);
 
-        Swal.fire({
+        const { isConfirmed } = await Swal.fire({
             title: 'Confirm Bulk Update',
             text: `Are you sure you want to ${options.type} ${options.quantity} items to ${selectedIds.length} product(s)?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, update all',
             cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                let updatedCount = 0;
-                let errors = [];
-
-                selectedRows.forEach(row => {
-                    const rowData = row.getData();
-                    const productId = rowData.id;
-                    const productIndex = inventoryData.findIndex(p => p.id === productId);
-
-                    if (productIndex !== -1) {
-                        const product = inventoryData[productIndex];
-                        let newStock = product.current_stock;
-
-                        switch (options.type) {
-                            case 'add':
-                                newStock = product.current_stock + options.quantity;
-                                break;
-                            case 'remove':
-                                if (options.quantity > product.current_stock) {
-                                    errors.push(`Cannot remove ${options.quantity} from ${product.name}. Only ${product.current_stock} available.`);
-                                    return;
-                                }
-                                newStock = product.current_stock - options.quantity;
-                                break;
-                            case 'set':
-                                newStock = options.quantity;
-                                break;
-                        }
-
-                        // Update stock
-                        inventoryData[productIndex].current_stock = newStock;
-
-                        // Update status
-                        if (newStock <= 0) {
-                            inventoryData[productIndex].status = 'out_of_stock';
-                        } else if (newStock <= product.min_stock) {
-                            inventoryData[productIndex].status = 'low_stock';
-                        } else {
-                            inventoryData[productIndex].status = 'in_stock';
-                        }
-
-                        // Update timestamp
-                        inventoryData[productIndex].last_updated = new Date().toISOString().slice(0, 16).replace('T', ' ');
-
-                        updatedCount++;
-
-                        // Add to history
-                        addToStockHistory(productId, product.name, product.current_stock, newStock, options.type, options.quantity, options.reason, 'Bulk update');
-                    }
-                });
-
-                // Update Tabulator
-                inventoryTable.replaceData(inventoryData);
-
-                // Update stats
-                updateStats();
-
-                // Clear selection
-                inventoryTable.deselectRow();
-
-                // Show result
-                let message = `Successfully updated ${updatedCount} product(s).`;
-                if (errors.length > 0) {
-                    message += ` ${errors.length} product(s) could not be updated due to insufficient stock.`;
-                }
-
-                Swal.fire({
-                    title: 'Bulk Update Complete',
-                    text: message,
-                    icon: errors.length > 0 ? 'warning' : 'success',
-                    confirmButtonText: 'OK'
-                });
-            }
         });
+
+        if (isConfirmed) {
+            try {
+                const response = await axiosInstance.post('/api/admin/inventory/bulk-update', {
+                    variant_ids: selectedIds,
+                    quantity: options.quantity,
+                    type: options.type,
+                    reason: options.reason,
+                    notes: 'Bulk update via dashboard'
+                });
+
+                if (response.data.success) {
+                    toastr.success(`Successfully processed bulk update for ${selectedIds.length} products`);
+                    inventoryTable.deselectRow();
+                    inventoryTable.setData();
+                    updateStats();
+                }
+            } catch (error) {
+                console.error('Error in bulk update:', error);
+                toastr.error('Failed to process bulk update');
+            }
+        }
     }
 
     // Quick Actions Functions
@@ -1400,123 +1180,11 @@
     }
 
     function showLowStockAlert() {
-        const lowStockProducts = inventoryData.filter(p => p.status === 'low_stock');
-
-        if (lowStockProducts.length === 0) {
-            Swal.fire({
-                title: 'No Low Stock Products',
-                text: 'All products have sufficient stock levels.',
-                icon: 'info',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
-
-        let alertHTML = `
-        <div class="text-left space-y-3 max-h-96 overflow-y-auto">
-            <p class="text-gray-600">${lowStockProducts.length} product(s) have low stock:</p>
-    `;
-
-        lowStockProducts.forEach(product => {
-            alertHTML += `
-            <div class="p-3 border border-amber-200 bg-amber-50 rounded-lg">
-                <div class="flex justify-between items-center">
-                    <span class="font-medium">${product.name}</span>
-                    <span class="text-amber-600 font-bold">${product.current_stock} / ${product.min_stock}</span>
-                </div>
-                <p class="text-sm text-gray-600 mt-1">${product.sku} • ${product.category}</p>
-            </div>
-        `;
-        });
-
-        alertHTML += `
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Low Stock Threshold</label>
-                <input type="number" id="lowStockThreshold" value="10" class="w-full border border-gray-300 rounded-lg px-3 py-2" min="1">
-            </div>
-        </div>
-    `;
-
-        Swal.fire({
-            title: 'Low Stock Alert',
-            html: alertHTML,
-            showCancelButton: true,
-            confirmButtonText: 'Update Threshold',
-            cancelButtonText: 'Close',
-            width: '500px'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const threshold = parseInt(document.getElementById('lowStockThreshold').value);
-                if (threshold > 0) {
-                    toastr.success(`Low stock threshold updated to ${threshold}`);
-                }
-            }
-        });
-    }
-
-    function bulkStockUpdate() {
-        showBulkActions();
+        toastr.info('Low stock alerts can be configured in settings.');
     }
 
     function showStockAnalysis() {
-        const totalValue = inventoryData.reduce((sum, p) => sum + (p.current_stock * p.price), 0);
-        const avgStock = inventoryData.reduce((sum, p) => sum + p.current_stock, 0) / inventoryData.length;
-        const lowStockValue = inventoryData.filter(p => p.status === 'low_stock')
-            .reduce((sum, p) => sum + (p.current_stock * p.price), 0);
-
-        Swal.fire({
-            title: 'Stock Analysis Report',
-            html: `
-            <div class="text-left space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                        <p class="text-sm text-gray-500">Total Inventory Value</p>
-                        <p class="text-xl font-bold text-gray-800">$${totalValue.toFixed(2)}</p>
-                    </div>
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                        <p class="text-sm text-gray-500">Average Stock Level</p>
-                        <p class="text-xl font-bold text-gray-800">${avgStock.toFixed(1)}</p>
-                    </div>
-                </div>
-                
-                <div>
-                    <p class="font-medium text-gray-700 mb-2">Stock Status Distribution</p>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">In Stock:</span>
-                            <span class="font-medium text-emerald-600">${inventoryData.filter(p => p.status === 'in_stock').length} products</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Low Stock:</span>
-                            <span class="font-medium text-amber-600">${inventoryData.filter(p => p.status === 'low_stock').length} products ($${lowStockValue.toFixed(2)})</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Out of Stock:</span>
-                            <span class="font-medium text-rose-600">${inventoryData.filter(p => p.status === 'out_of_stock').length} products</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div>
-                    <p class="font-medium text-gray-700 mb-2">Category Distribution</p>
-                    <div class="space-y-1">
-                        ${Array.from(new Set(inventoryData.map(p => p.category))).map(category => {
-                const categoryProducts = inventoryData.filter(p => p.category === category);
-                const percentage = (categoryProducts.length / inventoryData.length * 100).toFixed(1);
-                return `
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">${category}:</span>
-                                    <span class="font-medium">${categoryProducts.length} (${percentage}%)</span>
-                                </div>
-                            `;
-            }).join('')}
-                    </div>
-                </div>
-            </div>
-        `,
-            confirmButtonText: 'Close',
-            width: '500px'
-        });
+        toastr.info('Detailed stock analysis is available in the Reports section.');
     }
 </script>
 @endpush

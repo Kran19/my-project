@@ -176,7 +176,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
                         <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-500">$</span>
+                            <span class="absolute left-3 top-3 text-gray-500">₹</span>
                             <input type="number" id="calcAmount"
                                 class="w-full pl-8 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 placeholder="0.00" step="0.01">
@@ -199,17 +199,17 @@
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Original Amount:</span>
-                                <span id="originalAmount" class="font-medium">$0.00</span>
+                                <span id="originalAmount" class="font-medium">₹0.00</span>
                             </div>
 
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Tax Amount:</span>
-                                <span id="taxAmount" class="font-medium text-emerald-600">$0.00</span>
+                                <span id="taxAmount" class="font-medium text-emerald-600">₹0.00</span>
                             </div>
 
                             <div class="flex justify-between pt-2 border-t border-gray-200">
                                 <span class="text-gray-800 font-medium">Total Amount:</span>
-                                <span id="totalAmount" class="font-bold text-lg text-gray-900">$0.00</span>
+                                <span id="totalAmount" class="font-bold text-lg text-gray-900">₹0.00</span>
                             </div>
                         </div>
                     </div>
@@ -368,11 +368,11 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
-                            <input type="text" id="taxClassSlug" name="slug"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tax Code</label>
+                            <input type="text" id="taxClassCode" name="code"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="e.g., standard-tax, reduced-tax">
-                            <p class="text-xs text-gray-500 mt-1">URL-friendly version (auto-generated if empty)</p>
+                                placeholder="e.g., STANDARD, REDUCED">
+                            <p class="text-xs text-gray-500 mt-1">Unique identifier (auto-generated if empty)</p>
                         </div>
 
                         <div>
@@ -390,19 +390,12 @@
                             <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple tax rates</p>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
-                                <input type="number" id="taxClassSortOrder" name="sort_order" min="0"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    value="0">
-                            </div>
-                        </div>
+
 
                         <div class="flex items-center">
-                            <input type="checkbox" id="taxClassIsActive" name="is_active"
-                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
-                            <label for="taxClassIsActive" class="ml-2 text-sm text-gray-700">Active</label>
+                            <input type="checkbox" id="taxClassIsDefault" name="is_default"
+                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="taxClassIsDefault" class="ml-2 text-sm text-gray-700">Set as Default Class</label>
                         </div>
                     </div>
 
@@ -1455,8 +1448,7 @@ taxRateData.tax_class_id = taxRateData.tax_class_id
             }
 
             document.getElementById('taxClassId').value = '';
-            document.getElementById('taxClassIsActive').checked = true;
-            document.getElementById('taxClassSortOrder').value = 0;
+            document.getElementById('taxClassIsDefault').checked = false;
             document.getElementById('taxClassModalTitle').textContent = 'Create New Tax Class';
             document.getElementById('taxClassSubmitText').textContent = 'Create Tax Class';
 
@@ -1508,8 +1500,7 @@ taxRateData.tax_class_id = taxRateData.tax_class_id
                     document.getElementById('taxClassName').value = taxClass.name || '';
                     document.getElementById('taxClassCode').value = taxClass.code || '';
                     document.getElementById('taxClassDescription').value = taxClass.description || '';
-                    document.getElementById('taxClassIsDefault').checked = taxClass.is_default || false;
-                    document.getElementById('taxClassSortOrder').value = taxClass.sort_order || 0;
+                    document.getElementById('taxClassIsDefault').checked = !!taxClass.is_default;
 
                     // Load tax rates and set selected ones
                     await loadAvailableTaxRates();
@@ -1540,7 +1531,7 @@ taxRateData.tax_class_id = taxRateData.tax_class_id
             const form = document.getElementById('taxClassForm');
             const formData = new FormData(form);
             const taxClassData = Object.fromEntries(formData.entries());
-            taxClassData.is_active = document.getElementById('taxClassIsActive')?.checked ? true : false;
+            taxClassData.is_default = document.getElementById('taxClassIsDefault')?.checked ? true : false;
 
 
             // Validate required fields
@@ -1550,9 +1541,8 @@ taxRateData.tax_class_id = taxRateData.tax_class_id
             }
 
 
-            // Convert checkbox values
+            // Convert values
             taxClassData.is_default = document.getElementById('taxClassIsDefault')?.checked || false;
-            taxClassData.sort_order = parseInt(taxClassData.sort_order) || 0;
 
             // Process tax rate IDs (multiple select)
             const ratesSelect = document.getElementById('taxClassRateIds');

@@ -183,88 +183,116 @@
 
 @push('scripts')
 <script>
+const axiosInstance = axios.create({
+    headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': `Bearer ${window.ADMIN_API_TOKEN || "{{ session('admin_api_token') }}"}`
+    }
+});
+
 let historyTable;
 let currentHistoryData = [];
 
 // Load and filter history
-function loadHistory() {
-    let history = JSON.parse(localStorage.getItem('stockHistory') || '[]');
+async function loadHistory() {
+    updateHistoryStats();
     
-    // Apply filters
-    const dateRange = document.getElementById('dateRangeFilter').value;
-    const actionType = document.getElementById('actionFilter').value;
-    const reason = document.getElementById('reasonFilter').value;
-    const search = document.getElementById('productSearch').value.toLowerCase();
-    
-    currentHistoryData = history.filter(entry => {
-        // Date range filter
-        if (dateRange !== 'all') {
-            const entryDate = new Date(entry.updated_at);
-            const now = new Date();
-            
-            switch(dateRange) {
-                case 'today':
-                    if (entryDate.toDateString() !== now.toDateString()) return false;
-                    break;
-                case 'yesterday':
-                    const yesterday = new Date(now);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    if (entryDate.toDateString() !== yesterday.toDateString()) return false;
-                    break;
-                case 'week':
-                    const weekAgo = new Date(now);
-                    weekAgo.setDate(weekAgo.getDate() - 7);
-                    if (entryDate < weekAgo) return false;
-                    break;
-                case 'month':
-                    const monthAgo = new Date(now);
-                    monthAgo.setDate(monthAgo.getDate() - 30);
-                    if (entryDate < monthAgo) return false;
-                    break;
-                case 'quarter':
-                    const quarterAgo = new Date(now);
-                    quarterAgo.setDate(quarterAgo.getDate() - 90);
-                    if (entryDate < quarterAgo) return false;
-                    break;
-            }
-        }
-        
-        // Action type filter
-        if (actionType && entry.action !== actionType) return false;
-        
-        // Reason filter
-        if (reason && entry.reason !== reason) return false;
-        
-        // Search filter
-        if (search) {
-            const searchStr = entry.product_name.toLowerCase() + ' ' + 
-                            entry.reason.toLowerCase() + ' ' + 
-                            (entry.reference || '').toLowerCase() + ' ' +
-                            (entry.notes || '').toLowerCase();
-            if (!searchStr.includes(search)) return false;
-        }
-        
-        return true;
-    });
-    
-    // Update stats
-    updateHistoryStats(currentHistoryData);
-    
-    // Update Tabulator data
     if (historyTable) {
-        historyTable.replaceData(currentHistoryData);
+        historyTable.setData();
     } else {
         initializeHistoryTable();
     }
 }
 
+// Update history statistics
+async function updateHistoryStats() {
+    try {
+        const filters = getFilterParams();
+        const response = await axiosInstance.get('/api/admin/inventory/history/statistics', { params: filters });
+        if (response.data.success) {
+            const stats = response.data.data;
+            document.getElementById('totalAdjustments').textContent = stats.total_adjustments;
+            document.getElementById('stockAdded').textContent = stats.stock_added;
+            document.getElementById('stockRemoved').textContent = stats.stock_removed;
+        }
+    } catch (error) {
+        console.error('Error fetching history stats:', error);
+    }
+}
+
+function getFilterParams() {
+    const dateRange = document.getElementById('dateRangeFilter').value;
+    const actionType = document.getElementById('actionFilter').value;
+    const reason = document.getElementById('reasonFilter').value;
+    const search = document.getElementById('productSearch').value;
+
+    let params = {
+        change_type: actionType,
+        reason: reason,
+        search: search
+    };
+
+    if (dateRange !== 'all') {
+        const now = new Date();
+        let startDate, endDate;
+
+        switch(dateRange) {
+            case 'today':
+                startDate = now.toISOString().split('T')[0];
+                break;
+            case 'yesterday':
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                startDate = yesterday.toISOString().split('T')[0];
+                endDate = startDate;
+                break;
+            case 'week':
+                const weekAgo = new Date(now);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                startDate = weekAgo.toISOString().split('T')[0];
+                break;
+            case 'month':
+                const monthAgo = new Date(now);
+                monthAgo.setDate(monthAgo.getDate() - 30);
+                startDate = monthAgo.toISOString().split('T')[0];
+                break;
+            case 'quarter':
+                const quarterAgo = new Date(now);
+                quarterAgo.setDate(quarterAgo.getDate() - 90);
+                startDate = quarterAgo.toISOString().split('T')[0];
+                break;
+        }
+
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+    }
+
+    return params;
+}
+
 // Initialize Tabulator
 function initializeHistoryTable() {
     historyTable = new Tabulator("#historyTable", {
-        data: currentHistoryData,
+        ajaxURL: "/api/admin/inventory/history",
+        ajaxConfig: {
+            headers: {
+                'Authorization': `Bearer ${window.ADMIN_API_TOKEN || "{{ session('admin_api_token') }}"}`,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        },
+        ajaxParams: getFilterParams(),
+        ajaxResponse: function(url, params, response) {
+            if (!response.success || !response.data) {
+                return { last_page: 1, data: [] };
+            }
+            return {
+                last_page: response.data.meta?.last_page || 1,
+                data: Array.isArray(response.data.data) ? response.data.data : []
+            };
+        },
         layout: "fitColumns",
         responsiveLayout: "hide",
-        pagination: "local",
+        pagination: "remote",
         paginationSize: 10,
         movableColumns: true,
         paginationSizeSelector: [10, 20, 50, 100],
@@ -307,7 +335,7 @@ function initializeHistoryTable() {
                 field: "action",
                 width: 140,
                 responsive: 0,
-                headerFilter: "select",
+                headerFilter: "list",
                 headerFilterParams: {
                     values: {
                         "": "All Actions",
@@ -390,7 +418,7 @@ function initializeHistoryTable() {
                 field: "reason",
                 width: 140,
                 responsive: 0,
-                headerFilter: "select",
+                headerFilter: "list",
                 headerFilterParams: {
                     values: {
                         "": "All Reasons",
@@ -533,20 +561,12 @@ function initHistoryControls() {
     });
 }
 
-// Update history statistics
-function updateHistoryStats(history) {
-    const totalAdjustments = history.length;
-    const stockAdded = history.filter(h => h.action === 'add').length;
-    const stockRemoved = history.filter(h => h.action === 'remove').length;
-    
-    document.getElementById('totalAdjustments').textContent = totalAdjustments;
-    document.getElementById('stockAdded').textContent = stockAdded;
-    document.getElementById('stockRemoved').textContent = stockRemoved;
-}
-
 // Filter history when filters change
 function filterHistory() {
-    loadHistory();
+    if (historyTable) {
+        historyTable.setData("/api/admin/inventory/history", getFilterParams());
+        updateHistoryStats();
+    }
 }
 
 // Export history

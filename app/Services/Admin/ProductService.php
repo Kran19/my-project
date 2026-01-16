@@ -117,10 +117,9 @@ class ProductService
      */
     private function syncTags(Product $product, array $data): void
     {
-        if (isset($data['tag_ids']) && is_array($data['tag_ids']) && !empty($data['tag_ids'])) {
-            $product->tags()->sync($data['tag_ids']);
-            Log::info('Tags synced', ['product_id' => $product->id, 'tag_ids' => $data['tag_ids']]);
-        }
+        $tagIds = $data['tag_ids'] ?? [];
+        $product->tags()->sync($tagIds);
+        Log::info('Tags synced', ['product_id' => $product->id, 'tag_ids' => $tagIds]);
     }
 
     /**
@@ -128,8 +127,8 @@ class ProductService
      */
     private function syncSpecifications(Product $product, array $data): void
     {
+        $specificationsData = [];
         if (isset($data['specifications']) && is_array($data['specifications'])) {
-            $specificationsData = [];
             foreach ($data['specifications'] as $specData) {
                 if (!empty($specData['specification_id'])) {
                     $specificationsData[$specData['specification_id']] = [
@@ -138,12 +137,10 @@ class ProductService
                     ];
                 }
             }
-
-            if (!empty($specificationsData)) {
-                $product->specifications()->sync($specificationsData);
-                Log::info('Specifications synced', ['product_id' => $product->id, 'count' => count($specificationsData)]);
-            }
         }
+
+        $product->specifications()->sync($specificationsData);
+        Log::info('Specifications synced', ['product_id' => $product->id, 'count' => count($specificationsData)]);
     }
 
     /**
@@ -911,16 +908,43 @@ if ($mainImage) {
      */
     private function handleVariantsUpdate(Product $product, array $data): void
     {
-        if (!isset($data['variants']) || !is_array($data['variants'])) {
-            // Keep existing variants if no variants data sent? 
-            // Or if product type changed to simple?
-            // If product type is simple, we might want to soft delete configurable variants?
-            if ($product->product_type === 'simple') {
-                $product->variants()->update(['status' => 0]); // Or delete?
+        // 1. Handle Simple Product
+        if ($product->product_type === 'simple') {
+            Log::info('Updating simple product variant', ['product_id' => $product->id]);
+            $variant = $product->defaultVariant;
+            
+            if (!$variant) {
+                Log::warning('No default variant found for simple product, creating one', ['product_id' => $product->id]);
+                $this->createSimpleProductVariant($product, $data);
+                return;
             }
+
+            $variant->update([
+                'sku' => $data['sku'] ?? $variant->sku,
+                'price' => $data['price'] ?? $variant->price,
+                'compare_price' => $data['compare_price'] ?? $variant->compare_price,
+                'stock_quantity' => $data['stock_quantity'] ?? $variant->stock_quantity,
+                'stock_status' => (isset($data['stock_quantity']) && $data['stock_quantity'] > 0) ? 'in_stock' : 'out_of_stock',
+                'status' => 1,
+                'weight' => $data['weight'] ?? $product->weight,
+                'length' => $data['length'] ?? $product->length,
+                'width' => $data['width'] ?? $product->width,
+                'height' => $data['height'] ?? $product->height,
+            ]);
+
+            // Sync images for simple product (they are at the top level of $data)
+            $this->syncVariantImages($variant, $data);
+            Log::info('Simple product variant updated successfully', ['variant_id' => $variant->id]);
             return;
         }
 
+        // 2. Handle Configurable Product
+        if (!isset($data['variants']) || !is_array($data['variants'])) {
+            Log::info('No variants data provided for configurable product update', ['product_id' => $product->id]);
+            return;
+        }
+
+        Log::info('Updating configurable product variants', ['product_id' => $product->id, 'count' => count($data['variants'])]);
         $submittedVariantIds = [];
 
         foreach ($data['variants'] as $index => $variantData) {
@@ -931,7 +955,9 @@ if ($mainImage) {
                 $variant = ProductVariant::where('id', $variantData['id'])
                     ->where('product_id', $product->id)
                     ->first();
-                $submittedVariantIds[] = $variantData['id'];
+                if ($variant) {
+                    $submittedVariantIds[] = $variant->id;
+                }
             }
 
             if ($variant) {
@@ -939,30 +965,29 @@ if ($mainImage) {
                 $variant->update([
                     'sku' => $variantData['sku'],
                     'price' => $variantData['price'],
-                    'stock_quantity' => $variantData['stock_quantity'],
-                    'stock_status' => ($variantData['stock_quantity'] > 0) ? 'in_stock' : 'out_of_stock',
-                    'is_default' => (isset($data['default_variant_index']) && $data['default_variant_index'] == $index) || ($variantData['is_default'] ?? 0),
-                    'status' => 1 // Active
-                ]);
-            } else {
-                // CREATE new
-                // For new variants in Edit mode, we need attributes?
-                // If the user added a variant manually?
-                // Usually "Generate Variants" does this.
-                // Assuming we have basic data. If attributes missing, it might fail validation or just be a shell.
-                
-                $variant = ProductVariant::create([
-                    'product_id' => $product->id,
-                    'sku' => $variantData['sku'],
-                    'price' => $variantData['price'],
+                    'compare_price' => $variantData['compare_price'] ?? null,
                     'stock_quantity' => $variantData['stock_quantity'],
                     'stock_status' => ($variantData['stock_quantity'] > 0) ? 'in_stock' : 'out_of_stock',
                     'is_default' => (isset($data['default_variant_index']) && $data['default_variant_index'] == $index) || ($variantData['is_default'] ?? 0),
                     'status' => 1
                 ]);
+                Log::debug('Variant updated', ['variant_id' => $variant->id, 'sku' => $variant->sku]);
+            } else {
+                // CREATE new
+                $variant = ProductVariant::create([
+                    'product_id' => $product->id,
+                    'sku' => $variantData['sku'],
+                    'price' => $variantData['price'],
+                    'compare_price' => $variantData['compare_price'] ?? null,
+                    'stock_quantity' => $variantData['stock_quantity'],
+                    'stock_status' => ($variantData['stock_quantity'] > 0) ? 'in_stock' : 'out_of_stock',
+                    'is_default' => (isset($data['default_variant_index']) && $data['default_variant_index'] == $index) || ($variantData['is_default'] ?? 0),
+                    'status' => 1
+                ]);
+                $submittedVariantIds[] = $variant->id;
+                Log::debug('New variant created during update', ['variant_id' => $variant->id, 'sku' => $variant->sku]);
                 
-                // New variant needs attributes?
-                if(isset($variantData['attributes'])) {
+                if (isset($variantData['attributes'])) {
                     $this->syncVariantAttributes($variant, $variantData);
                 }
             }
@@ -971,14 +996,15 @@ if ($mainImage) {
             $this->syncVariantImages($variant, $variantData);
         }
 
-        // Optional: Soft delete or Delete variants not in submission
-        // Only if we are sure the submission contains ALL valid variants.
-        // In our Edit UI, we list all variants. If user deleted a row, it's gone from DOM.
-        // So we should delete variants not in $submittedVariantIds
+        // 3. Remove variants not in submission (if any deletions were intended)
         if (!empty($submittedVariantIds)) {
-            $product->variants()
+            $deletedCount = $product->variants()
                 ->whereNotIn('id', $submittedVariantIds)
-                ->delete(); 
+                ->delete();
+            if ($deletedCount > 0) {
+                Log::info('Deleted variants not in submission', ['product_id' => $product->id, 'count' => $deletedCount]);
+            }
         }
     }
+
 }

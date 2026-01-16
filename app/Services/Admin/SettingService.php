@@ -178,9 +178,9 @@ class SettingService
                 [
                     'key' => 'store_name',
                     'label' => 'Store Name',
-                    'value' => 'My eCommerce Store',
+                    'value' => 'MyApiqo Jewels',
                     'type' => 'text',
-                    'default' => 'My eCommerce Store',
+                    'default' => 'MyApiqo Jewels',
                     'description' => 'The name of your online store',
                     'is_encrypted' => false,
                     'is_public' => true,
@@ -189,9 +189,9 @@ class SettingService
                 [
                     'key' => 'store_email',
                     'label' => 'Store Email',
-                    'value' => 'contact@myecommercestore.com',
+                    'value' => 'contact@MyApiqojewels.com',
                     'type' => 'text',
-                    'default' => 'contact@myecommercestore.com',
+                    'default' => 'contact@MyApiqojewels.com',
                     'description' => 'Primary contact email for the store',
                     'is_encrypted' => false,
                     'is_public' => true,
@@ -200,9 +200,9 @@ class SettingService
                 [
                     'key' => 'store_phone',
                     'label' => 'Phone Number',
-                    'value' => '+1 (555) 123-4567',
+                    'value' => '+91 98765 43210',
                     'type' => 'text',
-                    'default' => '+1 (555) 123-4567',
+                    'default' => '+91 98765 43210',
                     'description' => 'Store contact phone number',
                     'is_encrypted' => false,
                     'is_public' => true,
@@ -211,15 +211,15 @@ class SettingService
                 [
                     'key' => 'currency',
                     'label' => 'Currency',
-                    'value' => 'USD',
+                    'value' => 'INR',
                     'type' => 'select',
-                    'default' => 'USD',
+                    'default' => 'INR',
                     'options' => [
+                        ['value' => 'INR', 'label' => 'Indian Rupee (₹)'],
                         ['value' => 'USD', 'label' => 'US Dollar ($)'],
                         ['value' => 'EUR', 'label' => 'Euro (€)'],
                         ['value' => 'GBP', 'label' => 'British Pound (£)'],
-                        ['value' => 'CAD', 'label' => 'Canadian Dollar (C$)'],
-                        ['value' => 'INR', 'label' => 'Indian Rupee (₹)']
+                        ['value' => 'CAD', 'label' => 'Canadian Dollar (C$)']
                     ],
                     'description' => 'Default currency for the store',
                     'is_encrypted' => false,
@@ -229,9 +229,9 @@ class SettingService
                 [
                     'key' => 'store_address',
                     'label' => 'Store Address',
-                    'value' => '123 Commerce Street, Business City, BC 12345',
+                    'value' => 'Suite 405, Jaipur Jewelry Mart, MI Road, Jaipur, Rajasthan 302001, India',
                     'type' => 'textarea',
-                    'default' => '123 Commerce Street, Business City, BC 12345',
+                    'default' => 'Suite 405, Jaipur Jewelry Mart, MI Road, Jaipur, Rajasthan 302001, India',
                     'description' => 'Physical address of the store',
                     'is_encrypted' => false,
                     'is_public' => true,
@@ -242,9 +242,9 @@ class SettingService
                 [
                     'key' => 'meta_title',
                     'label' => 'Meta Title',
-                    'value' => 'My eCommerce Store - Best Online Shopping',
+                    'value' => 'MyApiqo Jewels - Exquisite Indian Imitation & Fashion Jewelry',
                     'type' => 'text',
-                    'default' => 'My eCommerce Store - Best Online Shopping',
+                    'default' => 'MyApiqo Jewels - Exquisite Indian Imitation & Fashion Jewelry',
                     'description' => 'Default meta title for pages',
                     'is_encrypted' => false,
                     'is_public' => true,
@@ -253,9 +253,9 @@ class SettingService
                 [
                     'key' => 'meta_description',
                     'label' => 'Meta Description',
-                    'value' => 'Shop the best products online with fast delivery and great customer service. Your one-stop shop for all your needs.',
+                    'value' => 'Discover stunning Indian imitation jewelry at MyApiqo Jewels. From traditional Kundan sets to modern fashion jewelry, find the perfect piece for every occasion with fast delivery across India.',
                     'type' => 'textarea',
-                    'default' => 'Shop the best products online with fast delivery and great customer service. Your one-stop shop for all your needs.',
+                    'default' => 'Discover stunning Indian imitation jewelry at MyApiqo Jewels. From traditional Kundan sets to modern fashion jewelry, find the perfect piece for every occasion with fast delivery across India.',
                     'description' => 'Default meta description for pages',
                     'is_encrypted' => false,
                     'is_public' => true,
@@ -264,9 +264,9 @@ class SettingService
                 [
                     'key' => 'meta_keywords',
                     'label' => 'Meta Keywords',
-                    'value' => 'ecommerce, online shopping, products, deals',
+                    'value' => 'imitation jewelry, indian jewelry, kundan, polki, fashion accessories, wedding jewelry, online jewelry india',
                     'type' => 'text',
-                    'default' => 'ecommerce, online shopping, products, deals',
+                    'default' => 'imitation jewelry, indian jewelry, kundan, polki, fashion accessories, wedding jewelry, online jewelry india',
                     'description' => 'Default meta keywords for SEO',
                     'is_encrypted' => false,
                     'is_public' => true,
@@ -286,48 +286,37 @@ class SettingService
             ],
             'payment' => [
                 [
-                    'key' => 'paypal_enabled',
-                    'label' => 'Enable PayPal Payments',
+                    'key' => 'razorpay_enabled',
+                    'label' => 'Enable Razorpay Payments',
                     'value' => '1',
                     'type' => 'checkbox',
                     'default' => '1',
-                    'description' => 'Enable or disable PayPal payment method',
+                    'description' => 'Enable or disable Razorpay (UPI, Cards, Netbanking)',
                     'is_encrypted' => false,
                     'is_public' => false,
                     'sort_order' => 10
                 ],
                 [
-                    'key' => 'paypal_client_id',
-                    'label' => 'PayPal Client ID',
+                    'key' => 'razorpay_key_id',
+                    'label' => 'Razorpay Key ID',
                     'value' => '',
                     'type' => 'text',
                     'default' => '',
-                    'description' => 'PayPal API client ID',
+                    'description' => 'Razorpay API Key ID',
                     'is_encrypted' => true,
                     'is_public' => false,
                     'sort_order' => 20
                 ],
                 [
-                    'key' => 'stripe_enabled',
-                    'label' => 'Enable Stripe Payments',
-                    'value' => '1',
-                    'type' => 'checkbox',
-                    'default' => '1',
-                    'description' => 'Enable or disable Stripe payment method',
-                    'is_encrypted' => false,
-                    'is_public' => false,
-                    'sort_order' => 30
-                ],
-                [
-                    'key' => 'stripe_publishable_key',
-                    'label' => 'Stripe Publishable Key',
+                    'key' => 'razorpay_key_secret',
+                    'label' => 'Razorpay Key Secret',
                     'value' => '',
                     'type' => 'text',
                     'default' => '',
-                    'description' => 'Stripe publishable API key',
+                    'description' => 'Razorpay API Key Secret',
                     'is_encrypted' => true,
                     'is_public' => false,
-                    'sort_order' => 40
+                    'sort_order' => 30
                 ],
                 [
                     'key' => 'cod_enabled',
@@ -338,16 +327,16 @@ class SettingService
                     'description' => 'Enable or disable Cash on Delivery payment method',
                     'is_encrypted' => false,
                     'is_public' => true,
-                    'sort_order' => 50
+                    'sort_order' => 40
                 ]
             ],
             'shipping' => [
                 [
                     'key' => 'default_shipping_rate',
                     'label' => 'Default Shipping Rate',
-                    'value' => '5.99',
+                    'value' => '99.00',
                     'type' => 'decimal',
-                    'default' => '5.99',
+                    'default' => '99.00',
                     'description' => 'Default shipping rate for orders',
                     'is_encrypted' => false,
                     'is_public' => true,
@@ -355,11 +344,11 @@ class SettingService
                 ],
                 [
                     'key' => 'tax_rate',
-                    'label' => 'Tax Rate (%)',
-                    'value' => '8.5',
+                    'label' => 'Tax Rate GST (%)',
+                    'value' => '3.0',
                     'type' => 'decimal',
-                    'default' => '8.5',
-                    'description' => 'Default tax rate percentage',
+                    'default' => '3.0',
+                    'description' => 'Default tax rate (GST) percentage',
                     'is_encrypted' => false,
                     'is_public' => true,
                     'sort_order' => 20
@@ -367,9 +356,9 @@ class SettingService
                 [
                     'key' => 'free_shipping_min',
                     'label' => 'Free Shipping Minimum',
-                    'value' => '50.00',
+                    'value' => '999.00',
                     'type' => 'decimal',
-                    'default' => '50.00',
+                    'default' => '999.00',
                     'description' => 'Minimum order amount for free shipping',
                     'is_encrypted' => false,
                     'is_public' => true,
