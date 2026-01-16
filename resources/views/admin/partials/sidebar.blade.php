@@ -121,25 +121,25 @@ $navItems = [
         'route' => 'admin.media.index',
     ],
 
-    'reports' => [
-        'title' => 'Reports',
-        'icon' => 'fas fa-chart-bar',
-        'route' => 'admin.reports.index',
-        'submenu' => [
-            'sales' => [
-                'title' => 'Sales',
-                'route' => 'admin.reports.sales',
-            ],
-            'customers' => [
-                'title' => 'Customers',
-                'route' => 'admin.reports.customers',
-            ],
-            'products' => [
-                'title' => 'Products',
-                'route' => 'admin.reports.products',
-            ],
-        ],
-    ],
+    // 'reports' => [
+    //     'title' => 'Reports',
+    //     'icon' => 'fas fa-chart-bar',
+    //     'route' => 'admin.reports.index',
+    //     'submenu' => [
+    //         'sales' => [
+    //             'title' => 'Sales',
+    //             'route' => 'admin.reports.sales',
+    //         ],
+    //         'customers' => [
+    //             'title' => 'Customers',
+    //             'route' => 'admin.reports.customers',
+    //         ],
+    //         'products' => [
+    //             'title' => 'Products',
+    //             'route' => 'admin.reports.products',
+    //         ],
+    //     ],
+    // ],
 
     // 'shipping' => [
     //     'title' => 'Shipping',
@@ -162,8 +162,8 @@ $navItems = [
         'icon' => 'fas fa-bullhorn',
         'route' => 'admin.crm.index',
         'submenu' => [
-            'popup' => ['title' => 'Popup Manager', 'route' => 'admin.crm.popup'],
-            'settings' => ['title' => 'Site Settings', 'route' => 'admin.crm.settings'],
+            'banners' => ['title' => 'Sliders', 'route' => 'admin.banners.index'],
+            'home_sections' => ['title' => 'Home Page', 'route' => 'admin.home-sections.index'],
         ],
     ],
 

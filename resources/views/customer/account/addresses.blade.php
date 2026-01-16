@@ -25,8 +25,8 @@
                         <i class="fas fa-user text-2xl text-amber-700"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-800">John Doe</h3>
-                        <p class="text-sm text-gray-600">user@example.com</p>
+                        <h3 class="font-bold text-gray-800">{{ $customer->name }}</h3>
+                        <p class="text-sm text-gray-600">{{ $customer->email ?? $customer->mobile }}</p>
                     </div>
                 </div>
 
@@ -38,28 +38,43 @@
                         <span>Dashboard</span>
                     </a>
 
-                    <a href="{{ route('customer.wishlist') }}"
+                    <a href="{{ route('customer.wishlist.index') }}"
                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-amber-50">
                         <i class="fas fa-heart"></i>
                         <span>My Wishlist</span>
+                        @php
+                            $wishlistCount = \App\Models\Wishlist::where('customer_id', $customer->id)->count();
+                        @endphp
+                        @if($wishlistCount > 0)
                         <span class="ml-auto bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
-                            3
+                            {{ $wishlistCount }}
                         </span>
+                        @endif
                     </a>
 
                     <a href="{{ route('customer.account.orders') }}"
                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-amber-50">
                         <i class="fas fa-shopping-bag"></i>
                         <span>My Orders</span>
+                        @php
+                            $ordersCount = \App\Models\Order::where('customer_id', $customer->id)->count();
+                        @endphp
+                        @if($ordersCount > 0)
                         <span class="ml-auto bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
-                            5
+                            {{ $ordersCount }}
                         </span>
+                        @endif
                     </a>
 
                     <a href="{{ route('customer.account.addresses') }}"
                        class="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 text-amber-700">
                         <i class="fas fa-map-marker-alt"></i>
                         <span>Addresses</span>
+                        @if($addresses->count() > 0)
+                        <span class="ml-auto bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
+                            {{ $addresses->count() }}
+                        </span>
+                        @endif
                     </a>
 
                     <a href="{{ route('customer.account.change-password') }}"
@@ -84,87 +99,84 @@
         <div class="lg:col-span-3">
             <div class="bg-white rounded-2xl shadow-lg p-8">
                 <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800">My Addresses</h2>
+                    <h2 class="text-2xl font-bold text-gray-800">My Addresses ({{ $addresses->count() }})</h2>
                     <button onclick="openAddAddressModal()"
                             class="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
                         <i class="fas fa-plus mr-2"></i>Add New Address
                     </button>
                 </div>
 
+                @if($addresses->count() > 0)
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Default Address -->
-                    <div class="relative border-2 border-amber-500 rounded-2xl p-6 bg-amber-50">
+                    @foreach($addresses as $address)
+                    <div class="relative border {{ $address->is_default ? 'border-2 border-amber-500' : 'border-gray-200' }} rounded-2xl p-6 {{ $address->is_default ? 'bg-amber-50' : '' }} hover:shadow-lg transition-shadow">
+                        @if($address->is_default)
                         <div class="absolute top-4 right-4">
                             <span class="bg-amber-600 text-white text-xs px-3 py-1 rounded-full">Default</span>
                         </div>
+                        @endif
 
                         <div class="mb-4">
-                            <h3 class="font-bold text-gray-800 text-lg">John Doe</h3>
-                            <p class="text-gray-600">Home</p>
+                            <h3 class="font-bold text-gray-800 text-lg">{{ $address->name }}</h3>
+                            <p class="text-gray-600">
+                                @switch($address->type)
+                                    @case('shipping')
+                                        <i class="fas fa-truck mr-1"></i> Shipping Address
+                                        @break
+                                    @case('billing')
+                                        <i class="fas fa-file-invoice mr-1"></i> Billing Address
+                                        @break
+                                    @case('both')
+                                        <i class="fas fa-address-card mr-1"></i> Shipping & Billing
+                                        @break
+                                @endswitch
+                            </p>
                         </div>
 
                         <div class="space-y-2 text-gray-600">
-                            <p>123 Main Street, Apartment 4B</p>
-                            <p>Mumbai, Maharashtra 400001</p>
-                            <p>India</p>
+                            <p>{{ $address->address }}</p>
+                            <p>{{ $address->city }}, {{ $address->state }} {{ $address->pincode }}</p>
+                            <p>{{ $address->country }}</p>
                             <div class="pt-2">
-                                <p><i class="fas fa-phone mr-2"></i> +91 9876543210</p>
-                                <p class="mt-1"><i class="fas fa-envelope mr-2"></i> user@example.com</p>
+                                <p><i class="fas fa-phone mr-2"></i> {{ $address->mobile }}</p>
                             </div>
                         </div>
 
-                        <div class="flex gap-3 mt-6 pt-6 border-t border-amber-200">
-                            <button onclick="editAddress(1)"
+                        <div class="flex gap-3 mt-6 pt-6 border-t {{ $address->is_default ? 'border-amber-200' : 'border-gray-200' }}">
+                            <button onclick="editAddress({{ $address->id }})"
                                     class="px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50">
                                 <i class="fas fa-edit mr-2"></i>Edit
                             </button>
-                            <button onclick="setAsDefault(1)"
-                                    class="px-4 py-2 border border-gray-600 text-gray-600 rounded-lg hover:bg-gray-50" disabled>
+
+                            @if(!$address->is_default)
+                            <form method="POST" action="{{ route('customer.account.addresses.set-default', $address->id) }}" class="inline">
+                                @csrf
+                                <button type="submit"
+                                        class="px-4 py-2 border border-gray-600 text-gray-600 rounded-lg hover:bg-gray-50">
+                                    <i class="fas fa-star mr-2"></i>Set as Default
+                                </button>
+                            </form>
+                            @else
+                            <button class="px-4 py-2 border border-gray-300 text-gray-400 rounded-lg cursor-not-allowed" disabled>
                                 <i class="fas fa-star mr-2"></i>Default
                             </button>
-                            <button onclick="deleteAddress(1)"
-                                    class="px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 ml-auto">
-                                <i class="fas fa-trash mr-2"></i>Delete
-                            </button>
+                            @endif
+
+                            <form method="POST" action="{{ route('customer.account.addresses.delete', $address->id) }}" class="inline ml-auto" onsubmit="return confirm('Are you sure you want to delete this address?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                        class="px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50">
+                                    <i class="fas fa-trash mr-2"></i>Delete
+                                </button>
+                            </form>
                         </div>
                     </div>
-
-                    <!-- Office Address -->
-                    <div class="border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-shadow">
-                        <div class="mb-4">
-                            <h3 class="font-bold text-gray-800 text-lg">John Doe</h3>
-                            <p class="text-gray-600">Office</p>
-                        </div>
-
-                        <div class="space-y-2 text-gray-600">
-                            <p>456 Business Avenue, Suite 1201</p>
-                            <p>Bandra West, Mumbai 400050</p>
-                            <p>India</p>
-                            <div class="pt-2">
-                                <p><i class="fas fa-phone mr-2"></i> +91 9876543211</p>
-                                <p class="mt-1"><i class="fas fa-envelope mr-2"></i> john.office@example.com</p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-3 mt-6 pt-6 border-t border-gray-200">
-                            <button onclick="editAddress(2)"
-                                    class="px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50">
-                                <i class="fas fa-edit mr-2"></i>Edit
-                            </button>
-                            <button onclick="setAsDefault(2)"
-                                    class="px-4 py-2 border border-gray-600 text-gray-600 rounded-lg hover:bg-gray-50">
-                                <i class="fas fa-star mr-2"></i>Set as Default
-                            </button>
-                            <button onclick="deleteAddress(2)"
-                                    class="px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 ml-auto">
-                                <i class="fas fa-trash mr-2"></i>Delete
-                            </button>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
-
+                @else
                 <!-- Empty State -->
-                <div class="text-center py-12 hidden" id="emptyAddresses">
+                <div class="text-center py-12" id="emptyAddresses">
                     <i class="fas fa-map-marker-alt text-5xl text-gray-300 mb-4"></i>
                     <h3 class="text-xl font-bold text-gray-800 mb-2">No Addresses Saved</h3>
                     <p class="text-gray-600 mb-6">You haven't saved any addresses yet. Add your first address to get started.</p>
@@ -174,6 +186,7 @@
                         Add New Address
                     </button>
                 </div>
+                @endif
             </div>
         </div>
     </div>
@@ -190,55 +203,56 @@
                 </button>
             </div>
 
-            <form id="addressForm" class="space-y-6">
-                <input type="hidden" id="addressId">
+            <form id="addressForm" method="POST" action="{{ route('customer.account.addresses.store') }}" class="space-y-6">
+                @csrf
+                <input type="hidden" id="addressId" name="id">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-gray-700 mb-2">Full Name *</label>
-                        <input type="text" id="fullName" required
+                        <input type="text" id="fullName" name="name" required
                                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none">
                     </div>
 
                     <div>
                         <label class="block text-gray-700 mb-2">Address Type</label>
-                        <select id="addressType"
+                        <select id="addressType" name="type"
                                 class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none">
-                            <option value="Home">Home</option>
-                            <option value="Office">Office</option>
-                            <option value="Other">Other</option>
+                            <option value="shipping">Shipping</option>
+                            <option value="billing">Billing</option>
+                            <option value="both">Shipping & Billing</option>
                         </select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-gray-700 mb-2">Address Line 1 *</label>
-                    <input type="text" id="addressLine1" required
+                    <label class="block text-gray-700 mb-2">Mobile Number *</label>
+                    <input type="text" id="mobile" name="mobile" required
                            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none">
                 </div>
 
                 <div>
-                    <label class="block text-gray-700 mb-2">Address Line 2</label>
-                    <input type="text" id="addressLine2"
+                    <label class="block text-gray-700 mb-2">Address Line 1 *</label>
+                    <input type="text" id="addressLine1" name="address" required
                            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label class="block text-gray-700 mb-2">City *</label>
-                        <input type="text" id="city" required
+                        <input type="text" id="city" name="city" required
                                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none">
                     </div>
 
                     <div>
                         <label class="block text-gray-700 mb-2">State *</label>
-                        <input type="text" id="state" required
+                        <input type="text" id="state" name="state" required
                                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none">
                     </div>
 
                     <div>
-                        <label class="block text-gray-700 mb-2">ZIP Code *</label>
-                        <input type="text" id="zipCode" required
+                        <label class="block text-gray-700 mb-2">Pincode *</label>
+                        <input type="text" id="pincode" name="pincode" required
                                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none">
                     </div>
                 </div>
@@ -246,28 +260,26 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-gray-700 mb-2">Country *</label>
-                        <select id="country" required
+                        <select id="country" name="country" required
                                 class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none">
-                            <option value="India" selected>India</option>
-                            <option value="United States">United States</option>
-                            <option value="United Kingdom">United Kingdom</option>
-                            <option value="Canada">Canada</option>
-                            <option value="Australia">Australia</option>
+                            <option value="IN" selected>India</option>
+                            <option value="US">United States</option>
+                            <option value="GB">United Kingdom</option>
+                            <option value="CA">Canada</option>
+                            <option value="AU">Australia</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-gray-700 mb-2">Phone Number *</label>
-                        <input type="tel" id="phone" required
-                               class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none">
+                        <label class="block text-gray-700 mb-2">Set as Default</label>
+                        <div class="flex items-center mt-2">
+                            <input type="checkbox" id="setAsDefault" name="is_default" value="1"
+                                   class="w-5 h-5 text-amber-600 rounded focus:ring-amber-500">
+                            <label for="setAsDefault" class="ml-2 text-gray-600">
+                                Set this as my default address
+                            </label>
+                        </div>
                     </div>
-                </div>
-
-                <div class="flex items-start mt-6">
-                    <input type="checkbox" id="setAsDefault" class="mt-1 mr-3 text-amber-600">
-                    <label for="setAsDefault" class="text-sm text-gray-600">
-                        Set this as my default address
-                    </label>
                 </div>
 
                 <div class="flex gap-4 pt-6 border-t border-gray-200">
@@ -286,87 +298,61 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-let editingAddressId = null;
-
 function openAddAddressModal() {
-    editingAddressId = null;
     document.getElementById('modalTitle').textContent = 'Add New Address';
+    document.getElementById('addressForm').action = "{{ route('customer.account.addresses.store') }}";
     document.getElementById('addressForm').reset();
+    document.getElementById('addressId').value = '';
     document.getElementById('addressModal').classList.remove('hidden');
     document.getElementById('addressModal').classList.add('flex');
 }
 
 function editAddress(addressId) {
-    editingAddressId = addressId;
-    document.getElementById('modalTitle').textContent = 'Edit Address';
+    // Fetch address data via AJAX
+    fetch(`/api/addresses/${addressId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('modalTitle').textContent = 'Edit Address';
+            document.getElementById('addressForm').action = `/account/addresses/${addressId}`;
 
-    // In a real app, you would fetch the address data
-    // For demo, we'll set some sample data
-    if (addressId === 1) {
-        document.getElementById('fullName').value = 'John Doe';
-        document.getElementById('addressType').value = 'Home';
-        document.getElementById('addressLine1').value = '123 Main Street, Apartment 4B';
-        document.getElementById('city').value = 'Mumbai';
-        document.getElementById('state').value = 'Maharashtra';
-        document.getElementById('zipCode').value = '400001';
-        document.getElementById('country').value = 'India';
-        document.getElementById('phone').value = '+91 9876543210';
-        document.getElementById('setAsDefault').checked = true;
-    } else if (addressId === 2) {
-        document.getElementById('fullName').value = 'John Doe';
-        document.getElementById('addressType').value = 'Office';
-        document.getElementById('addressLine1').value = '456 Business Avenue, Suite 1201';
-        document.getElementById('city').value = 'Mumbai';
-        document.getElementById('state').value = 'Maharashtra';
-        document.getElementById('zipCode').value = '400050';
-        document.getElementById('country').value = 'India';
-        document.getElementById('phone').value = '+91 9876543211';
-        document.getElementById('setAsDefault').checked = false;
-    }
+            // Add method spoofing for PUT request
+            let methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'PUT';
+            document.getElementById('addressForm').appendChild(methodInput);
 
-    document.getElementById('addressModal').classList.remove('hidden');
-    document.getElementById('addressModal').classList.add('flex');
+            // Fill form with address data
+            document.getElementById('addressId').value = data.id;
+            document.getElementById('fullName').value = data.name;
+            document.getElementById('mobile').value = data.mobile;
+            document.getElementById('addressLine1').value = data.address;
+            document.getElementById('city').value = data.city;
+            document.getElementById('state').value = data.state;
+            document.getElementById('pincode').value = data.pincode;
+            document.getElementById('country').value = data.country;
+            document.getElementById('addressType').value = data.type;
+            document.getElementById('setAsDefault').checked = data.is_default == 1;
+
+            document.getElementById('addressModal').classList.remove('hidden');
+            document.getElementById('addressModal').classList.add('flex');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to load address data');
+        });
 }
 
 function closeAddressModal() {
     document.getElementById('addressModal').classList.add('hidden');
     document.getElementById('addressModal').classList.remove('flex');
-}
-
-function setAsDefault(addressId) {
-    if (confirm('Set this address as default?')) {
-        alert('Address set as default successfully!');
+    // Remove method input if exists
+    const methodInput = document.querySelector('input[name="_method"]');
+    if (methodInput) {
+        methodInput.remove();
     }
 }
-
-function deleteAddress(addressId) {
-    if (confirm('Are you sure you want to delete this address?')) {
-        alert('Address deleted successfully!');
-    }
-}
-
-// Handle form submission
-document.getElementById('addressForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    // In a real app, you would submit the form via AJAX
-    alert(editingAddressId ? 'Address updated successfully!' : 'Address added successfully!');
-    closeAddressModal();
-
-    // Show success message
-    const message = document.createElement('div');
-    message.className = 'fixed top-4 right-4 bg-green-100 text-green-800 px-6 py-3 rounded-full shadow-lg z-50';
-    message.innerHTML = `
-        <i class="fas fa-check-circle mr-2"></i>
-        ${editingAddressId ? 'Address updated successfully!' : 'Address added successfully!'}
-    `;
-    document.body.appendChild(message);
-
-    setTimeout(() => {
-        message.remove();
-    }, 3000);
-});
 </script>
-@endsection
+@endpush

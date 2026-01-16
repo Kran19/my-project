@@ -4,6 +4,16 @@
 
 @section('styles')
 <style>
+    .status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-confirmed {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
     .status-processing {
         background-color: #fef3c7;
         color: #92400e;
@@ -22,6 +32,16 @@
     .status-cancelled {
         background-color: #fee2e2;
         color: #991b1b;
+    }
+
+    .status-refunded {
+        background-color: #f3e8ff;
+        color: #6b21a8;
+    }
+
+    .status-returned {
+        background-color: #fce7f3;
+        color: #9d174d;
     }
 </style>
 @endsection
@@ -49,8 +69,11 @@
                         <i class="fas fa-user text-2xl text-amber-700"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-800">John Doe</h3>
-                        <p class="text-sm text-gray-600">user@example.com</p>
+                        @php
+                            $customer = Auth::guard('customer')->user();
+                        @endphp
+                        <h3 class="font-bold text-gray-800">{{ $customer->name }}</h3>
+                        <p class="text-sm text-gray-600">{{ $customer->email ?? $customer->mobile }}</p>
                     </div>
                 </div>
 
@@ -62,22 +85,29 @@
                         <span>Dashboard</span>
                     </a>
 
-                    <a href="{{ route('customer.wishlist') }}"
+                    <a href="{{ route('customer.wishlist.index') }}"
                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-amber-50">
                         <i class="fas fa-heart"></i>
                         <span>My Wishlist</span>
+                        @php
+                            $wishlistCount = \App\Models\Wishlist::where('customer_id', $customer->id)->count();
+                        @endphp
+                        @if($wishlistCount > 0)
                         <span class="ml-auto bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
-                            3
+                            {{ $wishlistCount }}
                         </span>
+                        @endif
                     </a>
 
                     <a href="{{ route('customer.account.orders') }}"
                        class="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 text-amber-700">
                         <i class="fas fa-shopping-bag"></i>
                         <span>My Orders</span>
+                        @if($totalOrders > 0)
                         <span class="ml-auto bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
-                            5
+                            {{ $totalOrders }}
                         </span>
+                        @endif
                     </a>
 
                     <a href="{{ route('customer.account.addresses') }}"
@@ -107,294 +137,197 @@
         <!-- Main Content -->
         <div class="lg:col-span-3">
             <div class="bg-white rounded-2xl shadow-lg p-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">My Orders (5)</h2>
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">My Orders ({{ $totalOrders }})</h2>
 
                 <!-- Order Status Summary -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    @foreach($statusCounts as $status => $count)
+                    @if($count > 0)
                     <div class="bg-amber-50 p-4 rounded-xl text-center">
-                        <div class="text-2xl font-bold text-amber-700 mb-1">1</div>
-                        <div class="text-sm text-gray-600">Processing</div>
+                        <div class="text-2xl font-bold text-amber-700 mb-1">{{ $count }}</div>
+                        <div class="text-sm text-gray-600">{{ ucfirst($status) }}</div>
                     </div>
-                    <div class="bg-blue-50 p-4 rounded-xl text-center">
-                        <div class="text-2xl font-bold text-blue-700 mb-1">1</div>
-                        <div class="text-sm text-gray-600">Shipped</div>
-                    </div>
-                    <div class="bg-green-50 p-4 rounded-xl text-center">
-                        <div class="text-2xl font-bold text-green-700 mb-1">2</div>
-                        <div class="text-sm text-gray-600">Delivered</div>
-                    </div>
-                    <div class="bg-red-50 p-4 rounded-xl text-center">
-                        <div class="text-2xl font-bold text-red-700 mb-1">1</div>
-                        <div class="text-sm text-gray-600">Cancelled</div>
-                    </div>
+                    @endif
+                    @endforeach
                 </div>
 
                 <!-- Order Filter -->
                 <div class="mb-6">
                     <div class="flex flex-wrap gap-2">
                         <a href="{{ route('customer.account.orders') }}"
-                           class="px-4 py-2 rounded-full bg-amber-600 text-white">
+                           class="px-4 py-2 rounded-full {{ !isset($status) ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                             All Orders
                         </a>
-                        <a href="#"
-                           class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
-                            Processing
+                        @foreach($statusCounts as $status => $count)
+                        @if($count > 0)
+                        <a href="{{ route('customer.account.orders.filter', $status) }}"
+                           class="px-4 py-2 rounded-full {{ (isset($statusFilter) && $statusFilter == $status) ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                            {{ ucfirst($status) }}
                         </a>
-                        <a href="#"
-                           class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
-                            Shipped
-                        </a>
-                        <a href="#"
-                           class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
-                            Delivered
-                        </a>
-                        <a href="#"
-                           class="px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200">
-                            Cancelled
-                        </a>
+                        @endif
+                        @endforeach
                     </div>
                 </div>
 
                 <!-- Orders List -->
                 <div class="space-y-6">
-                    <!-- Order 1 -->
-                    <div class="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
-                        <!-- Order Header -->
-                        <div class="bg-amber-50 p-6 border-b border-gray-200">
-                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div>
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <h3 class="font-bold text-gray-800 text-lg">Order #ORD20231215001</h3>
-                                        <span class="text-sm status-processing px-3 py-1 rounded-full">
-                                            Processing
-                                        </span>
+                    @if($orders->count() > 0)
+                        @foreach($orders as $order)
+                        <div class="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+                            <!-- Order Header -->
+                            <div class="bg-amber-50 p-6 border-b border-gray-200">
+                                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div>
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <h3 class="font-bold text-gray-800 text-lg">Order #{{ $order->order_number }}</h3>
+                                            <span class="text-sm status-{{ $order->status }} px-3 py-1 rounded-full">
+                                                {{ ucfirst($order->status) }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-4 text-sm text-gray-600">
+                                            <span><i class="far fa-calendar mr-1"></i> {{ $order->created_at->format('M d, Y') }}</span>
+                                            <span><i class="fas fa-box mr-1"></i> {{ $order->items->count() }} items</span>
+                                            @if($order->status == 'shipped' || $order->status == 'delivered')
+                                            <span><i class="fas fa-truck mr-1"></i> Shipped</span>
+                                            @endif
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-4 text-sm text-gray-600">
-                                        <span><i class="far fa-calendar mr-1"></i> Dec 15, 2023</span>
-                                        <span><i class="fas fa-box mr-1"></i> 2 items</span>
-                                        <span><i class="fas fa-truck mr-1"></i> TRK7890123456</span>
+                                    <div class="text-right">
+                                        <p class="text-2xl font-bold text-amber-700">₹{{ number_format($order->grand_total, 2) }}</p>
+                                        @if($order->status == 'pending' || $order->status == 'processing' || $order->status == 'shipped')
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            @if($order->status == 'shipped')
+                                                @if($order->delivered_at)
+                                                    Delivered: {{ $order->delivered_at->format('M d, Y') }}
+                                                @else
+                                                    Est. Delivery: {{ $order->created_at->addDays(5)->format('M d, Y') }}
+                                                @endif
+                                            @elseif($order->status == 'processing')
+                                                Processing
+                                            @else
+                                                Payment Pending
+                                            @endif
+                                        </p>
+                                        @endif
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-2xl font-bold text-amber-700">₹47,197.64</p>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        Est. Delivery: Dec 22, 2023
-                                    </p>
+                            </div>
+
+                            <!-- Order Items -->
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-{{ min($order->items->count(), 3) }} gap-4 mb-6">
+                                    @foreach($order->items->take(3) as $item)
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-gem text-amber-600"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-800 text-sm">{{ $item->product_name }}</p>
+                                            <p class="text-amber-700 font-bold text-sm">₹{{ number_format($item->unit_price, 2) }}</p>
+                                            <p class="text-gray-600 text-xs">Qty: {{ $item->quantity }}</p>
+                                            <p class="text-gray-600 text-xs">SKU: {{ $item->sku }}</p>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                    @if($order->items->count() > 3)
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-gray-500">+{{ $order->items->count() - 3 }} more items</span>
+                                    </div>
+                                    @endif
+                                </div>
+
+                                <!-- Order Actions -->
+                                <div class="flex flex-wrap gap-3 pt-6 border-t border-gray-200">
+                                    <a href="{{ route('customer.account.orders.details', $order->id) }}"
+                                       class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                                        <i class="fas fa-eye mr-2"></i>View Details
+                                    </a>
+
+                                    @if(in_array($order->status, ['pending', 'confirmed']))
+                                    <button onclick="showCancelModal('{{ $order->id }}')"
+                                            class="px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50">
+                                        <i class="fas fa-times mr-2"></i>Cancel Order
+                                    </button>
+                                    @endif
+
+                                    @if($order->status == 'delivered')
+                                    <button onclick="downloadInvoice('{{ $order->id }}')"
+                                            class="px-4 py-2 border border-gray-600 text-gray-600 rounded-lg hover:bg-gray-50">
+                                        <i class="fas fa-file-invoice mr-2"></i>Download Invoice
+                                    </button>
+                                    @endif
+
+                                    @if($order->status == 'delivered' && $order->delivered_at && $order->delivered_at->diffInDays(now()) <= 7)
+                                    <button onclick="requestReturn('{{ $order->id }}')"
+                                            class="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50">
+                                        <i class="fas fa-undo-alt mr-2"></i>Request Return
+                                    </button>
+                                    @endif
+
+                                    <a href="{{ route('customer.home.index') }}"
+                                       class="px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 ml-auto">
+                                        <i class="fas fa-redo mr-2"></i>Buy Again
+                                    </a>
                                 </div>
                             </div>
                         </div>
+                        @endforeach
 
-                        <!-- Order Items -->
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                <div class="flex items-center gap-3">
-                                    <img src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop"
-                                         alt="Rose Gold Diamond Ring"
-                                         class="w-16 h-16 object-cover rounded-lg">
-                                    <div>
-                                        <p class="font-medium text-gray-800 text-sm">Rose Gold Diamond Ring</p>
-                                        <p class="text-amber-700 font-bold text-sm">₹24,999.00</p>
-                                        <p class="text-gray-600 text-xs">Qty: 1</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <img src="https://images.unsplash.com/photo-1596703923538-b6d4bb0a44ea?w=400&h=400&fit=crop"
-                                         alt="Pearl & Diamond Earrings"
-                                         class="w-16 h-16 object-cover rounded-lg">
-                                    <div>
-                                        <p class="font-medium text-gray-800 text-sm">Pearl & Diamond Earrings</p>
-                                        <p class="text-amber-700 font-bold text-sm">₹14,999.00</p>
-                                        <p class="text-gray-600 text-xs">Qty: 1</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Order Actions -->
-                            <div class="flex flex-wrap gap-3 pt-6 border-t border-gray-200">
-                                <a href="{{ route('customer.account.orders.details', 1) }}"
-                                   class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
-                                    <i class="fas fa-eye mr-2"></i>View Details
-                                </a>
-
-                                <button onclick="cancelOrder('ORD20231215001')"
-                                        class="px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50">
-                                    <i class="fas fa-times mr-2"></i>Cancel Order
-                                </button>
-
-                                <a href="{{ route('customer.home.index') }}"
-                                   class="px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 ml-auto">
-                                    <i class="fas fa-redo mr-2"></i>Buy Again
-                                </a>
-                            </div>
+                        <!-- Pagination -->
+                        <div class="mt-8">
+                            {{ $orders->links() }}
                         </div>
+                    @else
+                    <div class="text-center py-12">
+                        <i class="fas fa-shopping-bag text-5xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">No Orders Found</h3>
+                        <p class="text-gray-600 mb-6">You haven't placed any orders yet.</p>
+                        <a href="{{ route('customer.home.index') }}"
+                           class="inline-flex items-center gap-3 bg-gradient-to-r from-amber-600 to-amber-800 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl">
+                            <i class="fas fa-shopping-cart mr-2"></i>
+                            Start Shopping
+                        </a>
                     </div>
-
-                    <!-- Order 2 -->
-                    <div class="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
-                        <!-- Order Header -->
-                        <div class="bg-green-50 p-6 border-b border-gray-200">
-                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div>
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <h3 class="font-bold text-gray-800 text-lg">Order #ORD20231212005</h3>
-                                        <span class="text-sm status-delivered px-3 py-1 rounded-full">
-                                            Delivered
-                                        </span>
-                                    </div>
-                                    <div class="flex items-center gap-4 text-sm text-gray-600">
-                                        <span><i class="far fa-calendar mr-1"></i> Dec 12, 2023</span>
-                                        <span><i class="fas fa-box mr-1"></i> 1 item</span>
-                                        <span><i class="fas fa-truck mr-1"></i> TRK4567890123</span>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-2xl font-bold text-amber-700">₹14,748.82</p>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        Delivered: Dec 18, 2023
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Order Items -->
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 gap-4 mb-6">
-                                <div class="flex items-center gap-3">
-                                    <img src="https://images.unsplash.com/photo-1541417904950-b855846fe074?w=400&h=400&fit=crop"
-                                         alt="Silver Pendant Set"
-                                         class="w-16 h-16 object-cover rounded-lg">
-                                    <div>
-                                        <p class="font-medium text-gray-800 text-sm">Silver Pendant Set with Chain</p>
-                                        <p class="text-amber-700 font-bold text-sm">₹12,499.00</p>
-                                        <p class="text-gray-600 text-xs">Qty: 1</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Order Actions -->
-                            <div class="flex flex-wrap gap-3 pt-6 border-t border-gray-200">
-                                <a href="{{ route('customer.account.orders.details', 2) }}"
-                                   class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
-                                    <i class="fas fa-eye mr-2"></i>View Details
-                                </a>
-
-                                <button onclick="downloadInvoice('ORD20231212005')"
-                                        class="px-4 py-2 border border-gray-600 text-gray-600 rounded-lg hover:bg-gray-50">
-                                    <i class="fas fa-file-invoice mr-2"></i>Download Invoice
-                                </button>
-
-                                <button onclick="requestReturn('ORD20231212005')"
-                                        class="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50">
-                                    <i class="fas fa-undo-alt mr-2"></i>Request Return
-                                </button>
-
-                                <a href="{{ route('customer.home.index') }}"
-                                   class="px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 ml-auto">
-                                    <i class="fas fa-redo mr-2"></i>Buy Again
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Order 3 -->
-                    <div class="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
-                        <!-- Order Header -->
-                        <div class="bg-blue-50 p-6 border-b border-gray-200">
-                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div>
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <h3 class="font-bold text-gray-800 text-lg">Order #ORD20231208003</h3>
-                                        <span class="text-sm status-shipped px-3 py-1 rounded-full">
-                                            Shipped
-                                        </span>
-                                    </div>
-                                    <div class="flex items-center gap-4 text-sm text-gray-600">
-                                        <span><i class="far fa-calendar mr-1"></i> Dec 8, 2023</span>
-                                        <span><i class="fas fa-box mr-1"></i> 3 items</span>
-                                        <span><i class="fas fa-truck mr-1"></i> TRK1234567890</span>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-2xl font-bold text-amber-700">₹9,792.82</p>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        Est. Delivery: Dec 15, 2023
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Order Items -->
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                <div class="flex items-center gap-3">
-                                    <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop"
-                                         alt="Gold Bangle"
-                                         class="w-16 h-16 object-cover rounded-lg">
-                                    <div>
-                                        <p class="font-medium text-gray-800 text-sm">Gold Bangle Collection</p>
-                                        <p class="text-amber-700 font-bold text-sm">₹4,599.00</p>
-                                        <p class="text-gray-600 text-xs">Qty: 1</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <img src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=400&fit=crop"
-                                         alt="Pearl Ring"
-                                         class="w-16 h-16 object-cover rounded-lg">
-                                    <div>
-                                        <p class="font-medium text-gray-800 text-sm">Pearl & Diamond Ring</p>
-                                        <p class="text-amber-700 font-bold text-sm">₹3,699.00</p>
-                                        <p class="text-gray-600 text-xs">Qty: 1</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-gray-500">+1 more item</span>
-                                </div>
-                            </div>
-
-                            <!-- Order Actions -->
-                            <div class="flex flex-wrap gap-3 pt-6 border-t border-gray-200">
-                                <a href="{{ route('customer.account.orders.details', 3) }}"
-                                   class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
-                                    <i class="fas fa-eye mr-2"></i>View Details
-                                </a>
-
-                                <a href="{{ route('customer.home.index') }}"
-                                   class="px-4 py-2 border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 ml-auto">
-                                    <i class="fas fa-redo mr-2"></i>Buy Again
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                    @endif
                 </div>
 
                 <!-- Order Summary -->
+                @if($orders->count() > 0)
                 <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-amber-50 p-6 rounded-xl">
                         <h4 class="font-bold text-gray-800 mb-4">Order Summary</h4>
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Total Orders</span>
-                                <span class="font-bold">5</span>
+                                <span class="font-bold">{{ $totalOrders }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Total Spent</span>
-                                <span class="font-bold text-amber-700">₹89,487.28</span>
+                                <span class="font-bold text-amber-700">₹{{ number_format($totalSpent, 2) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Average Order</span>
-                                <span class="font-bold">₹17,897.46</span>
+                                <span class="font-bold">₹{{ number_format($averageOrder, 2) }}</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="bg-blue-50 p-6 rounded-xl">
                         <h4 class="font-bold text-gray-800 mb-4">Shipping Address</h4>
+                        @php
+                            $latestOrder = $orders->first();
+                            $address = $latestOrder->shipping_address ? (is_array($latestOrder->shipping_address) ? $latestOrder->shipping_address : json_decode($latestOrder->shipping_address, true)) : null;
+                        @endphp
+                        @if($address)
                         <p class="text-sm text-gray-600">
-                            John Doe<br>
-                            123 Main Street, Apartment 4B<br>
-                            Mumbai, Maharashtra 400001<br>
-                            India
+                            {{ $address['name'] ?? 'N/A' }}<br>
+                            {{ $address['address'] ?? 'N/A' }}<br>
+                            {{ $address['city'] ?? 'N/A' }}, {{ $address['state'] ?? 'N/A' }} {{ $address['pincode'] ?? '' }}<br>
+                            {{ $address['country'] ?? 'India' }}
                         </p>
+                        @else
+                        <p class="text-sm text-gray-600">No address available</p>
+                        @endif
                     </div>
 
                     <div class="bg-green-50 p-6 rounded-xl">
@@ -411,14 +344,45 @@
                                 <i class="fas fa-question-circle"></i>
                                 <span>FAQ</span>
                             </a>
-                            <a href="#" class="flex items-center gap-2 text-amber-600 hover:text-amber-800">
-                                <i class="fas fa-file-invoice"></i>
-                                <span>Download Invoices</span>
-                            </a>
                         </div>
                     </div>
                 </div>
+                @endif
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Order Modal -->
+<div id="cancelModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full">
+        <div class="p-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Cancel Order</h3>
+            <form id="cancelForm" method="POST">
+                @csrf
+                <input type="hidden" id="orderId" name="order_id">
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">Cancellation Reason *</label>
+                    <select name="cancellation_reason" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none" required>
+                        <option value="">Select a reason</option>
+                        <option value="Changed mind">Changed mind</option>
+                        <option value="Found better price">Found better price</option>
+                        <option value="Delivery time too long">Delivery time too long</option>
+                        <option value="Ordered by mistake">Ordered by mistake</option>
+                        <option value="Other">Other reason</option>
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <button type="button" onclick="closeCancelModal()"
+                            class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex-1">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 flex-1">
+                        Cancel Order
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -426,24 +390,27 @@
 
 @section('scripts')
 <script>
-function cancelOrder(orderId) {
-    if (confirm('Are you sure you want to cancel this order?')) {
-        alert(`Order ${orderId} cancellation requested. You will be notified once it's processed.`);
-    }
+function showCancelModal(orderId) {
+    document.getElementById('orderId').value = orderId;
+    document.getElementById('cancelForm').action = `/account/orders/${orderId}/cancel`;
+    document.getElementById('cancelModal').classList.remove('hidden');
+    document.getElementById('cancelModal').classList.add('flex');
+}
+
+function closeCancelModal() {
+    document.getElementById('cancelModal').classList.add('hidden');
+    document.getElementById('cancelModal').classList.remove('flex');
 }
 
 function downloadInvoice(orderId) {
     alert(`Invoice for order ${orderId} is being generated. It will download shortly.`);
-    setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = '#';
-        link.download = `Invoice_${orderId}.pdf`;
-        link.click();
-    }, 1000);
+    // In real implementation, redirect to invoice download route
+    window.location.href = `/account/orders/${orderId}/invoice`;
 }
 
 function requestReturn(orderId) {
     alert(`Return request for order ${orderId} has been submitted. Our team will contact you shortly.`);
+    // In real implementation, submit return request via AJAX
 }
 </script>
 @endsection

@@ -285,7 +285,7 @@ class ProductService
             // 4. Handle specifications
             $this->syncSpecifications($product, $data);
 
-            // 5. Handle variants - delete existing and create new ones
+            // 5. Handle variants
             $this->handleVariantsUpdate($product, $data);
 
             DB::commit();
@@ -316,18 +316,18 @@ class ProductService
     /**
      * Handle variants update - delete existing and create new
      */
-    private function handleVariantsUpdate(Product $product, array $data): void
-    {
-        // Delete existing variants and their relations
-        $product->variants()->delete();
+    // private function handleVariantsUpdate(Product $product, array $data): void
+    // {
+    //     // Delete existing variants and their relations
+    //     $product->variants()->delete();
 
-        // Create new variants based on product type
-        if ($product->product_type === 'simple') {
-            $this->createSimpleProductVariant($product, $data);
-        } else {
-            $this->createConfigurableProductVariants($product, $data);
-        }
-    }
+    //     // Create new variants based on product type
+    //     if ($product->product_type === 'simple') {
+    //         $this->createSimpleProductVariant($product, $data);
+    //     } else {
+    //         $this->createConfigurableProductVariants($product, $data);
+    //     }
+    // }
 
     /**
      * Get product data for edit form
@@ -591,6 +591,9 @@ if ($mainImage) {
 
         // Remove duplicates
         $imageIds = array_values(array_unique($imageIds));
+
+        // Clear existing images first
+        DB::table('variant_images')->where('variant_id', $variant->id)->delete();
 
         foreach ($imageIds as $index => $imageId) {
             $imagesData[] = [
@@ -902,5 +905,80 @@ if ($mainImage) {
         }
 
         return $result;
+    }
+    /**
+     * Handle variants update (Create/Update/Delete)
+     */
+    private function handleVariantsUpdate(Product $product, array $data): void
+    {
+        if (!isset($data['variants']) || !is_array($data['variants'])) {
+            // Keep existing variants if no variants data sent? 
+            // Or if product type changed to simple?
+            // If product type is simple, we might want to soft delete configurable variants?
+            if ($product->product_type === 'simple') {
+                $product->variants()->update(['status' => 0]); // Or delete?
+            }
+            return;
+        }
+
+        $submittedVariantIds = [];
+
+        foreach ($data['variants'] as $index => $variantData) {
+            $variant = null;
+
+            // Check if updating existing variant
+            if (!empty($variantData['id'])) {
+                $variant = ProductVariant::where('id', $variantData['id'])
+                    ->where('product_id', $product->id)
+                    ->first();
+                $submittedVariantIds[] = $variantData['id'];
+            }
+
+            if ($variant) {
+                // UPDATE existing
+                $variant->update([
+                    'sku' => $variantData['sku'],
+                    'price' => $variantData['price'],
+                    'stock_quantity' => $variantData['stock_quantity'],
+                    'stock_status' => ($variantData['stock_quantity'] > 0) ? 'in_stock' : 'out_of_stock',
+                    'is_default' => (isset($data['default_variant_index']) && $data['default_variant_index'] == $index) || ($variantData['is_default'] ?? 0),
+                    'status' => 1 // Active
+                ]);
+            } else {
+                // CREATE new
+                // For new variants in Edit mode, we need attributes?
+                // If the user added a variant manually?
+                // Usually "Generate Variants" does this.
+                // Assuming we have basic data. If attributes missing, it might fail validation or just be a shell.
+                
+                $variant = ProductVariant::create([
+                    'product_id' => $product->id,
+                    'sku' => $variantData['sku'],
+                    'price' => $variantData['price'],
+                    'stock_quantity' => $variantData['stock_quantity'],
+                    'stock_status' => ($variantData['stock_quantity'] > 0) ? 'in_stock' : 'out_of_stock',
+                    'is_default' => (isset($data['default_variant_index']) && $data['default_variant_index'] == $index) || ($variantData['is_default'] ?? 0),
+                    'status' => 1
+                ]);
+                
+                // New variant needs attributes?
+                if(isset($variantData['attributes'])) {
+                    $this->syncVariantAttributes($variant, $variantData);
+                }
+            }
+
+            // Sync Images for both New and Existing
+            $this->syncVariantImages($variant, $variantData);
+        }
+
+        // Optional: Soft delete or Delete variants not in submission
+        // Only if we are sure the submission contains ALL valid variants.
+        // In our Edit UI, we list all variants. If user deleted a row, it's gone from DOM.
+        // So we should delete variants not in $submittedVariantIds
+        if (!empty($submittedVariantIds)) {
+            $product->variants()
+                ->whereNotIn('id', $submittedVariantIds)
+                ->delete(); 
+        }
     }
 }

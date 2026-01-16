@@ -202,6 +202,11 @@
                 border-color: #d97706 !important;
             }
 
+            .attribute-btn.disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
             /* Skeleton loading */
             .skeleton {
                 background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -276,6 +281,12 @@
                 -webkit-appearance: none;
                 margin: 0;
             }
+
+            /* Variant loading indicator */
+            .variant-loading {
+                opacity: 0.7;
+                pointer-events: none;
+            }
         </style>
     @endsection
 
@@ -337,30 +348,20 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
                             <!-- Product Images -->
                             <div class="animate-slide-left">
-                                <img id="mainImage"
-                                    src="{{ $product['main_image'] ? asset('storage/' . $product['main_image']) : asset('images/placeholder-product.jpg') }}"
-                                    alt="{{ $product['name'] }}"
-                                    class="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-105 cursor-pointer zoomable-image"
-                                    onclick="toggleZoom(this)"
-                                    onerror="this.src='{{ asset('images/placeholder-product.jpg') }}'">
+                                <div id="imageContainer">
+                                    <!-- Main image will be updated dynamically -->
+                                    <img id="mainImage"
+                                        src="{{ $product['main_image'] ? asset('storage/' . $product['main_image']) : asset('images/placeholder-product.jpg') }}"
+                                        alt="{{ $product['name'] }}"
+                                        class="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-105 cursor-pointer zoomable-image"
+                                        onclick="toggleZoom(this)"
+                                        onerror="this.src='{{ asset('images/placeholder-product.jpg') }}'">
+                                </div>
 
-                                @if (isset($product['images']) && count($product['images']) > 0)
-                                    <div id="thumbnailGallery" class="grid grid-cols-4 gap-4 mt-4">
-                                        @foreach ($product['images'] as $index => $image)
-                                            @php
-                                                $imgPath = is_array($image) ? $image['url'] : $image;
-                                            @endphp
-
-                                            <div class="thumbnail-item rounded-xl overflow-hidden border-2 {{ $index === 0 ? 'border-amber-500' : 'border-gray-200' }} p-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-amber-500"
-                                                data-image="{{ asset('storage/' . $imgPath) }}">
-                                                <img src="{{ asset('storage/' . $imgPath) }}"
-                                                    alt="{{ $product['name'] }} - View {{ $index + 1 }}"
-                                                    class="w-full h-24 object-cover rounded-lg" onclick="changeMainImage(this)"
-                                                    onerror="this.src='{{ asset('images/placeholder-product.jpg') }}'">
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
+                                <!-- Thumbnail gallery will be updated dynamically -->
+                                <div id="thumbnailGallery" class="grid grid-cols-4 gap-4 mt-4">
+                                    <!-- Thumbnails will be loaded here -->
+                                </div>
                             </div>
 
                             <!-- Product Information -->
@@ -379,12 +380,9 @@
                                         </span>
                                     @endif
 
-                                    @if ($product['discount_percent'] > 0)
-                                        <span
-                                            class="bg-gradient-to-r from-amber-600 to-amber-800 text-white text-xs px-3 py-1 rounded-full font-bold">
-                                            {{ $product['discount_percent'] }}% OFF
-                                        </span>
-                                    @endif
+                                    <span id="discountBadge" class="hidden bg-gradient-to-r from-amber-600 to-amber-800 text-white text-xs px-3 py-1 rounded-full font-bold">
+                                        <!-- Will be updated dynamically -->
+                                    </span>
 
                                     @if ($product['is_featured'])
                                         <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full font-medium">
@@ -439,16 +437,12 @@
                                         <span class="text-4xl font-bold text-gray-900" id="currentPriceDisplay">
                                             ₹{{ number_format($product['price'], 0) }}
                                         </span>
-                                        @if ($product['compare_price'] && $product['compare_price'] > $product['price'])
-                                            <span class="text-xl text-gray-400 line-through" id="comparePriceDisplay">
-                                                ₹{{ number_format($product['compare_price'], 0) }}
-                                            </span>
-                                            @if ($product['discount_percent'] > 0)
-                                                <span class="text-lg font-bold text-green-600" id="discountPercentDisplay">
-                                                    Save {{ $product['discount_percent'] }}%
-                                                </span>
-                                            @endif
-                                        @endif
+                                        <span id="comparePriceDisplay" class="hidden text-xl text-gray-400 line-through">
+                                            <!-- Will be updated dynamically -->
+                                        </span>
+                                        <span id="discountPercentDisplay" class="hidden text-lg font-bold text-green-600">
+                                            <!-- Will be updated dynamically -->
+                                        </span>
                                     </div>
                                     <p class="text-sm text-gray-600">
                                         Inclusive of all taxes • Free Shipping
@@ -469,6 +463,7 @@
                                                                 class="attribute-btn px-4 py-2 border border-gray-300 rounded-lg hover:border-amber-500 hover:bg-amber-50 hover:text-amber-700 transition-colors flex flex-col items-center justify-center min-w-[100px] bg-white text-gray-700"
                                                                 data-attribute-name="{{ $attributeName }}"
                                                                 data-attribute-value="{{ $option['value'] }}"
+                                                                data-option-id="{{ $option['id'] ?? '' }}"
                                                                 onclick="selectAttribute(this, '{{ $attributeName }}', '{{ $option['value'] }}')">
 
                                                                 @if (!empty($option['color_code']))
@@ -507,13 +502,13 @@
                                             <span class="text-3xl font-bold text-gray-900" id="variantPriceDisplay">
                                                 ₹{{ number_format($product['price'], 0) }}
                                             </span>
-                                            @if ($product['compare_price'])
-                                                <span class="text-xl text-gray-400 line-through"
-                                                    id="variantComparePriceDisplay">
-                                                    ₹{{ number_format($product['compare_price'], 0) }}
-                                                </span>
-                                            @endif
-                                            <span id="variantDiscountPercent" class="text-lg font-bold text-green-600"></span>
+                                            <span class="hidden text-xl text-gray-400 line-through"
+                                                id="variantComparePriceDisplay">
+                                                <!-- Will be updated dynamically -->
+                                            </span>
+                                            <span id="variantDiscountPercent" class="hidden text-lg font-bold text-green-600">
+                                                <!-- Will be updated dynamically -->
+                                            </span>
                                         </div>
                                     </div>
                                 @endif
@@ -561,7 +556,6 @@
                                                 <i class="fas fa-minus"></i>
                                             </button>
 
-                                            <!-- Change input to span for display only -->
                                             <span id="quantityDisplay"
                                                 class="w-12 text-center font-semibold border-0 bg-transparent">1</span>
 
@@ -917,23 +911,32 @@
     @endsection
 
     @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <!-- CSRF Token setup -->
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+
         <script>
             // Product data from PHP
             const productData = @json($product);
             const availableVariants = @json($product['variants'] ?? []);
             const attributeGroups = @json($product['attribute_groups'] ?? []);
+            const productImages = @json($product['images'] ?? []);
 
             // Cart state
             let selectedAttributes = {};
             let selectedVariant = null;
             let currentPrice = {{ $product['price'] ?? 0 }};
             let currentQuantity = 1;
-            let maxQuantity = 10; // Default max quantity
+            let maxQuantity = 10;
             let isInWishlist = false;
 
             // Initialize page
             document.addEventListener('DOMContentLoaded', function() {
                 console.log('Product detail page loaded with:', productData);
+
+                // Configure Axios
+                axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
                 // Initialize variant selection
                 initializeVariantSelection();
@@ -946,18 +949,89 @@
 
                 // Initialize quantity buttons state
                 updateQuantityButtons();
+
+                // Load initial images
+                loadProductImages();
             });
 
-            // Initialize variant selection
+            // Load product images
+            function loadProductImages() {
+                const thumbnailGallery = document.getElementById('thumbnailGallery');
+                if (!thumbnailGallery) return;
+
+                // Clear existing thumbnails
+                thumbnailGallery.innerHTML = '';
+
+                // Determine which images to show
+                let imagesToShow = [];
+                if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
+                    imagesToShow = selectedVariant.images;
+                } else if (productImages && productImages.length > 0) {
+                    imagesToShow = productImages;
+                }
+
+                // Show placeholder if no images
+                if (imagesToShow.length === 0) {
+                    const mainImage = document.getElementById('mainImage');
+                    if (mainImage) {
+                        mainImage.src = '/images/placeholder-product.jpg';
+                    }
+                    return;
+                }
+
+                // Set main image
+                const mainImage = document.getElementById('mainImage');
+                if (mainImage && imagesToShow[0]) {
+                    const imgPath = isArray(imagesToShow[0]) ? imagesToShow[0].url : imagesToShow[0];
+                    mainImage.src = imgPath.startsWith('http') ? imgPath : '/storage/' + imgPath;
+                }
+
+                // Create thumbnails
+                imagesToShow.forEach((image, index) => {
+                    const imgPath = isArray(image) ? image.url : image;
+                    const fullPath = imgPath.startsWith('http') ? imgPath : '/storage/' + imgPath;
+
+                    const thumbnailDiv = document.createElement('div');
+                    thumbnailDiv.className = `thumbnail-item rounded-xl overflow-hidden border-2 ${index === 0 ? 'border-amber-500' : 'border-gray-200'} p-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-amber-500`;
+                    thumbnailDiv.dataset.image = fullPath;
+
+                    thumbnailDiv.innerHTML = `
+                        <img src="${fullPath}"
+                             alt="${productData.name} - View ${index + 1}"
+                             class="w-full h-24 object-cover rounded-lg"
+                             onclick="changeMainImage(this)"
+                             onerror="this.src='/images/placeholder-product.jpg'">
+                    `;
+
+                    thumbnailGallery.appendChild(thumbnailDiv);
+                });
+            }
+
+            // Helper function to check if variable is array
+            function isArray(variable) {
+                return Array.isArray(variable) || (typeof variable === 'object' && variable !== null && 'url' in variable);
+            }
+
+            // Initialize variant selection - AUTO SELECT DEFAULT VARIANT
             function initializeVariantSelection() {
                 if (availableVariants.length > 0 && attributeGroups) {
-                    // If there's only one variant, pre-select it
-                    if (availableVariants.length === 1) {
-                        const variant = availableVariants[0];
-                        if (variant.attributes && variant.attributes.length > 0) {
-                            variant.attributes.forEach(attr => {
-                                const attributeName = attr.attribute_name;
-                                const attributeValue = attr.value;
+                    // Find the default variant (is_default = true or first variant)
+                    let defaultVariant = availableVariants.find(v => v.is_default) || availableVariants[0];
+
+                    if (defaultVariant) {
+                        // Clear any previous selections
+                        selectedAttributes = {};
+
+                        // Get attributes for default variant
+                        if (defaultVariant.attributes && defaultVariant.attributes.length > 0) {
+                            // Group attributes by name
+                            const variantAttributes = {};
+                            defaultVariant.attributes.forEach(attr => {
+                                variantAttributes[attr.attribute_name] = attr.value;
+                            });
+
+                            // Select each attribute button
+                            Object.entries(variantAttributes).forEach(([attributeName, attributeValue]) => {
                                 selectedAttributes[attributeName] = attributeValue;
 
                                 // Find and activate corresponding button
@@ -965,13 +1039,35 @@
                                     `[data-attribute-name="${attributeName}"][data-attribute-value="${attributeValue}"]`
                                 );
                                 if (button) {
-                                    button.classList.add('active');
+                                    selectAttribute(button, attributeName, attributeValue, true);
                                 }
                             });
 
-                            updateVariantDetails(variant);
+                            // Update variant details
+                            updateVariantDetails(defaultVariant);
                             updateAddToCartButton();
                         }
+                    }
+
+                    // If no variants are selected after initialization, show first available combination
+                    if (Object.keys(selectedAttributes).length === 0) {
+                        // Find first available combination from attribute groups
+                        const firstAttributes = {};
+                        Object.entries(attributeGroups).forEach(([attributeName, group]) => {
+                            if (group.options && group.options.length > 0) {
+                                firstAttributes[attributeName] = group.options[0].value;
+                            }
+                        });
+
+                        // Select first available attributes
+                        Object.entries(firstAttributes).forEach(([attributeName, attributeValue]) => {
+                            const button = document.querySelector(
+                                `[data-attribute-name="${attributeName}"][data-attribute-value="${attributeValue}"]`
+                            );
+                            if (button) {
+                                selectAttribute(button, attributeName, attributeValue, true);
+                            }
+                        });
                     }
                 }
             }
@@ -1023,7 +1119,7 @@
             }
 
             // Attribute selection function
-            function selectAttribute(button, attributeName, attributeValue) {
+            function selectAttribute(button, attributeName, attributeValue, isInitial = false) {
                 const group = button.closest('.variant-group');
 
                 // Remove active state from all buttons in this group
@@ -1031,6 +1127,7 @@
                     btn.classList.remove('active');
                     btn.classList.remove('bg-amber-600', 'text-white', 'border-amber-600');
                     btn.classList.add('border-gray-300', 'text-gray-700', 'bg-white');
+                    btn.classList.remove('disabled');
                 });
 
                 // Add active state to selected button
@@ -1049,15 +1146,17 @@
                     updateVariantDetails(matchedVariant);
 
                     // Show selected variant info
-                    document.getElementById('selectedVariantInfo').classList.remove('hidden');
-                    document.getElementById('selectedVariantPrice').classList.remove('hidden');
+                    if (!isInitial) {
+                        document.getElementById('selectedVariantInfo').classList.remove('hidden');
+                        document.getElementById('selectedVariantPrice').classList.remove('hidden');
 
-                    // Update selected variant text
-                    const selectedVariantText = document.getElementById('selectedVariantText');
-                    const attributesText = Object.entries(selectedAttributes)
-                        .map(([key, value]) => `${key}: ${value}`)
-                        .join(', ');
-                    selectedVariantText.textContent = `Selected: ${attributesText}`;
+                        // Update selected variant text
+                        const selectedVariantText = document.getElementById('selectedVariantText');
+                        const attributesText = Object.entries(selectedAttributes)
+                            .map(([key, value]) => `${key}: ${value}`)
+                            .join(', ');
+                        selectedVariantText.textContent = `Selected: ${attributesText}`;
+                    }
                 } else {
                     // If no variant matches all attributes yet
                     document.getElementById('selectedVariantInfo').classList.add('hidden');
@@ -1077,6 +1176,62 @@
                 updateAddToCartButton();
                 // Update quantity buttons based on selected variant stock
                 updateQuantityButtons();
+                // Disable unavailable options
+                updateAttributeAvailability();
+            }
+
+            // Update attribute button availability based on selected attributes
+            function updateAttributeAvailability() {
+                // Get currently selected attributes
+                const currentSelected = { ...selectedAttributes };
+
+                // Loop through all attribute groups
+                Object.entries(attributeGroups).forEach(([attributeName, group]) => {
+                    // Skip if this is the currently being selected attribute
+                    if (currentSelected[attributeName]) return;
+
+                    // Loop through all options in this group
+                    group.options.forEach(option => {
+                        const button = document.querySelector(
+                            `[data-attribute-name="${attributeName}"][data-attribute-value="${option.value}"]`
+                        );
+
+                        if (button) {
+                            // Test if this option would lead to an available variant
+                            const testAttributes = { ...currentSelected, [attributeName]: option.value };
+                            const isAvailable = isAttributeCombinationAvailable(testAttributes);
+
+                            if (isAvailable) {
+                                button.classList.remove('disabled');
+                                button.disabled = false;
+                            } else {
+                                button.classList.add('disabled');
+                                button.disabled = true;
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Check if an attribute combination leads to an available variant
+            function isAttributeCombinationAvailable(testAttributes) {
+                return availableVariants.some(variant => {
+                    if (!variant.attributes) return false;
+
+                    const variantAttributes = {};
+                    variant.attributes.forEach(attr => {
+                        variantAttributes[attr.attribute_name] = attr.value;
+                    });
+
+                    // Check if variant matches all test attributes
+                    for (const [key, value] of Object.entries(testAttributes)) {
+                        if (!variantAttributes[key] || variantAttributes[key] !== value) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
             }
 
             // Find variant that matches all selected attributes
@@ -1166,7 +1321,17 @@
                 // Update current price
                 currentPrice = variant.price;
 
-                // Update price displays
+                // Update main price displays
+                const currentPriceDisplay = document.getElementById('currentPriceDisplay');
+                const comparePriceDisplay = document.getElementById('comparePriceDisplay');
+                const discountPercentDisplay = document.getElementById('discountPercentDisplay');
+                const discountBadge = document.getElementById('discountBadge');
+
+                if (currentPriceDisplay) {
+                    currentPriceDisplay.textContent = `${formatPrice(variant.price)}`;
+                }
+
+                // Update variant-specific price displays
                 const variantPriceDisplay = document.getElementById('variantPriceDisplay');
                 const variantComparePriceDisplay = document.getElementById('variantComparePriceDisplay');
                 const variantDiscountPercent = document.getElementById('variantDiscountPercent');
@@ -1175,73 +1340,80 @@
                     variantPriceDisplay.textContent = `${formatPrice(variant.price)}`;
                 }
 
-                if (variantComparePriceDisplay) {
-                    if (variant.compare_price && variant.compare_price > variant.price) {
+                // Handle discount display
+                if (variant.compare_price && variant.compare_price > variant.price) {
+                    const discountPercent = Math.round(((variant.compare_price - variant.price) / variant.compare_price) * 100);
+
+                    // Update main displays
+                    if (comparePriceDisplay) {
+                        comparePriceDisplay.textContent = `${formatPrice(variant.compare_price)}`;
+                        comparePriceDisplay.classList.remove('hidden');
+                    }
+
+                    if (discountPercentDisplay) {
+                        discountPercentDisplay.textContent = `Save ${discountPercent}%`;
+                        discountPercentDisplay.classList.remove('hidden');
+                    }
+
+                    if (discountBadge) {
+                        discountBadge.textContent = `${discountPercent}% OFF`;
+                        discountBadge.classList.remove('hidden');
+                    }
+
+                    // Update variant-specific displays
+                    if (variantComparePriceDisplay) {
                         variantComparePriceDisplay.textContent = `${formatPrice(variant.compare_price)}`;
                         variantComparePriceDisplay.classList.remove('hidden');
-
-                        const discountPercent = Math.round(((variant.compare_price - variant.price) / variant.compare_price) *
-                            100);
-                        if (variantDiscountPercent) {
-                            variantDiscountPercent.textContent = `Save ${discountPercent}%`;
-                            variantDiscountPercent.classList.remove('hidden');
-                        }
-                    } else {
-                        variantComparePriceDisplay.classList.add('hidden');
-                        if (variantDiscountPercent) {
-                            variantDiscountPercent.classList.add('hidden');
-                        }
                     }
+
+                    if (variantDiscountPercent) {
+                        variantDiscountPercent.textContent = `Save ${discountPercent}%`;
+                        variantDiscountPercent.classList.remove('hidden');
+                    }
+                } else {
+                    // Hide discount displays
+                    if (comparePriceDisplay) comparePriceDisplay.classList.add('hidden');
+                    if (discountPercentDisplay) discountPercentDisplay.classList.add('hidden');
+                    if (discountBadge) discountBadge.classList.add('hidden');
+                    if (variantComparePriceDisplay) variantComparePriceDisplay.classList.add('hidden');
+                    if (variantDiscountPercent) variantDiscountPercent.classList.add('hidden');
                 }
 
                 // Update stock status
                 const dynamicStockStatus = document.getElementById('dynamicStockStatus');
+                const mainStockStatus = document.getElementById('stockStatus');
                 if (dynamicStockStatus && variant.stock_quantity !== undefined) {
                     const isInStock = variant.stock_quantity > 0;
                     maxQuantity = Math.min(variant.stock_quantity, 10); // Update max quantity based on stock
+
                     dynamicStockStatus.className = `flex items-center gap-3 ${isInStock ? 'text-green-600' : 'text-red-600'}`;
                     dynamicStockStatus.innerHTML = `
-                <i class="fas ${isInStock ? 'fa-check-circle' : 'fa-times-circle'} text-xl"></i>
-                <div>
-                    <p class="font-medium">
-                        ${isInStock ? 'In Stock' : 'Out of Stock'}
-                        ${isInStock && variant.stock_quantity ? `(${variant.stock_quantity} available)` : ''}
-                    </p>
-                    <p class="text-sm">${isInStock ? 'Order within next 2 hours for same day dispatch' : 'Expected restock in 7-10 days'}</p>
-                </div>
-            `;
+                        <i class="fas ${isInStock ? 'fa-check-circle' : 'fa-times-circle'} text-xl"></i>
+                        <div>
+                            <p class="font-medium">
+                                ${isInStock ? 'In Stock' : 'Out of Stock'}
+                                ${isInStock && variant.stock_quantity ? `(${variant.stock_quantity} available)` : ''}
+                            </p>
+                            <p class="text-sm">${isInStock ? 'Order within next 2 hours for same day dispatch' : 'Expected restock in 7-10 days'}</p>
+                        </div>
+                    `;
+
+                    // Also update main stock status
+                    if (mainStockStatus) {
+                        mainStockStatus.className = `${isInStock ? 'text-green-600' : 'text-red-600'} font-medium`;
+                        mainStockStatus.innerHTML = `
+                            <i class="fas ${isInStock ? 'fa-check-circle' : 'fa-times-circle'} mr-1"></i>
+                            ${isInStock ? 'In Stock' : 'Out of Stock'}
+                        `;
+                    }
 
                     // Update action buttons
                     document.getElementById('addToCartBtn').disabled = !isInStock;
                     document.getElementById('buyNowBtn').disabled = !isInStock;
                 }
 
-                // Update product images if variant has specific images
-                if (variant.images && variant.images.length > 0) {
-                    const mainImage = document.getElementById('mainImage');
-                    const thumbnailGallery = document.getElementById('thumbnailGallery');
-
-                    if (mainImage && variant.images[0]?.url) {
-                        mainImage.src = variant.images[0].url;
-                        mainImage.alt = productData['name'] + (variant.sku ? ` - ${variant.sku}` : '');
-                    }
-
-                    if (thumbnailGallery) {
-                        thumbnailGallery.innerHTML = '';
-                        variant.images.forEach((image, index) => {
-                            const thumbnail = document.createElement('div');
-                            thumbnail.className =
-                                `thumbnail-item rounded-xl overflow-hidden border-2 ${index === 0 ? 'border-amber-500' : 'border-gray-200'} p-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-amber-500`;
-                            thumbnail.dataset.image = image.url;
-                            thumbnail.innerHTML = `
-                        <img src="${image.url}" alt="Variant Image ${index + 1}"
-                             class="w-full h-24 object-cover rounded-lg"
-                             onclick="changeMainImage(this)">
-                    `;
-                            thumbnailGallery.appendChild(thumbnail);
-                        });
-                    }
-                }
+                // Load variant-specific images
+                loadProductImages();
 
                 // Update total price
                 updateTotalPrice();
@@ -1296,7 +1468,7 @@
                 return matchedVariant ? matchedVariant.id : null;
             }
 
-            // QUANTITY FUNCTIONS - FIXED VERSION
+            // QUANTITY FUNCTIONS
             function decreaseQuantity() {
                 if (currentQuantity > 1) {
                     currentQuantity--;
@@ -1353,7 +1525,6 @@
             }
 
             // Add to cart function
-            // Add to cart function - FIXED VERSION
             async function addToCart() {
                 const variantId = getSelectedVariantId();
                 if (!variantId) {
@@ -1382,7 +1553,7 @@
                         attributes: attributes
                     });
 
-                    console.log('Add to cart response:', response.data); // Debug log
+                    console.log('Add to cart response:', response.data);
 
                     if (response.data.success) {
                         // Show success message
@@ -1393,17 +1564,12 @@
                         addToCartBtn.classList.add('bg-green-600', 'hover:bg-green-700');
                         addToCartBtn.classList.remove('bg-gray-900', 'hover:bg-gray-800');
 
-                        // Update cart count in header - FIXED: Check response structure
+                        // Update cart count in header
                         let cartCount = 0;
-
-                        // Try different possible response structures
                         if (response.data.cart_count !== undefined) {
                             cartCount = response.data.cart_count;
                         } else if (response.data.data && response.data.data.cart_count !== undefined) {
                             cartCount = response.data.data.cart_count;
-                        } else if (response.data.data && response.data.data.cart && response.data.data.cart.items_count !==
-                            undefined) {
-                            cartCount = response.data.data.cart.items_count;
                         }
 
                         // Update cart count
@@ -1425,12 +1591,6 @@
                 } catch (error) {
                     console.error('Error adding to cart:', error);
 
-                    // More detailed error logging
-                    if (error.response) {
-                        console.error('Response data:', error.response.data);
-                        console.error('Response status:', error.response.status);
-                    }
-
                     showNotification(
                         error.response?.data?.message ||
                         error.message ||
@@ -1446,6 +1606,7 @@
                     }
                 }
             }
+
             // Toggle wishlist
             async function toggleWishlist() {
                 const wishlistBtn = document.getElementById('wishlistBtn');
@@ -1526,7 +1687,7 @@
 
             // Helper functions
             function formatPrice(price) {
-                return new Intl.NumberFormat('en-IN').format(price);
+                return '₹' + new Intl.NumberFormat('en-IN').format(price);
             }
 
             function getSelectedAttributes() {

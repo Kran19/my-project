@@ -23,6 +23,8 @@ use App\Http\Controllers\Admin\ShippingController as AdminShipping;
 use App\Http\Controllers\Admin\SettingController as AdminSetting;
 use App\Http\Controllers\Admin\InventoryController as AdminInventory;
 use App\Http\Controllers\Admin\OfferController as AdminOffer;
+use App\Http\Controllers\Admin\BannerController as AdminBanner;
+use App\Http\Controllers\Admin\HomeSectionController as AdminHomeSection;
 
 
 /*
@@ -104,6 +106,9 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [AdminProduct::class, 'index'])->name('admin.products.index');
             Route::get('/create', [AdminProduct::class, 'create'])->name('admin.products.create');
             Route::get('/{product}/edit', [AdminProduct::class, 'edit'])->name('admin.products.edit');
+            Route::post('/', [AdminProduct::class, 'store'])->name('admin.products.store');
+            Route::put('/{product}', [AdminProduct::class, 'update'])->name('admin.products.update');
+            Route::delete('/{product}', [AdminProduct::class, 'destroy'])->name('admin.products.destroy');
 
 
             Route::get('/attributes', [AdminProduct::class, 'attributes'])->name('admin.products.attributes');
@@ -111,7 +116,9 @@ Route::prefix('admin')->group(function () {
             Route::get('/tags', [AdminProduct::class, 'tags'])->name('admin.products.tags');
 
             Route::get('/variants', [AdminProduct::class, 'variants'])->name('admin.products.variants');
-
+            Route::get('/category/{category}/specifications', [AdminProduct::class, 'getCategorySpecifications'])->name('admin.products.category.specifications');
+            Route::get('/category/{category}/attributes', [AdminProduct::class, 'getCategoryAttributes'])->name('admin.products.category.attributes');
+            Route::get('/search', [AdminProduct::class, 'search'])->name('admin.products.search');
         });
 
         /*
@@ -139,7 +146,8 @@ Route::prefix('admin')->group(function () {
         */
         Route::prefix('media')->group(function () {
             Route::get('/', [AdminMedia::class, 'index'])->name('admin.media.index');
-            Route::get('/upload', [AdminMedia::class, 'upload'])->name('admin.media.upload');
+            Route::get('/data', [AdminMedia::class, 'getData'])->name('admin.media.data');
+            Route::post('/upload', [AdminMedia::class, 'upload'])->name('admin.media.upload');
         });
 
 
@@ -232,6 +240,28 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [AdminCRM::class, 'index'])->name('admin.crm.index');
             Route::get('/popup', [AdminCRM::class, 'popup'])->name('admin.crm.popup');
             Route::get('/settings', [AdminCRM::class, 'settings'])->name('admin.crm.settings');
+
+            // Banners
+            Route::prefix('banners')->name('admin.banners.')->group(function () {
+                Route::get('/', [AdminBanner::class, 'index'])->name('index');
+                Route::get('/create', [AdminBanner::class, 'create'])->name('create');
+                Route::post('/', [AdminBanner::class, 'store'])->name('store');
+                Route::get('/{banner}/edit', [AdminBanner::class, 'edit'])->name('edit');
+                Route::put('/{banner}', [AdminBanner::class, 'update'])->name('update');
+                Route::delete('/{banner}', [AdminBanner::class, 'destroy'])->name('destroy');
+                Route::post('/{banner}/toggle-status', [AdminBanner::class, 'toggleStatus'])->name('toggle-status');
+            });
+
+            // Home Sections
+            Route::prefix('home-sections')->name('admin.home-sections.')->group(function () {
+                Route::get('/', [AdminHomeSection::class, 'index'])->name('index');
+                Route::get('/create', [AdminHomeSection::class, 'create'])->name('create');
+                Route::post('/', [AdminHomeSection::class, 'store'])->name('store');
+                Route::get('/{section}/edit', [AdminHomeSection::class, 'edit'])->name('edit');
+                Route::put('/{section}', [AdminHomeSection::class, 'update'])->name('update');
+                Route::delete('/{section}', [AdminHomeSection::class, 'destroy'])->name('destroy');
+                Route::post('/{section}/toggle-status', [AdminHomeSection::class, 'toggleStatus'])->name('toggle-status');
+            });
         });
 
         /*
@@ -318,6 +348,7 @@ Route::name('customer.')->group(function () {
         Route::put('/update/{cartItemId}', [CustomerCart::class, 'updateQuantity'])->name('cart.update');
         Route::delete('/remove/{cartItemId}', [CustomerCart::class, 'removeItem'])->name('cart.remove');
         Route::post('/apply-coupon', [CustomerCart::class, 'applyCoupon'])->name('cart.apply-coupon');
+        Route::post('/remove-coupon', [CustomerCart::class, 'removeCoupon'])->name('cart.remove-coupon');
         Route::post('/sync', [CustomerCart::class, 'syncCart'])->name('cart.sync');
         Route::get('/summary', [CustomerCart::class, 'getCartSummary'])->name('cart.summary');
         Route::get('/count', [CustomerCart::class, 'getCartCount'])->name('cart.count');
@@ -360,8 +391,33 @@ Route::name('customer.')->group(function () {
     | WISHLIST
     |--------------------------------------------------------------------------
     */
-    Route::get('/wishlist', [CustomerWishlist::class, 'index'])->name('wishlist');
-    Route::post('/add', [CustomerWishlist::class, 'addItem'])->name('wishlist.add');
+    // Wishlist Routes
+    Route::middleware(['customer.auth'])->prefix('wishlist')->name('wishlist.')->group(function () {
+        Route::get('/', [CustomerWishlist::class, 'index'])->name('index');
+
+        // Item management
+        Route::post('/add', [CustomerWishlist::class, 'add'])->name('add');
+        Route::post('/remove', [CustomerWishlist::class, 'remove'])->name('remove');
+        Route::post('/remove-multiple', [CustomerWishlist::class, 'removeMultiple'])->name('remove.multiple');
+        Route::post('/move-to-cart', [CustomerWishlist::class, 'moveToCart'])->name('move-to-cart');
+        Route::post('/move-all-to-cart', [CustomerWishlist::class, 'moveAllToCart'])->name('move-all-to-cart');
+        Route::post('/clear', [CustomerWishlist::class, 'clear'])->name('clear');
+
+        // Wishlist management
+        Route::post('/create', [CustomerWishlist::class, 'create'])->name('create');
+        Route::put('/{id}', [CustomerWishlist::class, 'update'])->name('update');
+        Route::delete('/{id}', [CustomerWishlist::class, 'delete'])->name('delete');
+        Route::post('/{id}/share', [CustomerWishlist::class, 'share'])->name('share');
+        Route::post('/{id}/add-item', [CustomerWishlist::class, 'addItemToWishlist'])->name('add.item');
+
+        // Data endpoints
+        Route::get('/count', [CustomerWishlist::class, 'count'])->name('count');
+        Route::get('/items', [CustomerWishlist::class, 'getWishlistItems'])->name('items');
+        Route::get('/wishlists', [CustomerWishlist::class, 'getWishlists'])->name('wishlists');
+    });
+
+    // Public shared wishlist (no auth required)
+    Route::get('/wishlist/shared/{id}', [CustomerWishlist::class, 'shared'])->name('wishlist.shared');
 
     /*
     |--------------------------------------------------------------------------
@@ -390,6 +446,21 @@ Route::name('customer.')->group(function () {
         Route::get('/orders/{id}', [CustomerOrder::class, 'orderDetails'])->name('orders.details');
         Route::get('/addresses', [CustomerAccount::class, 'addresses'])->name('addresses');
         Route::get('/change-password', [CustomerAccount::class, 'changePassword'])->name('change-password');
+        Route::get('/orders/filter/{status}', [CustomerOrder::class, 'filterOrders'])->name('orders.filter');
+
+        // In customer account routes group
+        Route::post('/addresses', [CustomerAccount::class, 'storeAddress'])->name('addresses.store');
+        Route::put('/addresses/{id}', [CustomerAccount::class, 'updateAddress'])->name('addresses.update');
+        Route::delete('/addresses/{id}', [CustomerAccount::class, 'deleteAddress'])->name('addresses.delete');
+        Route::post('/addresses/{id}/set-default', [CustomerAccount::class, 'setDefaultAddress'])->name('addresses.set-default');
+
+        // Add order cancellation route
+        Route::post('/orders/{id}/cancel', [CustomerOrder::class, 'cancelOrder'])->name('orders.cancel');
+        Route::get('/orders/filter/{status}', [CustomerOrder::class, 'filterOrders'])->name('orders.filter');
+        Route::get('/orders/{id}/invoice', [CustomerOrder::class, 'downloadInvoice'])->name('orders.download-invoice');
+
+        // Add change password route
+        Route::post('/change-password', [CustomerAccount::class, 'updatePassword'])->name('change-password.update');
     });
 
 });

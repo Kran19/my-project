@@ -22,31 +22,43 @@ class BrandRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
-            'name' => ['required', 'string', 'max:100'],
-            'slug' => ['required', 'string', 'max:150', Rule::unique('brands')->ignore($this->route('brand'))],
+        $isCreate = $this->isMethod('post');
+
+        return [
+            'name' => [
+                $isCreate ? 'required' : 'sometimes',
+                'string',
+                'max:100',
+                $isCreate ? 'unique:brands,name' : null,
+            ],
+
+            'slug' => [
+                $isCreate ? 'required' : 'sometimes',
+                'string',
+                'max:150',
+                Rule::unique('brands')->ignore($this->route('brand')),
+            ],
+
+            'status' => [
+                $isCreate ? 'required' : 'sometimes',
+                'in:active,inactive',
+            ],
+
             'description' => ['nullable', 'string'],
-            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:min_width=100,min_height=100,max_width=2000,max_height=2000'],
-            'status' => ['required', 'in:active,inactive'],
-            'featured' => ['boolean'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
-            'website' => ['nullable', 'url', 'max:255'],
-            'email' => ['nullable', 'email', 'max:100'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'country' => ['nullable', 'string', 'max:100'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'meta_title' => ['nullable', 'string', 'max:255'],
-            'meta_description' => ['nullable', 'string', 'max:500'],
-            'meta_keywords' => ['nullable', 'string', 'max:255'],
+            'logo' => ['nullable', 'image'],
+            'featured' => ['sometimes', 'boolean'],
+            'sort_order' => ['nullable', 'integer'],
+            'website' => ['nullable', 'url'],
+            'email' => ['nullable', 'email'],
+            'phone' => ['nullable', 'string'],
+            'country' => ['nullable', 'string'],
+            'address' => ['nullable', 'string'],
+            'meta_title' => ['nullable', 'string'],
+            'meta_description' => ['nullable', 'string'],
+            'meta_keywords' => ['nullable', 'string'],
         ];
-
-        // For create (POST)
-        if ($this->isMethod('post')) {
-            $rules['name'][] = 'unique:brands,name';
-        }
-
-        return $rules;
     }
+
 
     /**
      * Get custom messages for validator errors.

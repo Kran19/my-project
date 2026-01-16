@@ -301,8 +301,10 @@ class BrandController extends Controller
                 }
             }
 
-            // Convert status to boolean
-            $data['status'] = $data['status'] === 'active' ? 1 : 0;
+            if (array_key_exists('status', $data)) {
+                $data['status'] = $data['status'] === 'active' ? 1 : 0;
+            }
+
 
             // Update brand
             $brand->update($data);

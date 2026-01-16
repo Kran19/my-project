@@ -8,6 +8,8 @@ use App\Models\Testimonial;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Order;
+use App\Models\Banner;
+use App\Models\HomeSection;
 use App\Services\Customer\ProductService;
 use Illuminate\Support\Facades\Log;
 
@@ -23,71 +25,45 @@ class HomeController extends Controller
     public function index()
     {
         try {
+            /* ------------------------------
+             | BANNERS
+             |------------------------------*/
+            $banners = Banner::where('status', true)->orderBy('sort_order')->get();
 
             /* ------------------------------
-             | CATEGORIES (Top 6)
+             | HOME SECTIONS
              |------------------------------*/
-            $categories = Category::with('image')
-                ->where('status', 1)
-                ->whereNull('parent_id')
-                ->orderBy('sort_order')
-                ->limit(6)
-                ->get(['id', 'name', 'slug', 'description', 'image_id']);
+            $sections = HomeSection::with('category')->where('status', true)->orderBy('sort_order')->get();
+            $dynamicSections = [];
 
-            /* ------------------------------
-             | CATEGORY PRODUCTS
-             |------------------------------*/
-            $categoryProducts = [];
+            foreach ($sections as $section) {
+                $products = [];
+                if ($section->type === 'category' && $section->category_id) {
+                    $products = $this->productService->getProducts(
+                        [
+                            'category_id' => $section->category_id,
+                            'sort_by'     => 'featured',
+                        ],
+                        12,
+                        1
+                    )->items();
+                } elseif ($section->type === 'custom_products' && !empty($section->product_ids)) {
+                    $products = $this->productService->getProducts(
+                        [
+                            'product_ids' => $section->product_ids,
+                        ],
+                        12,
+                        1
+                    )->items();
+                }
 
-            foreach ($categories as $category) {
-                $products = $this->productService->getProducts(
-                    [
-                        'category_id' => $category->id,
-                        'sort_by'     => 'featured',
-                    ],
-                    8,
-                    1
-                )->items();
-
-                // ✅ Normalize data (VERY IMPORTANT)
-                $categoryProducts[$category->id] = collect($products)
-                    ->filter(fn ($p) => is_array($p) && isset($p['id']))
-                    ->values()
-                    ->toArray();
+                $dynamicSections[] = [
+                    'title' => $section->title,
+                    'subtitle' => $section->subtitle,
+                    'style' => $section->style,
+                    'products' => collect($products)->filter(fn ($p) => is_array($p) && isset($p['id']))->values()->toArray()
+                ];
             }
-
-            /* ------------------------------
-             | FEATURED PRODUCTS
-             |------------------------------*/
-            $featuredProducts = collect(
-                $this->productService->getProducts(
-                    ['is_featured' => true, 'sort_by' => 'newest'],
-                    8,
-                    1
-                )->items()
-            )->filter(fn ($p) => is_array($p))->values()->toArray();
-
-            /* ------------------------------
-             | BESTSELLER PRODUCTS
-             |------------------------------*/
-            $bestsellerProducts = collect(
-                $this->productService->getProducts(
-                    ['is_bestseller' => true, 'sort_by' => 'popular'],
-                    4,
-                    1
-                )->items()
-            )->filter(fn ($p) => is_array($p))->values()->toArray();
-
-            /* ------------------------------
-             | NEW ARRIVALS
-             |------------------------------*/
-            $newProducts = collect(
-                $this->productService->getProducts(
-                    ['is_new' => true, 'sort_by' => 'newest'],
-                    6,
-                    1
-                )->items()
-            )->filter(fn ($p) => is_array($p))->values()->toArray();
 
             /* ------------------------------
              | TESTIMONIALS
@@ -107,65 +83,25 @@ class HomeController extends Controller
                 'review_count'   => 98,
             ];
 
-            /* ------------------------------
-             | PROMO SLIDER
-             |------------------------------*/
-            $promoSlides = [
-                [
-                    'title' => 'Party Collection',
-                    'highlight' => 'BUY 2 GET 1 FREE',
-                    'subtitle' => 'Statement Jewelry',
-                    'description' => 'Sparkle at every party with trendy imitation jewelry.',
-                    'cta' => 'Shop Now',
-                    'icon' => 'fas fa-glass-cheers',
-                    'bg_color' => 'from-pink-100 via-purple-200 to-pink-300',
-                    'text_color' => 'text-purple-800',
-                    'image' => 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1200',
-                    'badge' => 'PARTY',
-                    'badge_color' => 'badge-party',
-                ],
-                [
-                    'title' => 'Latest Fashion',
-                    'highlight' => 'UP TO 50% OFF',
-                    'subtitle' => 'Trending Designs',
-                    'description' => 'Stay ahead with our latest fashion jewelry.',
-                    'cta' => 'Explore',
-                    'icon' => 'fas fa-gem',
-                    'bg_color' => 'from-purple-100 via-pink-200 to-purple-300',
-                    'text_color' => 'text-pink-800',
-                    'image' => 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200',
-                    'badge' => 'FASHION',
-                    'badge_color' => 'badge-fashion',
-                ],
-            ];
-
             return view('customer.home.index', compact(
-                'categories',
-                'categoryProducts',
-                'featuredProducts',
-                'bestsellerProducts',
-                'newProducts',
+                'banners',
+                'dynamicSections',
                 'testimonials',
-                'stats',
-                'promoSlides'
+                'stats'
             ));
 
         } catch (\Throwable $e) {
-
             Log::error('Home page error', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return view('customer.home.index', [
-                'categories' => collect(),
-                'categoryProducts' => [],
-                'featuredProducts' => [],
-                'bestsellerProducts' => [],
-                'newProducts' => [],
+                'banners' => collect(),
+                'dynamicSections' => [],
                 'testimonials' => collect(),
                 'stats' => [],
-                'promoSlides' => [],
             ]);
         }
     }

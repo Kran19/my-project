@@ -170,11 +170,28 @@ class CartController extends Controller
             'coupon_code' => 'required|string'
         ]);
 
-        // TODO: Implement coupon logic
-        return response()->json([
-            'success' => false,
-            'message' => 'Coupon functionality coming soon'
-        ]);
+        try {
+            $result = $this->cartHelper->applyCoupon($request->coupon_code);
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function removeCoupon()
+    {
+        try {
+            $result = $this->cartHelper->removeCoupon();
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
     private function getRecommendedProducts()

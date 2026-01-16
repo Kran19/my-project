@@ -30,8 +30,9 @@ class TaxRate extends Model
     ];
 
     // Relationships
-    public function taxClass(): BelongsTo
-    {
-        return $this->belongsTo(TaxClass::class);
-    }
+public function taxClass(): BelongsTo
+{
+    return $this->belongsTo(TaxClass::class)->withTrashed();
+}
+
 }

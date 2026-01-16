@@ -25,8 +25,13 @@
                         <i class="fas fa-user text-2xl text-amber-700"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-800">John Doe</h3>
-                        <p class="text-sm text-gray-600">user@example.com</p>
+                        <h3 class="font-bold text-gray-800">{{ $customer->name }}</h3>
+                        <p class="text-sm text-gray-600">{{ $customer->email ?? $customer->mobile }}</p>
+                        @if($customer->password_changed_at)
+                        <p class="text-xs text-gray-500 mt-1">
+                            Last changed: {{ $customer->password_changed_at->diffForHumans() }}
+                        </p>
+                        @endif
                     </div>
                 </div>
 
@@ -42,18 +47,28 @@
                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-amber-50">
                         <i class="fas fa-heart"></i>
                         <span>My Wishlist</span>
+                        @php
+                            $wishlistCount = \App\Models\Wishlist::where('customer_id', $customer->id)->count();
+                        @endphp
+                        @if($wishlistCount > 0)
                         <span class="ml-auto bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
-                            3
+                            {{ $wishlistCount }}
                         </span>
+                        @endif
                     </a>
 
                     <a href="{{ route('customer.account.orders') }}"
                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-amber-50">
                         <i class="fas fa-shopping-bag"></i>
                         <span>My Orders</span>
+                        @php
+                            $ordersCount = \App\Models\Order::where('customer_id', $customer->id)->count();
+                        @endphp
+                        @if($ordersCount > 0)
                         <span class="ml-auto bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
-                            5
+                            {{ $ordersCount }}
                         </span>
+                        @endif
                     </a>
 
                     <a href="{{ route('customer.account.addresses') }}"
@@ -85,24 +100,43 @@
             <div class="bg-white rounded-2xl shadow-lg p-8">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Change Password</h2>
 
+                @if(session('success'))
+                <div class="mb-6 p-4 bg-green-50 text-green-800 rounded-lg">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    {{ session('success') }}
+                </div>
+                @endif
+
+                @if(session('error'))
+                <div class="mb-6 p-4 bg-red-50 text-red-800 rounded-lg">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    {{ session('error') }}
+                </div>
+                @endif
+
                 <div class="max-w-lg">
-                    <form id="changePasswordForm" class="space-y-6">
+                    <form method="POST" action="{{ route('customer.account.change-password.update') }}" class="space-y-6">
+                        @csrf
+
                         <div>
                             <label class="block text-gray-700 mb-2">Current Password *</label>
                             <div class="relative">
-                                <input type="password" id="currentPassword" required
+                                <input type="password" name="current_password" id="currentPassword" required
                                        class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none pr-12">
                                 <button type="button" onclick="togglePassword('currentPassword')"
                                         class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </div>
+                            @error('current_password')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="block text-gray-700 mb-2">New Password *</label>
                             <div class="relative">
-                                <input type="password" id="newPassword" required
+                                <input type="password" name="password" id="newPassword" required
                                        class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none pr-12">
                                 <button type="button" onclick="togglePassword('newPassword')"
                                         class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
@@ -134,12 +168,15 @@
                                     </li>
                                 </ul>
                             </div>
+                            @error('password')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="block text-gray-700 mb-2">Confirm New Password *</label>
                             <div class="relative">
-                                <input type="password" id="confirmPassword" required
+                                <input type="password" name="password_confirmation" id="confirmPassword" required
                                        class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none pr-12">
                                 <button type="button" onclick="togglePassword('confirmPassword')"
                                         class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
@@ -175,11 +212,15 @@
                             </li>
                             <li class="flex items-start gap-2">
                                 <i class="fas fa-sync-alt text-amber-600 mt-1"></i>
-                                <span>Change your password regularly</span>
+                                <span>Change your password regularly (recommended every 90 days)</span>
                             </li>
                             <li class="flex items-start gap-2">
                                 <i class="fas fa-lock text-amber-600 mt-1"></i>
                                 <span>Never share your password with anyone</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fas fa-user-secret text-amber-600 mt-1"></i>
+                                <span>Avoid using personal information in your password</span>
                             </li>
                         </ul>
                     </div>
@@ -194,14 +235,14 @@
 <script>
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
-    const button = input.nextElementSibling;
+    const button = input.nextElementSibling.querySelector('i');
 
     if (input.type === 'password') {
         input.type = 'text';
-        button.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        button.className = 'fas fa-eye-slash';
     } else {
         input.type = 'password';
-        button.innerHTML = '<i class="fas fa-eye"></i>';
+        button.className = 'fas fa-eye';
     }
 }
 
@@ -267,62 +308,5 @@ newPasswordInput.addEventListener('input', function() {
 });
 
 confirmPasswordInput.addEventListener('input', checkPasswordMatch);
-
-// Form submission
-document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-
-    // Basic validation
-    if (!currentPassword) {
-        alert('Please enter your current password');
-        return;
-    }
-
-    if (!validatePassword(newPassword)) {
-        alert('Please ensure your new password meets all requirements');
-        return;
-    }
-
-    if (!checkPasswordMatch()) {
-        alert('Passwords do not match');
-        return;
-    }
-
-    if (currentPassword === newPassword) {
-        alert('New password must be different from current password');
-        return;
-    }
-
-    // In a real app, you would submit the form via AJAX
-    // For demo, show success message
-    alert('Password changed successfully!');
-
-    // Show success message
-    const message = document.createElement('div');
-    message.className = 'fixed top-4 right-4 bg-green-100 text-green-800 px-6 py-3 rounded-full shadow-lg z-50';
-    message.innerHTML = `
-        <i class="fas fa-check-circle mr-2"></i>
-        Password changed successfully!
-    `;
-    document.body.appendChild(message);
-
-    // Reset form
-    this.reset();
-
-    // Reset validation icons
-    document.querySelectorAll('#lengthCheck, #uppercaseCheck, #lowercaseCheck, #numberCheck, #specialCheck').forEach(el => {
-        el.querySelector('i').className = 'fas fa-circle text-gray-300 text-xs mr-2';
-    });
-
-    passwordMatchMessage.classList.add('hidden');
-
-    setTimeout(() => {
-        message.remove();
-    }, 3000);
-});
 </script>
 @endsection

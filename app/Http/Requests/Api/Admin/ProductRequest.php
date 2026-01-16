@@ -20,7 +20,7 @@ class ProductRequest extends FormRequest
      */
     public function rules(): array
     {
-        $productId = $this->route('product') ? $this->route('product')->id : null;
+        $productId = $this->route('product');
 
         $rules = [
             // Basic Information
@@ -94,8 +94,8 @@ class ProductRequest extends FormRequest
                 'max:100',
                 // Don't use ignore here for create, only for update
                 $this->isMethod('PUT') || $this->isMethod('PATCH')
-                    ? Rule::unique('product_variants', 'sku')->ignore($productId, 'product_id')
-                    : 'unique:product_variants,sku'
+                ? Rule::unique('product_variants', 'sku')->ignore($productId, 'product_id')
+                : 'unique:product_variants,sku'
             ];
             $rules['price'] = 'required|numeric|min:0';
             $rules['compare_price'] = 'nullable|numeric|min:0';
@@ -129,8 +129,8 @@ class ProductRequest extends FormRequest
                     'string',
                     'max:100',
                     $variantId
-                        ? Rule::unique('product_variants', 'sku')->ignore($variantId)
-                        : 'unique:product_variants,sku'
+                    ? Rule::unique('product_variants', 'sku')->ignore($variantId)
+                    : 'unique:product_variants,sku'
                 ];
                 $rules["variants.{$index}.price"] = 'required|numeric|min:0';
                 $rules["variants.{$index}.compare_price"] = 'nullable|numeric|min:0';

@@ -344,6 +344,9 @@
                                         @endif
                                     </div>
                                     <div class="mb-6">
+                                        <!-- Available Promo Codes -->
+                                        <div id="availablePromoCodes" class="mb-4"></div>
+                                        
                                         <div class="relative">
                                             <input type="text" id="promoCode" placeholder="Enter promo code"
                                                 class="w-full px-4 py-3 pl-10 rounded-full border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none transition-colors">
@@ -529,6 +532,114 @@
         axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
         axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         axios.defaults.headers.common['Accept'] = 'application/json';
+
+        // Load available promo codes on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAvailablePromoCodes();
+            
+            const cartItems = document.querySelectorAll('.cart-item');
+            cartItems.forEach((item, index) => {
+                item.style.animationDelay = `${index * 0.1}s`;
+                item.classList.add('animate-slide-up');
+            });
+        });
+
+        // Load available promo codes
+        async function loadAvailablePromoCodes() {
+            try {
+                const response = await axios.get('/api/customer/offers/active');
+                console.log('Offers API Response:', response.data);
+                
+                if (response.data.success && response.data.data.length > 0) {
+                    const offers = response.data.data;
+                    const container = document.getElementById('availablePromoCodes');
+                    
+                    let html = '<div class="mb-3"><p class="text-xs font-semibold text-gray-700 mb-2">Available Offers:</p><div class="space-y-2">';
+                    
+                    offers.forEach(offer => {
+                        let discount = '';
+                        if (offer.offer_type === 'percentage') {
+                            discount = `${offer.discount_value}% OFF`;
+                        } else if (offer.offer_type === 'fixed') {
+                            discount = `₹${offer.discount_value} OFF`;
+                        } else if (offer.offer_type === 'bogo') {
+                            discount = `Buy ${offer.buy_qty} Get ${offer.get_qty}`;
+                        } else if (offer.offer_type === 'buy_x_get_y') {
+                            discount = `Buy ${offer.buy_qty} Get ${offer.get_qty}`;
+                        } else if (offer.offer_type === 'free_shipping') {
+                            discount = 'FREE SHIPPING';
+                        } else {
+                            discount = 'SPECIAL OFFER';
+                        }
+                        
+                        html += `
+                            <div class="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors" 
+                                 onclick="applyPromoCodeDirect('${offer.code}')">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-tag text-green-600 text-sm"></i>
+                                    <div>
+                                        <p class="text-xs font-bold text-green-800">${offer.code}</p>
+                                        <p class="text-xs text-green-600">${offer.name}</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-green-700">${discount}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div></div>';
+                    container.innerHTML = html;
+                } else {
+                    console.log('No offers available or API returned empty data');
+                }
+            } catch (error) {
+                console.error('Failed to load promo codes:', error);
+                console.error('Error details:', error.response);
+            }
+        }
+
+        // Apply promo code directly (on click)
+        function applyPromoCodeDirect(code) {
+            document.getElementById('promoCode').value = code;
+            applyPromoCode();
+        }
+
+        // Apply promo code
+        async function applyPromoCode() {
+            const code = document.getElementById('promoCode').value.trim();
+            
+            if (!code) {
+                showNotification('Please enter a coupon code', 'error');
+                return;
+            }
+
+            try {
+                const response = await axios.post('/cart/apply-coupon', {
+                    coupon_code: code
+                });
+
+                if (response.data.success) {
+                    showNotification(response.data.message, 'success');
+                    location.reload();
+                }
+            } catch (error) {
+                showNotification(error.response?.data?.message || 'Failed to apply coupon', 'error');
+            }
+        }
+
+        // Remove coupon
+        async function removeCoupon() {
+            try {
+                const response = await axios.post('/cart/remove-coupon');
+                
+                if (response.data.success) {
+                    showNotification(response.data.message, 'success');
+                    location.reload();
+                }
+            } catch (error) {
+                showNotification('Failed to remove coupon', 'error');
+            }
+        }
 
         // Change quantity function
         function changeQuantity(itemId, delta) {
@@ -840,15 +951,6 @@
             if (e.key === 'Enter') {
                 applyPromoCode();
             }
-        });
-
-        // Initialize cart item animations
-        document.addEventListener('DOMContentLoaded', function() {
-            const cartItems = document.querySelectorAll('.cart-item');
-            cartItems.forEach((item, index) => {
-                item.style.animationDelay = `${index * 0.1}s`;
-                item.classList.add('animate-slide-up');
-            });
         });
     </script>
 @endpush

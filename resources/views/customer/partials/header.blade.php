@@ -85,12 +85,9 @@
             <nav class="hidden md:flex items-center space-x-8">
                 <a href="{{ route('customer.home.index') }}" class="nav-link">Home</a>
                 <a href="{{ route('customer.products.list') }}" class="nav-link">All Categories</a>
-                <a href="{{ route('customer.category.products', 'earrings') }}" class="nav-link">Earrings</a>
-                <a href="{{ route('customer.category.products', 'necklaces') }}" class="nav-link">Necklaces</a>
-                <a href="{{ route('customer.category.products', 'rings') }}" class="nav-link">Rings</a>
-                <a href="{{ route('customer.category.products', 'bracelets') }}" class="nav-link">Bracelets</a>
-                <a href="{{ route('customer.category.products', 'bangles') }}" class="nav-link">Bangles</a>
-                <a href="{{ route('customer.category.products', 'pendant') }}" class="nav-link">Pendant</a>
+                @foreach($navCategories as $category)
+                    <a href="{{ route('customer.category.products', $category->slug) }}" class="nav-link">{{ $category->name }}</a>
+                @endforeach
             </nav>
 
             <!-- Right Section -->
@@ -120,23 +117,36 @@
                         </button>
 
                         <!-- Dropdown -->
-                        <div
-                            class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border hidden group-hover:block z-50">
-                            <div class="p-4 border-b">
-                                <p class="font-semibold">{{ auth('customer')->user()->name }}</p>
-                                <p class="text-sm text-gray-500">{{ auth('customer')->user()->email }}</p>
-                            </div>
-                            <div class="p-2">
-                                <a href="{{ route('customer.account.profile') }}" class="dropdown-link">My Account</a>
-                                <a href="{{ route('customer.account.orders') }}" class="dropdown-link">My Orders</a>
-                                <a href="{{ route('customer.wishlist') }}" class="dropdown-link">Wishlist</a>
+                        <div class="absolute right-0 top-full pt-2 w-56 hidden group-hover:block z-50">
+                            <div class="bg-white rounded-xl shadow-xl border border-amber-100 overflow-hidden">
+                                <div class="p-4 border-b bg-gradient-to-r from-amber-50 to-white">
+                                    <p class="font-bold text-amber-900 truncate">{{ auth('customer')->user()->name }}</p>
+                                    <p class="text-xs text-amber-700/70 truncate">{{ auth('customer')->user()->email }}</p>
+                                </div>
+                                <div class="p-2 space-y-1">
+                                    <a href="{{ route('customer.account.profile') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 rounded-lg transition-colors">
+                                        <i class="fas fa-user-circle w-6 text-center text-amber-500/80"></i>
+                                        My Account
+                                    </a>
+                                    <a href="{{ route('customer.account.orders') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 rounded-lg transition-colors">
+                                        <i class="fas fa-shopping-bag w-6 text-center text-amber-500/80"></i>
+                                        My Orders
+                                    </a>
+                                    <a href="{{ route('customer.wishlist.index') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 rounded-lg transition-colors">
+                                        <i class="fas fa-heart w-6 text-center text-amber-500/80"></i>
+                                        Wishlist
+                                    </a>
 
-                                <form method="POST" action="{{ route('customer.logout') }}">
-                                    @csrf
-                                    <button type="submit" class="dropdown-link text-red-600 w-full text-left">
-                                        Logout
-                                    </button>
-                                </form>
+                                    <div class="h-px bg-amber-50 my-1"></div>
+
+                                    <form method="POST" action="{{ route('customer.logout') }}">
+                                        @csrf
+                                        <button type="submit" class="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors text-left">
+                                            <i class="fas fa-sign-out-alt w-6 text-center text-red-400"></i>
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -175,30 +185,13 @@
             </div>
 
             <!-- Categories -->
-            <a href="{{ route('customer.category.products', 'earrings') }}" class="mobile-link">
-                <i class="fas fa-gem mr-3 text-amber-600 w-5"></i>
-                Earrings
-            </a>
-            <a href="{{ route('customer.category.products', 'necklaces') }}" class="mobile-link">
-                <i class="fas fa-gem mr-3 text-amber-600 w-5"></i>
-                Necklaces
-            </a>
-            <a href="{{ route('customer.category.products', 'rings') }}" class="mobile-link">
-                <i class="fas fa-gem mr-3 text-amber-600 w-5"></i>
-                Rings
-            </a>
-            <a href="{{ route('customer.category.products', 'bracelets') }}" class="mobile-link">
-                <i class="fas fa-gem mr-3 text-amber-600 w-5"></i>
-                Bracelets
-            </a>
-            <a href="{{ route('customer.category.products', 'bangles') }}" class="mobile-link">
-                <i class="fas fa-gem mr-3 text-amber-600 w-5"></i>
-                Bangles
-            </a>
-            <a href="{{ route('customer.category.products', 'pendant') }}" class="mobile-link">
-                <i class="fas fa-gem mr-3 text-amber-600 w-5"></i>
-                Pendant
-            </a>
+            <!-- Categories -->
+            @foreach($navCategories as $category)
+                <a href="{{ route('customer.category.products', $category->slug) }}" class="mobile-link">
+                    <i class="fas fa-gem mr-3 text-amber-600 w-5"></i>
+                    {{ $category->name }}
+                </a>
+            @endforeach
 
             <!-- Account Section Header -->
             <div class="pt-2 pb-1 border-t border-gray-100 mt-2">
@@ -211,7 +204,7 @@
                     <div class="flex items-center">
                         <i class="fas fa-shopping-cart mr-3 text-amber-600 w-5"></i>
                         Cart
-                    </div>
+                    </div> 
                     <a href="{{ route('customer.cart') }}" class="relative icon-btn">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-badge hidden">0</span>
@@ -234,7 +227,7 @@
                 </a>
 
                 <!-- Wishlist -->
-                <a href="{{ route('customer.wishlist') }}" class="mobile-link">
+                <a href="{{ route('customer.wishlist.index') }}" class="mobile-link">
                     <i class="fas fa-heart mr-3 text-amber-600 w-5"></i>
                     Wishlist
                 </a>

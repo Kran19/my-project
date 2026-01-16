@@ -3,2811 +3,717 @@
 @section('title', 'Edit Product')
 
 @section('content')
-    <div class="mb-8">
-        <div class="flex justify-between items-center">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Edit Product</h2>
-                <p class="text-gray-600">Edit product information and variants</p>
-            </div>
-            <a href="{{ route('admin.products.index') }}" class="btn-secondary">
-                <i class="fas fa-arrow-left mr-2"></i>Back to Products
-            </a>
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Edit Product: {{ $product->name }}</h2>
+            <nav class="text-sm text-gray-500">
+                <a href="{{ route('admin.dashboard') }}" class="hover:text-blue-500">Dashboard</a>
+                <span class="mx-2">/</span>
+                <a href="{{ route('admin.products.index') }}" class="hover:text-blue-500">Products</a>
+                <span class="mx-2">/</span>
+                <span class="text-gray-700">Edit</span>
+            </nav>
         </div>
+        <a href="{{ route('admin.products.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
+            Back to List
+        </a>
     </div>
+</div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800">Edit Product Information</h3>
-        </div>
+<form action="{{ route('admin.products.update', $product->id) }}" method="POST" id="product-form" class="space-y-6">
+    @csrf
+    @method('PUT')
 
-        <form id="productForm" class="p-6" novalidate>
-            @csrf
-
-            <input type="hidden" id="productId" value="{{ $product->id }}">
-
-            <div class="space-y-8">
-                <!-- Basic Information -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                            <label for="productName" class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
-                            <input type="text" id="productName" name="name" required
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="Enter product name">
-                            <div id="nameError" class="hidden mt-1 text-sm text-rose-600"></div>
-                        </div>
-                        <div>
-                            <label for="productSlug" class="block text-sm font-medium text-gray-700 mb-2">Slug *</label>
-                            <input type="text" id="productSlug" name="slug" required
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="product-url-slug">
-                            <div id="slugError" class="hidden mt-1 text-sm text-rose-600"></div>
-                        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Basic Info -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Basic Information</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Product Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="name" id="name" value="{{ old('name', $product->name) }}" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                        @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="productCode" class="block text-sm font-medium text-gray-700 mb-2">Product Code</label>
-                            <input type="text" id="productCode" name="product_code"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="PROD-CODE-001">
-                            <div id="productCodeError" class="hidden mt-1 text-sm text-rose-600"></div>
+                            <label for="slug" class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                            <input type="text" name="slug" id="slug" value="{{ old('slug', $product->slug) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-gray-50">
+                            @error('slug') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Product Type *</label>
-                            <div class="grid grid-cols-2 gap-4">
-                                <label class="product-type-option cursor-pointer">
-                                    <input type="radio" name="product_type" value="simple" class="sr-only">
-                                    <div class="p-4 border-2 border-gray-200 rounded-xl text-center">
-                                        <i class="fas fa-cube text-2xl text-gray-400 mb-2"></i>
-                                        <p class="font-medium">Simple Product</p>
-                                        <p class="text-xs text-gray-500 mt-1">Single variant</p>
-                                    </div>
-                                </label>
-                                <label class="product-type-option cursor-pointer">
-                                    <input type="radio" name="product_type" value="configurable" class="sr-only">
-                                    <div class="p-4 border-2 border-gray-200 rounded-xl text-center">
-                                        <i class="fas fa-layer-group text-2xl text-gray-400 mb-2"></i>
-                                        <p class="font-medium">Configurable</p>
-                                        <p class="text-xs text-gray-500 mt-1">Multiple variants</p>
-                                    </div>
-                                </label>
-                            </div>
+                            <label for="product_code" class="block text-sm font-medium text-gray-700 mb-1">Product Code (Art. No.)</label>
+                            <input type="text" name="product_code" id="product_code" value="{{ old('product_code', $product->product_code) }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                            @error('product_code') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Category & Brand -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Category & Brand</h3>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                            <label for="categoryId" class="block text-sm font-medium text-gray-700 mb-2">Main Category *</label>
-                            <select id="categoryId" name="main_category_id" required
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <option value="">Select Category</option>
-                                <!-- Categories will be loaded dynamically -->
-                            </select>
-                            <div id="categoryError" class="hidden mt-1 text-sm text-rose-600"></div>
-                        </div>
-                        <div>
-                            <label for="brandId" class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
-                            <select id="brandId" name="brand_id"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <option value="">Select Brand</option>
-                                <!-- Brands will be loaded dynamically -->
-                            </select>
-                        </div>
+            <!-- Description -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Description</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="short_description" class="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
+                        <textarea name="short_description" id="short_description" rows="3"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">{{ old('short_description', $product->short_description) }}</textarea>
                     </div>
-                    <div class="mt-4">
-                        <label for="additionalCategories" class="block text-sm font-medium text-gray-700 mb-2">Additional Categories</label>
-                        <select id="additionalCategories" name="category_ids[]" multiple
-                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                            <!-- Additional categories will be loaded dynamically -->
+
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
+                        <textarea name="description" id="description" rows="6"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">{{ old('description', $product->description) }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100" id="media-section">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Product Images</h3>
+                
+                <!-- Main Image -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Main Image</label>
+                    <input type="hidden" name="main_image_id" id="main_image_id" value="{{ old('main_image_id', $product->main_image_id) }}">
+                    
+                    <div id="main-image-preview" class="mb-3">
+                         @if($product->main_image)
+                              <img src="{{ asset('storage/' . $product->main_image) }}" class="h-32 object-cover rounded border">
+                         @endif
+                    </div>
+                    
+                    <button type="button" onclick="openMediaModal('main')" 
+                        class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Select Main Image
+                    </button>
+                    @error('main_image_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
+                <!-- Gallery Images (For Simple Product / Product Level) -->
+                <!-- Only relevant if product is Simple, or if we treat Configurable parent images as generic gallery. 
+                     Usually Configurable products have a main image representation, but variants have specific images.
+                     We'll keep this for simple products mostly. -->
+                <div>
+                     <label class="block text-sm font-medium text-gray-700 mb-2">Gallery Images</label>
+                     <div id="gallery-container" class="grid grid-cols-3 md:grid-cols-5 gap-4 mb-3">
+                         @if($product->defaultVariant && $product->defaultVariant->images)
+                             @foreach($product->defaultVariant->images as $img)
+                                 @if(!$img->pivot->is_primary)
+                                     <div class="relative group border rounded-lg overflow-hidden h-24">
+                                        <img src="{{ asset('storage/' . $img->file_path) }}" class="w-full h-full object-cover">
+                                        <input type="hidden" name="gallery_image_ids[]" value="{{ $img->id }}">
+                                        <button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                 @endif
+                             @endforeach
+                         @endif
+                     </div>
+                     <button type="button" onclick="openMediaModal('gallery')" 
+                        class="bg-gray-50 text-gray-600 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Add Images
+                    </button>
+                </div>
+            </div>
+
+            <!-- Simple Product Fields -->
+            @if($product->product_type === 'simple')
+            <div id="simple-product-fields" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Pricing & Inventory</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                            <input type="number" name="price" id="price" value="{{ old('price', $product->price) }}" step="0.01" min="0" class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        @error('price') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">SKU <span class="text-red-500">*</span></label>
+                        <input type="text" name="sku" id="sku" value="{{ old('sku', $product->sku) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                        @error('sku') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label for="stock_quantity" class="block text-sm font-medium text-gray-700 mb-1">Stock Quantity <span class="text-red-500">*</span></label>
+                        <input type="number" name="stock_quantity" id="stock_quantity" value="{{ old('stock_quantity', $product->stock_quantity) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                         @error('stock_quantity') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                     <div>
+                        <label for="compare_price" class="block text-sm font-medium text-gray-700 mb-1">Compare at Price</label>
+                        <input type="number" name="compare_price" value="{{ old('compare_price', $product->compare_price) }}" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- CONFIGURABLE VARIANTS SECTION -->
+            @if($product->product_type === 'configurable')
+            <div id="configurable-product-fields" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Product Variants</h3>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 border">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Variant</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-32">SKU</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Price</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Stock</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-48">Images</th>
+                                <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16">Default</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="variants-container">
+                            <!-- PHP RENDERED VARIANTS -->
+                            @foreach($product->variants as $idx => $variant)
+                                @if(!$variant->is_default || $product->variants->count() > 1) 
+                                <!-- Skip the main "shell" default variant of configurable product if it exists and we have real variants, 
+                                     BUT usually configurable product structure in DB might differ.
+                                     Assuming $product->variants returns ALL variants including the generated ones.
+                                     The default variant for configurable parent (holding main SKU/price) might be separate or one of them.
+                                     Let's list ALL valid variants.
+                                     Usually `variants` relationship returns specific combinations. -->
+                                     
+                                <tr id="variant-row-{{ $idx }}">
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
+                                        {{-- Variant Name Construction --}}
+                                        @php
+                                            $name = $variant->attributes->map(function($a) {
+                                                return $a->pivot->attributeValue->value ?? ''; // Accessing value via pivot relation
+                                            })->join(' / ');
+                                        @endphp
+                                        {{ $name ?: 'Variant #' . ($idx + 1) }}
+                                        
+                                        <input type="hidden" name="variants[{{ $idx }}][id]" value="{{ $variant->id }}">
+                                        
+                                        {{-- We need to preserve attributes? Usually on Edit we don't change attribs of existing variant, just values --}}
+                                        {{-- But we need to send them back if we want to "sync"? 
+                                             Actually, ProductService update logic for existing variants might just check SKU/ID.
+                                             Let's look at ProductService::updateProduct:
+                                             It usually iterates variants.
+                                             If basic update, we just need ID.
+                                        --}}
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <input type="text" name="variants[{{ $idx }}][sku]" value="{{ $variant->sku }}" class="w-full px-2 py-1 border rounded text-sm">
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <input type="number" name="variants[{{ $idx }}][price]" value="{{ $variant->price }}" step="0.01" class="w-full px-2 py-1 border rounded text-sm">
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <input type="number" name="variants[{{ $idx }}][stock_quantity]" value="{{ $variant->stock_quantity }}" class="w-full px-2 py-1 border rounded text-sm">
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <div id="variant-images-{{ $idx }}" class="flex gap-1 flex-wrap">
+                                            {{-- Main Image --}}
+                                            @if($variant->primaryImage)
+                                                <div class="relative w-10 h-10 variant-main-thumb border-2 border-blue-500">
+                                                    <img src="{{ asset('storage/' . $variant->primaryImage->media->file_path) }}" class="w-full h-full object-cover">
+                                                </div>
+                                            @endif
+                                            {{-- Gallery --}}
+                                            @foreach($variant->images as $vImg)
+                                                <div class="relative w-10 h-10 border border-gray-200">
+                                                    <img src="{{ asset('storage/' . $vImg->file_path) }}" class="w-full h-full object-cover">
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <button type="button" onclick="openVariantMediaModal({{ $idx }})" class="text-xs text-blue-600 hover:text-blue-800 mt-1">Manage Images</button>
+                                        
+                                        {{-- Hidden Inputs for Images --}}
+                                        <input type="hidden" name="variants[{{ $idx }}][main_image_id]" id="variant-main-input-{{ $idx }}" value="{{ $variant->primaryImage ? $variant->primaryImage->media_id : '' }}">
+                                        <div id="variant-gallery-inputs-{{ $idx }}">
+                                            @foreach($variant->images as $vImg)
+                                                <input type="hidden" name="variants[{{ $idx }}][gallery_image_ids][]" value="{{ $vImg->id }}">
+                                            @endforeach
+                                        </div>
+                                    </td>
+                                    <td class="px-3 py-2 text-center">
+                                       <input type="radio" name="default_variant_index" value="{{ $idx }}" {{ $variant->is_default ? 'checked' : '' }} onclick="document.querySelectorAll('.is-default-input').forEach(el => el.value=0); document.getElementById('is-default-{{ $idx }}').value=1;">
+                                       <input type="hidden" id="is-default-{{ $idx }}" name="variants[{{ $idx }}][is_default]" value="{{ $variant->is_default ? '1' : '0' }}" class="is-default-input">
+                                    </td>
+                                </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+            <!-- Dynamic Specifications -->
+            <div id="specifications-wrapper" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Specifications</h3>
+                <div id="specifications-container" class="space-y-6">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Publish Status (Same as above) -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Publish</h3>
+                <div class="space-y-4">
+                     <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="status" id="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="active" {{ old('status', $product->status) == 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="draft" {{ old('status', $product->status) == 'draft' ? 'selected' : '' }}>Draft</option>
+                            <option value="pending" {{ old('status', $product->status) == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="inactive" {{ old('status', $product->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="is_featured" id="is_featured" value="1" {{ old('is_featured', $product->is_featured) ? 'checked' : '' }}
+                            class="rounded text-blue-500 focus:ring-blue-500 h-4 w-4">
+                        <label for="is_featured" class="text-sm text-gray-700">Featured Product</label>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="is_new" id="is_new" value="1" {{ old('is_new', $product->is_new) ? 'checked' : '' }}
+                            class="rounded text-blue-500 focus:ring-blue-500 h-4 w-4">
+                        <label for="is_new" class="text-sm text-gray-700">New Arrival</label>
+                    </div>
+
+                     <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="is_bestseller" id="is_bestseller" value="1" {{ old('is_bestseller', $product->is_bestseller) ? 'checked' : '' }}
+                            class="rounded text-blue-500 focus:ring-blue-500 h-4 w-4">
+                        <label for="is_bestseller" class="text-sm text-gray-700">Bestseller</label>
+                    </div>
+
+                    <div class="pt-4 border-t">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                            Update Product
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organization -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Organization</h3>
+                
+                <div class="space-y-4">
+                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
+                        <input type="text" value="{{ ucfirst($product->product_type) }}" disabled class="w-full px-4 py-2 border border-gray-200 bg-gray-100 rounded-lg text-gray-500 cursor-not-allowed">
+                        <input type="hidden" name="product_type" value="{{ $product->product_type }}">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Main Category</label>
+                         <input type="text" value="{{ $product->mainCategory ? $product->mainCategory->name : 'None' }}" disabled class="w-full px-4 py-2 border border-gray-200 bg-gray-100 rounded-lg text-gray-500 cursor-not-allowed">
+                         <input type="hidden" name="main_category_id" id="main_category_id" value="{{ $product->main_category_id }}">
+                    </div>
+
+                    <div>
+                        <label for="brand_id" class="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                        <select name="brand_id" id="brand_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select Brand</option>
+                            @foreach($brands as $brand)
+                                <option value="{{ $brand->id }}" {{ old('brand_id', $product->brand_id) == $brand->id ? 'selected' : '' }}>{{ $brand->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
-
-                <!-- Product Images -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Product Images</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <!-- Main Image -->
-                        <div id="simpleProductImageSection">
-                            <h4 class="text-md font-semibold text-gray-700 mb-3">Main Product Image *</h4>
-                            <div class="space-y-4">
-                                <div id="mainImagePreview"
-                                    class="w-full h-64 bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition"
-                                    onclick="openMediaPicker('main')">
-                                    <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-2"></i>
-                                    <span class="text-gray-500">Click to upload main image</span>
-                                    <span class="text-xs text-gray-400 mt-1">Recommended: 800x800px, PNG/JPG</span>
-                                </div>
-                                <input type="hidden" id="mainImageId" name="main_image_id">
-                                <div id="mainImageError" class="hidden mt-2 text-sm text-rose-600"></div>
-                            </div>
-                        </div>
-
-                        <!-- Gallery Images -->
-                        <div id="simpleGallerySection">
-                            <h4 class="text-md font-semibold text-gray-700 mb-3">Gallery Images</h4>
-                            <div class="space-y-4">
-                                <div id="galleryPreview"
-                                    class="grid grid-cols-3 gap-3 mb-3 min-h-[100px] p-3 border border-gray-200 rounded-xl">
-                                    <div class="col-span-3 text-center text-gray-500 text-sm py-8">
-                                        No gallery images selected
-                                    </div>
-                                </div>
-                                <button type="button" onclick="openMediaPicker('gallery')" class="btn-secondary w-full">
-                                    <i class="fas fa-plus mr-2"></i>Add Gallery Images
-                                </button>
-                                <input type="hidden" id="galleryImageIds" name="gallery_image_ids[]">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Simple Product Fields -->
-                <div id="simpleProductFields" class="hidden">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Pricing & Inventory</h3>
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div>
-                            <label for="simpleSku" class="block text-sm font-medium text-gray-700 mb-2">SKU *</label>
-                            <input type="text" id="simpleSku" name="sku" required
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="PRODUCT-SKU-001">
-                            <div id="skuError" class="hidden mt-1 text-sm text-rose-600"></div>
-                        </div>
-                        <div>
-                            <label for="simplePrice" class="block text-sm font-medium text-gray-700 mb-2">Price *</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">₹</span>
-                                </div>
-                                <input type="number" id="simplePrice" name="price" step="0.01" min="0" required
-                                    class="pl-8 w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    placeholder="0.00">
-                            </div>
-                        </div>
-                        <div>
-                            <label for="simpleComparePrice" class="block text-sm font-medium text-gray-700 mb-2">Compare Price</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">₹</span>
-                                </div>
-                                <input type="number" id="simpleComparePrice" name="compare_price" step="0.01" min="0"
-                                    class="pl-8 w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    placeholder="0.00">
-                            </div>
-                        </div>
-                        <div>
-                            <label for="simpleCostPrice" class="block text-sm font-medium text-gray-700 mb-2">Cost Price</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">₹</span>
-                                </div>
-                                <input type="number" id="simpleCostPrice" name="cost_price" step="0.01" min="0"
-                                    class="pl-8 w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    placeholder="0.00">
-                            </div>
-                        </div>
-                        <div>
-                            <label for="simpleStock" class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity *</label>
-                            <input type="number" id="simpleStock" name="stock_quantity" min="0" required
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="0">
-                        </div>
-                        <div>
-                            <label for="simpleStockStatus" class="block text-sm font-medium text-gray-700 mb-2">Stock Status</label>
-                            <select id="simpleStockStatus" name="stock_status"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <option value="in_stock">In Stock</option>
-                                <option value="out_of_stock">Out of Stock</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Configurable Product Fields -->
-                <div id="configurableProductFields" class="hidden">
-                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-                        <div class="flex items-center">
-                            <i class="fas fa-info-circle text-blue-500 text-xl mr-3"></i>
-                            <div>
-                                <h4 class="font-semibold text-blue-800">Configurable Product</h4>
-                                <p class="text-sm text-blue-600 mt-1">Configure variants in the "Product Variants" section below</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Variants Section -->
-                <div id="variantsSection" class="hidden">
-                    <div class="border-t pt-8">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-6">Product Variants</h3>
-
-                        <!-- Attribute Selection -->
-                        <div id="attributeSelection" class="space-y-6 mb-8">
-                            <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                                Select a category to load attributes for variants
-                            </div>
-                        </div>
-
-                        <!-- Generate Variants Button -->
-                        <div class="mb-8">
-                            <button type="button" id="generateVariantsBtn" onclick="generateVariants()"
-                                class="btn-primary px-6 py-3 rounded-lg font-medium hidden">
-                                <i class="fas fa-bolt mr-2"></i>Generate Variants
-                            </button>
-                        </div>
-
-                        <!-- Variants Table -->
-                        <div id="variantsContainer" class="hidden">
-                            <div class="mb-6 flex justify-between items-center">
-                                <h4 class="text-lg font-semibold text-gray-700">Generated Variants</h4>
-                                <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full"
-                                    id="variantsCount">0 variants</span>
-                            </div>
-
-                            <div class="overflow-x-auto border border-gray-200 rounded-xl">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variant</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Compare Price</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost Price</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Images</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="variantsTableBody" class="bg-white divide-y divide-gray-200">
-                                        <!-- Variants will be generated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tax & Pricing -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Tax & Pricing</h3>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                            <label for="taxClassId" class="block text-sm font-medium text-gray-700 mb-2">Tax Class</label>
-                            <select id="taxClassId" name="tax_class_id"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <option value="">Select Tax Class</option>
-                                <!-- Tax classes will be loaded dynamically -->
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Manage Stock</label>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="manageStock" name="manage_stock" checked
-                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                <label for="manageStock" class="ml-2 text-sm text-gray-700">
-                                    Yes, track inventory for this product
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Description -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Description</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="shortDescription" class="block text-sm font-medium text-gray-700 mb-2">Short Description</label>
-                            <textarea id="shortDescription" name="short_description" rows="3"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="Brief product description for listings"></textarea>
-                        </div>
-                        <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Long Description *</label>
-                            <textarea id="description" name="description" rows="6" required
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="Detailed product description with features, specifications, etc."></textarea>
-                            <div id="descriptionError" class="hidden mt-1 text-sm text-rose-600"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Specifications -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Specifications</h3>
-                    <div id="specificationsContainer" class="space-y-6">
-                        <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                            Select a category to load specifications
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tags -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Product Tags</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="tags" class="block text-sm font-medium text-gray-700 mb-2">Select Tags</label>
-                            <select id="tags" name="tag_ids[]" multiple
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <!-- Tags will be loaded dynamically -->
-                            </select>
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Type to search or create new tags
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SEO Settings -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">SEO Settings</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="metaTitle" class="block text-sm font-medium text-gray-700 mb-2">Meta Title</label>
-                            <input type="text" id="metaTitle" name="meta_title"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="Meta title for SEO (max 60 characters)">
-                        </div>
-                        <div>
-                            <label for="metaDescription" class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
-                            <textarea id="metaDescription" name="meta_description" rows="2"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="Meta description for SEO (max 160 characters)"></textarea>
-                        </div>
-                        <div>
-                            <label for="metaKeywords" class="block text-sm font-medium text-gray-700 mb-2">Meta Keywords</label>
-                            <input type="text" id="metaKeywords" name="meta_keywords"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="keyword1, keyword2, keyword3">
-                        </div>
-                        <div>
-                            <label for="canonicalUrl" class="block text-sm font-medium text-gray-700 mb-2">Canonical URL</label>
-                            <input type="text" id="canonicalUrl" name="canonical_url"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="https://example.com/product-url">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dimensions & Weight -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Dimensions & Weight</h3>
-                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <div>
-                            <label for="weight" class="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
-                            <input type="number" id="weight" name="weight" step="0.01" min="0"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="0.00">
-                        </div>
-                        <div>
-                            <label for="length" class="block text-sm font-medium text-gray-700 mb-2">Length (cm)</label>
-                            <input type="number" id="length" name="length" step="0.01" min="0"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="0.00">
-                        </div>
-                        <div>
-                            <label for="width" class="block text-sm font-medium text-gray-700 mb-2">Width (cm)</label>
-                            <input type="number" id="width" name="width" step="0.01" min="0"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="0.00">
-                        </div>
-                        <div>
-                            <label for="height" class="block text-sm font-medium text-gray-700 mb-2">Height (cm)</label>
-                            <input type="number" id="height" name="height" step="0.01" min="0"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="0.00">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Additional Settings -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Additional Settings</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-4">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="isFeatured" name="is_featured"
-                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                <label for="isFeatured" class="ml-2 text-sm text-gray-700">
-                                    Featured Product
-                                </label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="isNew" name="is_new"
-                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                <label for="isNew" class="ml-2 text-sm text-gray-700">
-                                    Mark as New
-                                </label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="isBestseller" name="is_bestseller"
-                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                <label for="isBestseller" class="ml-2 text-sm text-gray-700">
-                                    Mark as Bestseller
-                                </label>
-                            </div>
-                        </div>
-                        <div>
-                            <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                            <select id="status" name="status" required
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                                <option value="draft">Draft</option>
-                                <option value="pending">Pending Review</option>
-                                <option value="active">Published</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end space-x-4 border-t pt-6">
-                    <a href="{{ route('admin.products.index') }}" class="btn-secondary px-6 py-3">Cancel</a>
-                    <button type="button" id="deleteBtn" class="btn-danger px-6 py-3 hidden">
-                        <i class="fas fa-trash mr-2"></i>Delete
-                    </button>
-                    <button type="submit" id="submitBtn" class="btn-primary px-6 py-3">
-                        <i class="fas fa-save mr-2"></i>Update Product
-                    </button>
-                </div>
             </div>
-        </form>
-    </div>
 
-    <!-- Media Library Modal -->
-    <div id="mediaLibraryModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
-            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800" id="mediaModalTitle">Select Image</h3>
-                <button onclick="closeMediaLibrary()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 120px)">
-                <div class="mb-4">
-                    <div class="relative" style="width: 300px;">
-                        <input type="text" id="mediaSearchInput" placeholder="Search media..."
-                            class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            <!-- Shipping -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Shipping</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                        <input type="number" name="weight" id="weight" value="{{ old('weight', $product->weight) }}" step="0.01"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-                </div>
+                    
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                             <label class="block text-xs text-gray-500">Length</label>
+                             <input type="number" name="length" value="{{ old('length', $product->length) }}" placeholder="cm" class="w-full px-2 py-1 border rounded">
+                        </div>
+                        <div>
+                             <label class="block text-xs text-gray-500">Width</label>
+                             <input type="number" name="width" value="{{ old('width', $product->width) }}" placeholder="cm" class="w-full px-2 py-1 border rounded">
+                        </div>
+                        <div>
+                             <label class="block text-xs text-gray-500">Height</label>
+                             <input type="number" name="height" value="{{ old('height', $product->height) }}" placeholder="cm" class="w-full px-2 py-1 border rounded">
+                        </div>
+                    </div>
 
-                <div id="mediaGrid"
-                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto"
-                    style="max-height: 60vh;">
-                    <!-- Media items will be loaded here -->
-                </div>
-
-                <div class="flex justify-end space-x-4 mt-6 pt-6 border-t">
-                    <button type="button" onclick="closeMediaLibrary()" class="btn-secondary">Cancel</button>
-                    <button type="button" onclick="confirmMediaSelection()" class="btn-primary">
-                        <i class="fas fa-check mr-2"></i>Select
-                    </button>
-                </div>
+                     <div>
+                        <label for="tax_class_id" class="block text-sm font-medium text-gray-700 mb-1">Tax Class</label>
+                        <select name="tax_class_id" id="tax_class_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">None</option>
+                            @foreach($taxClasses as $tax)
+                                <option value="{{ $tax->id }}" {{ old('tax_class_id', $product->tax_class_id) == $tax->id ? 'selected' : '' }}>{{ $tax->name }} ({{ $tax->rate }}%)</option>
+                            @endforeach
+                        </select>
+                    </div>
+                 </div>
             </div>
         </div>
     </div>
+</form>
 
-    <!-- Variant Image Modal -->
-    <div id="variantImageModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800" id="variantModalTitle">Select Variant Images</h3>
-                <button onclick="closeVariantImageModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+<!-- Media Modal (Same as Create) -->
+<div id="media-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeMediaModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Select Media</h3>
+                    <button type="button" onclick="closeMediaModal()" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <span class="sr-only">Close</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="flex flex-col md:flex-row justify-between mb-4 space-y-2 md:space-y-0">
+                    <input type="text" id="media-search" placeholder="Search files..." class="border rounded px-3 py-2 w-full md:w-1/3">
+                     <div class="flex items-center space-x-2">
+                        <label class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow transition">
+                            <span>Upload New</span>
+                            <input type="file" id="media-upload" class="hidden" multiple onchange="handleFileUpload(this)">
+                        </label>
+                    </div>
+                </div>
+
+                <div id="media-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 max-h-96 overflow-y-auto p-2 border rounded">
+                    <!-- Loaded dynamically -->
+                    <div class="col-span-full text-center py-10 text-gray-500">Loading media...</div>
+                </div>
+
+                <div id="media-pagination" class="mt-4 flex justify-between items-center">
+                    <!-- Pagination links -->
+                </div>
             </div>
-            <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 120px)">
-                <div class="mb-4">
-                    <div class="relative" style="width: 300px;">
-                        <input type="text" id="variantMediaSearchInput" placeholder="Search media..."
-                            class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                    </div>
-                </div>
-
-                <div id="variantMediaGrid"
-                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto mb-6"
-                    style="max-height: 50vh;">
-                    <!-- Media items will be loaded here -->
-                </div>
-
-                <!-- Gallery Images Selection for Variants -->
-                <div class="mt-6 pt-6 border-t">
-                    <h4 class="text-md font-semibold text-gray-700 mb-3">Gallery Images (Optional)</h4>
-                    <div id="variantGalleryPreview"
-                        class="grid grid-cols-4 gap-3 mb-3 min-h-[80px] p-3 border border-gray-200 rounded-xl">
-                        <div class="col-span-4 text-center text-gray-500 text-sm py-4">
-                            No gallery images selected
-                        </div>
-                    </div>
-                    <button type="button" onclick="openVariantGalleryPicker()" class="btn-secondary w-full mb-4">
-                        <i class="fas fa-plus mr-2"></i>Add Gallery Images
-                    </button>
-                </div>
-
-                <div class="flex justify-end space-x-4 mt-6 pt-6 border-t">
-                    <button type="button" onclick="closeVariantImageModal()" class="btn-secondary">Cancel</button>
-                    <button type="button" onclick="confirmVariantImages()" class="btn-primary">
-                        <i class="fas fa-check mr-2"></i>Select Images
-                    </button>
-                </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="media-select-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">
+                    Select
+                </button>
+                <button type="button" onclick="closeMediaModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
+</div>
+
 @endsection
 
-@push('styles')
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <style>
-        .select2-container--default .select2-selection--multiple {
-            border: 1px solid #d1d5db !important;
-            border-radius: 0.5rem !important;
-            padding: 0.5rem !important;
-        }
-        .select2-container--default.select2-container--focus .select2-selection--multiple {
-            border-color: #6366f1 !important;
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
-        }
-        .select2-container .select2-search--inline .select2-search__field {
-            margin-top: 0 !important;
-        }
-        .specification-input {
-            min-width: 200px;
-        }
-        .variant-input {
-            min-width: 120px;
-        }
-    </style>
-@endpush
-
 @push('scripts')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        // Axios instance
-        const axiosInstance = axios.create({
-            baseURL: '{{ url('') }}/api/admin',
-            headers: {
-                'Authorization': `Bearer ${window.ADMIN_API_TOKEN || "{{ session('admin_api_token') }}"}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
-
-        // Global variables
-        let selectedMediaType = null;
-        let selectedMediaId = null;
-        let selectedMediaUrl = null;
-        let selectedGalleryImages = [];
-        let selectedVariantGalleryImages = [];
-        let currentVariantForImages = null;
-        let variantImages = {};
-        let categoryAttributes = [];
-        let selectedAttributes = {};
-        let generatedVariants = [];
-        let currentCategoryId = null;
-        let specificationsData = {};
-    const pathParts = window.location.pathname.split('/');
-
-    // /admin/products/26/edit
-    const productId = pathParts[pathParts.indexOf('products') + 1];        let productData = null;
-
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Product edit page loaded for product ID:', productId);
-
-            // Initialize form
-            initProductForm();
-
-            // Load product data
-            loadProductData();
-
-            // Setup event listeners
-            setupEventListeners();
-
-            // Show delete button
-            document.getElementById('deleteBtn').classList.remove('hidden');
-
-            // Delete button event
-            document.getElementById('deleteBtn').addEventListener('click', deleteProduct);
-        });
-
-        // Load product data from API
-        async function loadProductData() {
-            try {
-                const response = await axiosInstance.get(`/products/${productId}`);
-
-                if (response.data.success) {
-                    productData = response.data.data;
-                    console.log('Product data loaded:', productData);
-
-                    // Populate form fields
-                    populateForm(productData);
-
-                    // Load dropdown data
-                    await loadDropdownData();
-
-                    // Load images
-                    loadProductImages(productData);
-
-                    // Load tags
-                    loadProductTags(productData);
-
-                    // Load variants if configurable
-                    if (productData.product_type === 'configurable') {
-                        loadProductVariants(productData.variants);
-                    }
-
-                } else {
-                    toastr.error('Failed to load product data');
-                }
-            } catch (error) {
-                console.error('Error loading product data:', error);
-                toastr.error('Failed to load product data');
-            }
-        }
-
-        // Populate form with data
-        function populateForm(data) {
-            // Basic information
-            document.getElementById('productName').value = data.name || '';
-            document.getElementById('productSlug').value = data.slug || '';
-            document.getElementById('productCode').value = data.product_code || '';
-            document.getElementById('shortDescription').value = data.short_description || '';
-            document.getElementById('description').value = data.description || '';
-            document.getElementById('metaTitle').value = data.meta_title || '';
-            document.getElementById('metaDescription').value = data.meta_description || '';
-            document.getElementById('metaKeywords').value = data.meta_keywords || '';
-            document.getElementById('canonicalUrl').value = data.canonical_url || '';
-            document.getElementById('weight').value = data.weight || '';
-            document.getElementById('length').value = data.dimensions?.length || '';
-            document.getElementById('width').value = data.dimensions?.width || '';
-            document.getElementById('height').value = data.dimensions?.height || '';
-            document.getElementById('status').value = data.status || 'draft';
-            document.getElementById('isFeatured').checked = data.is_featured || false;
-            document.getElementById('isNew').checked = data.is_new || false;
-            document.getElementById('isBestseller').checked = data.is_bestseller || false;
-            document.getElementById('manageStock').checked = true; // Assuming stock is managed
-
-            // Set product type
-            const productType = data.product_type || 'simple';
-            document.querySelector(`input[name="product_type"][value="${productType}"]`).checked = true;
-            selectProductType(productType);
-
-            // Store product specifications for later use
-            if (data.specifications) {
-                window.productSpecifications = data.specifications;
-            }
-        }
-
-        // Load dropdown data (categories, brands, tax classes)
-        async function loadDropdownData() {
-            try {
-                const [categories, brands, taxClasses, tags] = await Promise.all([
-                    loadCategories(),
-                    loadBrands(),
-                    loadTaxClasses(),
-                    loadTags()
-                ]);
-
-                // After dropdowns are loaded, set selected values
-                setSelectedDropdownValues();
-
-            } catch (error) {
-                console.error('Error loading dropdown data:', error);
-                toastr.error('Failed to load dropdown data');
-            }
-        }
-
-        // Load categories
-        async function loadCategories() {
-            try {
-                const response = await axiosInstance.get('/categories/dropdown');
-                if (response.data.success) {
-                    const categories = response.data.data;
-                    const select = document.getElementById('categoryId');
-                    const additionalSelect = document.getElementById('additionalCategories');
-
-                    select.innerHTML = '<option value="">Select Category</option>';
-
-                    // Clear additional categories select2
-                    $('#additionalCategories').empty();
-                    $('#additionalCategories').append('<option value="">Select Additional Categories</option>');
-
-                    function addOptions(categoryList, level = 0, targetElement, isSelect2 = false) {
-                        categoryList.forEach(category => {
-                            const prefix = '— '.repeat(level);
-                            if (isSelect2) {
-                                const option = new Option(prefix + category.name, category.id, false, false);
-                                targetElement.append(option);
-                            } else {
-                                const option = document.createElement('option');
-                                option.value = category.id;
-                                option.textContent = prefix + category.name;
-                                targetElement.appendChild(option);
-                            }
-
-                            if (category.children && category.children.length > 0) {
-                                addOptions(category.children, level + 1, targetElement, isSelect2);
-                            }
-                        });
-                    }
-
-                    addOptions(categories, 0, select);
-                    addOptions(categories, 0, $('#additionalCategories'), true);
-
-                }
-            } catch (error) {
-                console.error('Error loading categories:', error);
-                toastr.error('Failed to load categories');
-            }
-        }
-
-        // Load brands
-        async function loadBrands() {
-            try {
-                const response = await axiosInstance.get('/brands/dropdown');
-                if (response.data.success) {
-                    const brands = response.data.data;
-                    const select = document.getElementById('brandId');
-                    select.innerHTML = '<option value="">Select Brand</option>';
-
-                    brands.forEach(brand => {
-                        const option = document.createElement('option');
-                        option.value = brand.id;
-                        option.textContent = brand.name;
-                        select.appendChild(option);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading brands:', error);
-                toastr.error('Failed to load brands');
-            }
-        }
-
-        // Load tax classes
-        async function loadTaxClasses() {
-            try {
-                const response = await axiosInstance.get('/tax-classes/dropdown');
-                if (response.data.success) {
-                    const taxClasses = response.data.data;
-                    const select = document.getElementById('taxClassId');
-                    select.innerHTML = '<option value="">Select Tax Class</option>';
-
-                    taxClasses.forEach(taxClass => {
-                        const option = document.createElement('option');
-                        option.value = taxClass.id;
-                        option.textContent = `${taxClass.name} (${taxClass.rate}%)`;
-                        select.appendChild(option);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading tax classes:', error);
-            }
-        }
-
-        // Load tags
-        async function loadTags() {
-            try {
-                const response = await axiosInstance.get('/tags/dropdown');
-                if (response.data.success) {
-                    const tags = response.data.data;
-                    const select = $('#tags');
-
-                    select.empty();
-                    tags.forEach(tag => {
-                        const option = new Option(tag.name, tag.id, false, false);
-                        select.append(option);
-                    });
-
-                    // Trigger change to refresh Select2
-                    select.trigger('change');
-                }
-            } catch (error) {
-                console.error('Error loading tags:', error);
-            }
-        }
-
-        // Set selected dropdown values after they're loaded
-        function setSelectedDropdownValues() {
-            if (!productData) return;
-
-            // Set main category
-            if (productData.main_category) {
-                document.getElementById('categoryId').value = productData.main_category.id;
-
-                // Trigger change to load specifications and attributes
-                setTimeout(() => {
-                    document.getElementById('categoryId').dispatchEvent(new Event('change'));
-                }, 500);
-            }
-
-            // Set brand
-            if (productData.brand) {
-                document.getElementById('brandId').value = productData.brand.id;
-            }
-
-            // Set additional categories
-            if (productData.categories && productData.categories.length > 0) {
-                const additionalIds = productData.categories
-                    .filter(cat => cat.id !== (productData.main_category?.id))
-                    .map(cat => cat.id);
-
-                if (additionalIds.length > 0) {
-                    $('#additionalCategories').val(additionalIds).trigger('change');
-                }
-            }
-
-            // Set tax class
-            if (productData.tax_class) {
-                document.getElementById('taxClassId').value = productData.tax_class.id;
-            }
-
-            // Set tags
-            if (productData.tags && productData.tags.length > 0) {
-                const tagIds = productData.tags.map(tag => tag.id);
-                $('#tags').val(tagIds).trigger('change');
-            }
-
-            // Update UI
-            updateProductTypeUI();
-        }
-
-        // Load product images
-        function loadProductImages(data) {
-            // Main image
-            if (data.default_variant?.images) {
-                const mainImage = data.default_variant.images.find(img => img.is_primary);
-                if (mainImage) {
-                    document.getElementById('mainImageId').value = mainImage.media_id || mainImage.id;
-                    document.getElementById('mainImagePreview').innerHTML = `
-                        <div class="relative w-full h-full">
-                            <img src="${mainImage.url}" alt="Main image" class="w-full h-full object-cover rounded-xl">
-                            <button type="button" onclick="removeMainImage()"
-                                    class="absolute top-2 right-2 w-8 h-8 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors">
-                                <i class="fas fa-times text-sm"></i>
-                            </button>
-                        </div>
-                    `;
-                }
-
-                // Gallery images
-                const galleryImages = data.default_variant.images.filter(img => !img.is_primary);
-                if (galleryImages.length > 0) {
-                    const galleryPreview = document.getElementById('galleryPreview');
-                    galleryPreview.innerHTML = '';
-
-                    selectedGalleryImages = [];
-
-                    galleryImages.forEach((img, index) => {
-                        selectedGalleryImages.push({
-                            id: img.media_id || img.id,
-                            url: img.url
-                        });
-
-                        const imgDiv = document.createElement('div');
-                        imgDiv.className = 'relative';
-                        imgDiv.innerHTML = `
-                            <div class="relative h-24">
-                                <img src="${img.url}" alt="Gallery image" class="w-full h-full object-cover rounded-lg">
-                                <button type="button" onclick="removeGalleryImage(${index})"
-                                        class="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-rose-600">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        `;
-                        galleryPreview.appendChild(imgDiv);
-                    });
-
-                    // Update hidden inputs
-                    const galleryIds = selectedGalleryImages.map(img => img.id);
-                    const container = document.getElementById('simpleGallerySection');
-
-                    // Remove old inputs
-                    container.querySelectorAll('input[name="gallery_image_ids[]"]').forEach(el => el.remove());
-
-                    // Add new inputs
-                    galleryIds.forEach(id => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'gallery_image_ids[]';
-                        input.value = id;
-                        container.appendChild(input);
-                    });
-                }
-            }
-        }
-
-        // Load product tags
-        function loadProductTags(data) {
-            if (data.tags && data.tags.length > 0) {
-                const tagIds = data.tags.map(tag => tag.id);
-                $('#tags').val(tagIds).trigger('change');
-            }
-        }
-
-        // Load product variants
-        function loadProductVariants(variants) {
-            if (variants && variants.length > 0) {
-                generatedVariants = variants.map(variant => ({
-                    id: variant.id,
-                    sku: variant.sku,
-                    price: variant.price,
-                    compare_price: variant.compare_price,
-                    cost_price: variant.cost_price,
-                    stock_quantity: variant.stock_quantity,
-                    stock_status: variant.stock_status,
-                    status: variant.status,
-                    is_default: variant.is_default,
-                    attributes: variant.attributes,
-                    combination: variant.attributes.map(attr => ({
-                        attribute_id: attr.attribute_id,
-                        attribute_name: attr.attribute_name,
-                        value_id: attr.attribute_value_id,
-                        value: attr.attribute_value
-                    })),
-                    combination_display: variant.combination_display,
-                    images: variant.images
-                }));
-
-                // Store variant images
-                generatedVariants.forEach(variant => {
-                    if (variant.images && variant.images.length > 0) {
-                        const mainImage = variant.images.find(img => img.is_primary);
-                        const galleryImages = variant.images.filter(img => !img.is_primary);
-
-                        variantImages[`variant-${variant.id}`] = {
-                            main_id: mainImage ? (mainImage.media_id || mainImage.id) : null,
-                            main_url: mainImage ? mainImage.url : null,
-                            gallery_ids: galleryImages.map(img => img.media_id || img.id),
-                            gallery_urls: galleryImages.map(img => img.url)
-                        };
-                    }
-                });
-
-                // Display variants
-                displayGeneratedVariants(generatedVariants);
-            }
-        }
-
-        // Initialize product form
-        function initProductForm() {
-            // Auto-generate slug from product name
-            document.getElementById('productName').addEventListener('blur', function() {
-                const name = this.value.trim();
-                if (name) {
-                    const slugInput = document.getElementById('productSlug');
-                    if (!slugInput.value) {
-                        const slug = name.toLowerCase()
-                            .replace(/[^a-z0-9 -]/g, '')
-                            .replace(/\s+/g, '-')
-                            .replace(/-+/g, '-')
-                            .substring(0, 255);
-                        slugInput.value = slug;
-                    }
-                }
-            });
-
-            // Auto-generate product code from name
-            document.getElementById('productName').addEventListener('input', function() {
-                const name = this.value.trim();
-                if (name) {
-                    const codeInput = document.getElementById('productCode');
-                    if (!codeInput.value) {
-                        const code = name.toUpperCase()
-                            .replace(/[^A-Z0-9]/g, '')
-                            .substring(0, 20);
-                        codeInput.value = 'PROD-' + code;
-                    }
-                }
-            });
-
-            // Product type option click
-            document.querySelectorAll('.product-type-option').forEach(option => {
-                option.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const radio = this.querySelector('input[type="radio"]');
-                    if (!radio.checked) {
-                        radio.checked = true;
-                        updateProductTypeUI();
-                        selectProductType(radio.value);
-                    }
-                });
-            });
-
-            // Also add change listeners to radio buttons directly
-            document.querySelectorAll('input[name="product_type"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    updateProductTypeUI();
-                    selectProductType(this.value);
-                });
-            });
-
-            // Initialize Select2 for tags
-            $('#tags').select2({
-                tags: true,
-                placeholder: 'Select or create tags',
-                allowClear: true,
-                multiple: true,
-                width: '100%',
-                createTag: function(params) {
-                    return {
-                        id: params.term,
-                        text: params.term,
-                        newTag: true
-                    };
-                }
-            });
-
-            // Initialize Select2 for additional categories
-            $('#additionalCategories').select2({
-                placeholder: 'Select additional categories',
-                allowClear: true,
-                multiple: true,
-                width: '100%'
-            });
-
-            // Auto-generate SKU for simple product
-            document.getElementById('productName').addEventListener('blur', function() {
-                const name = this.value.trim();
-                if (name) {
-                    const skuInput = document.getElementById('simpleSku');
-                    if (!skuInput.value) {
-                        const sku = name.toUpperCase()
-                            .replace(/[^A-Z0-9]/g, '')
-                            .substring(0, 20);
-                        skuInput.value = sku + '-001';
-                    }
-                }
-            });
-        }
-
-        // Update product type UI
-        function updateProductTypeUI() {
-            const selectedRadio = document.querySelector('input[name="product_type"]:checked');
-            if (selectedRadio) {
-                document.querySelectorAll('.product-type-option').forEach(opt => {
-                    opt.querySelector('div').classList.remove('border-indigo-500', 'text-indigo-600');
-                    opt.querySelector('div').classList.add('border-gray-200', 'text-gray-400');
-                    opt.querySelector('i').classList.remove('text-indigo-600');
-                    opt.querySelector('i').classList.add('text-gray-400');
-                });
-
-                const parentOption = selectedRadio.closest('.product-type-option');
-                if (parentOption) {
-                    parentOption.querySelector('div').classList.remove('border-gray-200', 'text-gray-400');
-                    parentOption.querySelector('div').classList.add('border-indigo-500', 'text-indigo-600');
-                    parentOption.querySelector('i').classList.remove('text-gray-400');
-                    parentOption.querySelector('i').classList.add('text-indigo-600');
-                }
-            }
-        }
-
-        // Select product type
-        function selectProductType(type) {
-            console.log('Selecting product type:', type);
-
-            if (type === 'simple') {
-                // Show simple product fields
-                document.getElementById('simpleProductFields').classList.remove('hidden');
-                document.getElementById('simpleProductImageSection').classList.remove('hidden');
-                document.getElementById('simpleGallerySection').classList.remove('hidden');
-
-                // Hide configurable product fields
-                document.getElementById('configurableProductFields').classList.add('hidden');
-                document.getElementById('variantsSection').classList.add('hidden');
-
-                // Enable simple fields
-                setContainerState('simpleProductFields', true);
-
-            } else if (type === 'configurable') {
-                // Hide simple product fields
-                document.getElementById('simpleProductFields').classList.add('hidden');
-                document.getElementById('simpleProductImageSection').classList.add('hidden');
-                document.getElementById('simpleGallerySection').classList.add('hidden');
-
-                // Show configurable product fields
-                document.getElementById('configurableProductFields').classList.remove('hidden');
-
-                // Disable simple fields
-                setContainerState('simpleProductFields', false);
-
-                // Show variants section if category is selected
-                if (currentCategoryId) {
-                    document.getElementById('variantsSection').classList.remove('hidden');
-                } else {
-                    document.getElementById('variantsSection').classList.remove('hidden');
-                    document.getElementById('attributeSelection').innerHTML = `
-                        <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                            Please select a category first to load attributes for variants
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Category change event
-            document.getElementById('categoryId').addEventListener('change', async function() {
-                const categoryId = this.value;
-                currentCategoryId = categoryId;
-
-                if (categoryId) {
-                    // Load category specifications
-                    await loadCategorySpecifications(categoryId);
-
-                    // Load category attributes for variants
-                    await loadCategoryAttributes(categoryId);
-                } else {
-                    // Clear specifications and attributes
-                    document.getElementById('specificationsContainer').innerHTML = `
-                        <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                            Select a category to load specifications
-                        </div>
-                    `;
-
-                    document.getElementById('attributeSelection').innerHTML = `
-                        <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                            Select a category to load attributes for variants
-                        </div>
-                    `;
-
-                    document.getElementById('generateVariantsBtn').classList.add('hidden');
-                    document.getElementById('variantsContainer').classList.add('hidden');
-                }
-            });
-
-            // Form submission
-            document.getElementById('productForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                updateProduct();
-            });
-
-            // Check SKU availability
-            document.getElementById('simpleSku').addEventListener('blur', function() {
-                checkSkuAvailability(this.value);
-            });
-        }
-
-        // Load category specifications
-        async function loadCategorySpecifications(categoryId) {
-            try {
-                const container = document.getElementById('specificationsContainer');
-                container.innerHTML = `
-                    <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading specifications...
-                    </div>
-                `;
-
-                const response = await axiosInstance.get(`/products/category/${categoryId}/specifications`);
-
-                if (response.data.success) {
-                    const specificationGroups = response.data.data;
-                    specificationsData = specificationGroups;
-
-                    if (!specificationGroups || specificationGroups.length === 0) {
-                        container.innerHTML = `
-                            <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                                No specifications found for this category
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    let html = '<div class="space-y-8">';
-
-                    specificationGroups.forEach((group) => {
-                        if (group.specifications && group.specifications.length > 0) {
-                            html += `
-                                <div class="specification-group border rounded-xl p-6">
-                                    ${group.group_name ? `
-                                        <div class="mb-4 pb-3 border-b">
-                                            <h4 class="text-lg font-semibold text-gray-800">${group.group_name}</h4>
-                                            ${group.group_description ? `<p class="text-sm text-gray-600 mt-1">${group.group_description}</p>` : ''}
-                                        </div>
-                                    ` : ''}
-                                    <div class="space-y-6">
-                            `;
-
-                            group.specifications.forEach((spec) => {
-                                const specKey = `spec_${spec.id}`;
-
-                                // Check if product has this specification
-                                const productSpec = window.productSpecifications?.find(s => s.specification_id == spec.id);
-
-                                html += `
-                                    <div class="specification-item p-4 border rounded-lg">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                                            ${spec.name}
-                                            ${spec.is_required ? '<span class="text-rose-500 ml-1">*</span>' : ''}
-                                        </label>
-                                        ${renderSpecificationInput(spec, specKey, productSpec)}
-                                        ${spec.description ? `<p class="text-xs text-gray-500 mt-2">${spec.description}</p>` : ''}
-                                    </div>
-                                `;
-                            });
-
-                            html += `
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    });
-
-                    html += '</div>';
-                    container.innerHTML = html;
-
-                    // Initialize multiselect for specifications
-                    initializeSpecificationSelects();
-
-                } else {
-                    container.innerHTML = `
-                        <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                            No specifications found for this category
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Error loading specifications:', error);
-                container.innerHTML = `
-                    <div class="text-sm text-rose-500 p-4 bg-rose-50 rounded-lg text-center">
-                        Failed to load specifications: ${error.message}
-                    </div>
-                `;
-            }
-        }
-
-        // Render specification input with existing value
-        function renderSpecificationInput(spec, specKey, productSpec = null) {
-            let inputHtml = `
-                <input type="hidden" name="specifications[${specKey}][specification_id]" value="${spec.id}">
-            `;
-
-            const inputType = spec.input_type || 'text';
-            const isRequired = spec.is_required || false;
-            const values = spec.values || [];
-
-            // Get existing value
-            const existingValue = productSpec ? (productSpec.custom_value || productSpec.specification_value_id || null) : null;
-
-            switch (inputType) {
-                case 'textarea':
-                    inputHtml += `
-                        <textarea name="specifications[${specKey}][custom_value]"
-                            ${isRequired ? 'required' : ''}
-                            rows="3"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent specification-input"
-                            placeholder="Enter ${spec.name}">${existingValue || ''}</textarea>
-                    `;
-                    break;
-
-                case 'multiselect':
-                    if (values.length > 0) {
-                        // Parse existing value if it's a JSON string
-                        let existingValues = [];
-                        if (existingValue) {
-                            try {
-                                existingValues = Array.isArray(existingValue) ? existingValue : JSON.parse(existingValue);
-                            } catch (e) {
-                                existingValues = existingValue ? [existingValue] : [];
-                            }
-                        }
-
-                        inputHtml += `
-                            <select name="specifications[${specKey}][specification_value_ids][]"
-                                ${isRequired ? 'required' : ''}
-                                multiple
-                                data-input-type="multiselect"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent specification-input">
-                                ${values.map(value => `
-                                    <option value="${value.id}" ${existingValues.includes(value.id) ? 'selected' : ''}>
-                                        ${value.label || value.value}
-                                    </option>
-                                `).join('')}
-                            </select>
-                        `;
-                    } else {
-                        inputHtml += `
-                            <input type="text" name="specifications[${specKey}][custom_value]"
-                                ${isRequired ? 'required' : ''}
-                                value="${existingValue || ''}"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent specification-input"
-                                placeholder="Enter ${spec.name}">
-                        `;
-                    }
-                    break;
-
-                case 'select':
-                    if (values.length > 0) {
-                        inputHtml += `
-                            <div class="flex gap-2">
-                                <select name="specifications[${specKey}][specification_value_id]"
-                                    ${isRequired ? 'required' : ''}
-                                    class="flex-grow border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent specification-input">
-                                    <option value="">Select ${spec.name}</option>
-                                    ${values.map(value => `
-                                        <option value="${value.id}" ${existingValue == value.id ? 'selected' : ''}>
-                                            ${value.label || value.value}
-                                        </option>
-                                    `).join('')}
-                                </select>
-                                <button type="button" onclick="addCustomSpecificationValue('${specKey}')"
-                                    class="btn-secondary px-3 py-2 text-sm">
-                                    <i class="fas fa-plus mr-1"></i>Custom
-                                </button>
-                            </div>
-                            <div id="custom_${specKey}" class="hidden mt-2">
-                                <input type="text" name="specifications[${specKey}][custom_value]"
-                                    value="${existingValue && !values.some(v => v.id == existingValue) ? existingValue : ''}"
-                                    class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    placeholder="Enter custom value">
-                            </div>
-                        `;
-                    } else {
-                        inputHtml += `
-                            <input type="text" name="specifications[${specKey}][custom_value]"
-                                ${isRequired ? 'required' : ''}
-                                value="${existingValue || ''}"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent specification-input"
-                                placeholder="Enter ${spec.name}">
-                        `;
-                    }
-                    break;
-
-                case 'checkbox':
-                    inputHtml += `
-                        <label class="flex items-center">
-                            <input type="checkbox" name="specifications[${specKey}][custom_value]" value="1"
-                                ${isRequired ? 'required' : ''}
-                                ${existingValue == '1' ? 'checked' : ''}
-                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                            <span class="ml-2 text-sm text-gray-700">${spec.name}</span>
-                        </label>
-                    `;
-                    break;
-
-                case 'radio':
-                    if (values.length > 0) {
-                        let radioHtml = '<div class="space-y-2">';
-                        values.forEach((value, index) => {
-                            radioHtml += `
-                                <label class="flex items-center">
-                                    <input type="radio" name="specifications[${specKey}][custom_value]"
-                                           value="${value.value}"
-                                           ${index === 0 && isRequired ? 'required' : ''}
-                                           ${existingValue == value.value ? 'checked' : ''}
-                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                                    <span class="ml-2 text-sm text-gray-700">${value.label || value.value}</span>
-                                </label>
-                            `;
-                        });
-                        radioHtml += `
-                            <div class="flex items-center mt-2">
-                                <input type="radio" name="specifications[${specKey}][custom_value]"
-                                       id="custom_radio_${specKey}"
-                                       value="${existingValue && !values.some(v => v.value == existingValue) ? existingValue : ''}"
-                                       ${existingValue && !values.some(v => v.value == existingValue) ? 'checked' : ''}
-                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                                <input type="text" id="custom_radio_input_${specKey}"
-                                       value="${existingValue && !values.some(v => v.value == existingValue) ? existingValue : ''}"
-                                       placeholder="Custom value"
-                                       class="ml-2 flex-grow border border-gray-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                       onchange="document.getElementById('custom_radio_${specKey}').value = this.value">
-                            </div>
-                        `;
-                        radioHtml += '</div>';
-                        inputHtml += radioHtml;
-                    } else {
-                        inputHtml += `
-                            <input type="text" name="specifications[${specKey}][custom_value]"
-                                ${isRequired ? 'required' : ''}
-                                value="${existingValue || ''}"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent specification-input"
-                                placeholder="Enter ${spec.name}">
-                        `;
-                    }
-                    break;
-
-                default: // text, number, etc.
-                    const htmlInputType = inputType === 'number' ? 'number' : 'text';
-                    inputHtml += `
-                        <input type="${htmlInputType}" name="specifications[${specKey}][custom_value]"
-                            ${isRequired ? 'required' : ''}
-                            ${htmlInputType === 'number' ? 'step="any"' : ''}
-                            value="${existingValue || ''}"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent specification-input"
-                            placeholder="Enter ${spec.name}">
-                    `;
-            }
-
-            return inputHtml;
-        }
-
-        // Initialize specification select inputs
-        function initializeSpecificationSelects() {
-            document.querySelectorAll('select[data-input-type="multiselect"]').forEach(select => {
-                $(select).select2({
-                    placeholder: 'Select options',
-                    allowClear: true,
-                    multiple: true,
-                    width: '100%'
-                });
-            });
-        }
-
-        // Load category attributes
-        async function loadCategoryAttributes(categoryId) {
-            try {
-                const container = document.getElementById('attributeSelection');
-                container.innerHTML = `
-                    <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>Loading attributes...
-                    </div>
-                `;
-
-                const response = await axiosInstance.get(`/products/category/${categoryId}/attributes`);
-
-                if (response.data.success) {
-                    categoryAttributes = response.data.data;
-
-                    if (!categoryAttributes || categoryAttributes.length === 0) {
-                        container.innerHTML = `
-                            <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                                No attributes found for variants in this category
-                            </div>
-                        `;
-                        document.getElementById('generateVariantsBtn').classList.add('hidden');
-                        return;
-                    }
-
-                    let html = '<div class="space-y-6">';
-
-                    categoryAttributes.forEach(attribute => {
-                        const attributeId = `attr-${attribute.id}`;
-
-                        // Check if this attribute is used in existing variants
-                        const isUsedInVariants = generatedVariants.some(variant =>
-                            variant.attributes.some(attr => attr.attribute_id == attribute.id)
-                        );
-
-                        html += `
-                            <div class="attribute-item border rounded-xl p-4">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div>
-                                        <h5 class="font-medium text-gray-800">${attribute.name}</h5>
-                                        <div class="flex items-center space-x-2 mt-1">
-                                            <span class="text-xs px-2 py-1 bg-gray-100 rounded">${attribute.type}</span>
-                                            ${attribute.is_required ? '<span class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded">Required</span>' : ''}
-                                            <span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">Variant</span>
-                                            ${isUsedInVariants ? '<span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">In Use</span>' : ''}
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-3">
-                                        <label class="flex items-center">
-                                            <input type="checkbox"
-                                                   id="${attributeId}"
-                                                   data-attribute-id="${attribute.id}"
-                                                   data-attribute-name="${attribute.name}"
-                                                   ${isUsedInVariants ? 'checked disabled' : ''}
-                                                   class="attribute-select-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                            <span class="ml-2 text-sm text-gray-700">Use for variants</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="attribute-options-container ${isUsedInVariants ? '' : 'hidden'} mt-4" id="options-${attribute.id}">
-                                    <h6 class="text-sm font-medium text-gray-700 mb-2">Select Options:</h6>
-                                    ${renderAttributeOptions(attribute, isUsedInVariants)}
-                                </div>
-                            </div>
-                        `;
-                    });
-
-                    html += '</div>';
-                    container.innerHTML = html;
-
-                    // Only show generate button if we can generate new variants
-                    if (!generatedVariants || generatedVariants.length === 0) {
-                        document.getElementById('generateVariantsBtn').classList.remove('hidden');
-                    }
-
-                    // Setup event listeners for attribute selection
-                    setupAttributeEventListeners();
-
-                } else {
-                    container.innerHTML = `
-                        <div class="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg text-center">
-                            No attributes found for variants in this category
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Error loading attributes:', error);
-                container.innerHTML = `
-                    <div class="text-sm text-rose-500 p-4 bg-rose-50 rounded-lg text-center">
-                        Failed to load attributes: ${error.message}
-                    </div>
-                `;
-            }
-        }
-
-        // Render attribute options with existing selections
-        function renderAttributeOptions(attribute, isUsedInVariants = false) {
-            if (!attribute.options || attribute.options.length === 0) {
-                return `
-                    <div class="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg text-center">
-                        No predefined options. You'll need to enter values manually when creating variants.
-                    </div>
-                `;
-            }
-
-            let html = `
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            `;
-
-            // Get options used in existing variants
-            const usedOptions = [];
-            if (isUsedInVariants) {
-                generatedVariants.forEach(variant => {
-                    variant.attributes.forEach(attr => {
-                        if (attr.attribute_id == attribute.id && attr.attribute_value_id) {
-                            usedOptions.push(attr.attribute_value_id);
-                        }
-                    });
-                });
-            }
-
-            attribute.options.forEach(option => {
-                const optionId = `opt-${attribute.id}-${option.id}`;
-                const colorStyle = option.color_code ? `style="background-color: ${option.color_code}"` : '';
-                const isUsed = usedOptions.includes(option.id);
-
-                html += `
-                    <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors ${isUsed ? 'bg-green-50 border-green-200' : ''}">
-                        <input type="checkbox"
-                               id="${optionId}"
-                               data-attribute-id="${attribute.id}"
-                               data-option-id="${option.id}"
-                               data-option-value="${option.value}"
-                               data-option-label="${option.label || option.value}"
-                               ${isUsed ? 'checked disabled' : ''}
-                               class="attribute-option-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                        <div class="ml-2 flex items-center">
-                            ${option.color_code ? `<div class="w-6 h-6 rounded-full mr-2 border border-gray-300" ${colorStyle}></div>` : ''}
-                            ${option.image_url ? `<img src="${option.image_url}" alt="${option.label}" class="w-6 h-6 rounded mr-2 object-cover">` : ''}
-                            <span class="text-sm text-gray-700">${option.label || option.value}</span>
-                            ${isUsed ? '<span class="ml-2 text-xs text-green-600">(In Use)</span>' : ''}
-                        </div>
-                    </label>
-                `;
-            });
-
-            html += `
-                </div>
-                <div class="mt-3 text-xs text-gray-500">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Select one or more options to create variants
-                </div>
-            `;
-            return html;
-        }
-
-        // Setup attribute event listeners
-        function setupAttributeEventListeners() {
-            document.addEventListener('change', function(e) {
-                if (e.target.classList.contains('attribute-select-checkbox')) {
-                    const attributeId = e.target.getAttribute('data-attribute-id');
-                    const optionsContainer = document.getElementById(`options-${attributeId}`);
-
-                    if (e.target.checked) {
-                        optionsContainer.classList.remove('hidden');
-                        selectedAttributes[attributeId] = {
-                            name: e.target.getAttribute('data-attribute-name'),
-                            attribute_id: attributeId,
-                            values: []
-                        };
-                    } else {
-                        optionsContainer.classList.add('hidden');
-                        delete selectedAttributes[attributeId];
-
-                        document.querySelectorAll(`.attribute-option-checkbox[data-attribute-id="${attributeId}"]`)
-                            .forEach(opt => {
-                                opt.checked = false;
-                            });
-                    }
-
-                    updateGenerateButton();
-                }
-
-                if (e.target.classList.contains('attribute-option-checkbox')) {
-                    const attributeId = e.target.getAttribute('data-attribute-id');
-                    const attributeCheckbox = document.querySelector(
-                        `.attribute-select-checkbox[data-attribute-id="${attributeId}"]`);
-
-                    if (!attributeCheckbox || !attributeCheckbox.checked) {
-                        e.target.checked = false;
-                        return;
-                    }
-
-                    const optionId = e.target.getAttribute('data-option-id');
-                    const optionValue = e.target.getAttribute('data-option-value');
-                    const optionLabel = e.target.getAttribute('data-option-label');
-
-                    if (!selectedAttributes[attributeId]) {
-                        selectedAttributes[attributeId] = {
-                            name: attributeCheckbox.getAttribute('data-attribute-name'),
-                            attribute_id: attributeId,
-                            values: []
-                        };
-                    }
-
-                    if (e.target.checked) {
-                        if (!selectedAttributes[attributeId].values.some(opt => opt.id == optionId)) {
-                            selectedAttributes[attributeId].values.push({
-                                id: optionId,
-                                value: optionValue,
-                                label: optionLabel
-                            });
-                        }
-                    } else {
-                        selectedAttributes[attributeId].values = selectedAttributes[attributeId].values.filter(
-                            opt => opt.id != optionId
-                        );
-
-                        if (selectedAttributes[attributeId].values.length === 0) {
-                            delete selectedAttributes[attributeId];
-                        }
-                    }
-
-                    updateGenerateButton();
-                }
-            });
-        }
-
-        // Update generate button state
-        function updateGenerateButton() {
-            const hasSelectedAttributes = Object.keys(selectedAttributes).length > 0;
-            const hasSelectedOptions = Object.values(selectedAttributes).some(attr => attr.values.length > 0);
-
-            const generateBtn = document.getElementById('generateVariantsBtn');
-            if (hasSelectedAttributes && hasSelectedOptions && (!generatedVariants || generatedVariants.length === 0)) {
-                generateBtn.classList.remove('hidden');
-                generateBtn.disabled = false;
+<script>
+    // Prepare existing specs mapping
+    const existingSpecs = @json($product->specifications->map(function($s){ 
+       return [
+           'specification_id' => $s->id, 
+           'specification_value_id' => $s->pivot->specification_value_id,
+           'custom_value' => $s->pivot->custom_value
+       ];
+    }));
+
+    document.getElementById('name').addEventListener('input', function() {
+        let slug = this.value.toLowerCase()
+            .replace(/[^\w ]+/g, '')
+            .replace(/ +/g, '-');
+        document.getElementById('slug').value = slug;
+    });
+
+    async function fetchSpecifications(categoryId) {
+        if (!categoryId) return;
+        
+        const container = document.getElementById('specifications-container');
+        container.innerHTML = '<p class="text-gray-500">Loading specifications...</p>';
+
+        try {
+            const response = await axios.get(`{{ route('admin.products.category.specifications', ':id') }}`.replace(':id', categoryId));
+            
+            if(response.data.success) {
+                renderSpecifications(response.data.data);
             } else {
-                generateBtn.classList.add('hidden');
-                generateBtn.disabled = true;
+                container.innerHTML = '<p class="text-red-500">Failed to load specifications.</p>';
             }
+        } catch (error) {
+            console.error('Spec fetch error:', error);
+            container.innerHTML = '<p class="text-red-500">Error loading specifications.</p>';
         }
+    }
 
-        // Display generated variants (same as create but with existing data)
-        function displayGeneratedVariants(variants) {
-            const container = document.getElementById('variantsContainer');
-            const tableBody = document.getElementById('variantsTableBody');
-            const countElement = document.getElementById('variantsCount');
+    function renderSpecifications(groups) {
+         const container = document.getElementById('specifications-container');
+         container.innerHTML = '';
 
-            if (!variants || variants.length === 0) {
-                container.classList.add('hidden');
-                return;
-            }
+         if (!groups || groups.length === 0) {
+             container.innerHTML = '<p class="text-gray-500">No specifications found for this category.</p>';
+             return;
+         }
 
-            // Update count
-            countElement.textContent = `${variants.length} variant${variants.length !== 1 ? 's' : ''}`;
+         let html = '';
+         let specIndex = 0;
 
-            // Clear table
-            tableBody.innerHTML = '';
+         groups.forEach(group => {
+             html += `<div class="mb-6">`;
+             html += `<h4 class="font-medium text-gray-700 mb-3 bg-gray-50 p-2 rounded">${group.group_name}</h4>`;
+             html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+             
+             group.specifications.forEach(spec => {
+                 const fieldName = `specifications[${specIndex}]`;
+                 
+                 const match = existingSpecs.find(s => s.specification_id === spec.id);
+                 const existingValId = match ? match.specification_value_id : null;
+                 const existingCustom = match ? match.custom_value : '';
 
-            // Add rows
-            variants.forEach((variant, index) => {
-                const rowId = `variant-${variant.id || index}`;
-                const combinationDisplay = variant.combination_display ||
-                    (variant.attributes && variant.attributes.length > 0 ?
-                        variant.attributes.map(attr => `${attr.attribute_name || attr.value}`).join(' / ') :
-                        variant.sku);
-
-                const row = document.createElement('tr');
-                row.id = rowId;
-                row.className = 'variant-row hover:bg-gray-50';
-
-                // Check if variant has images stored
-                const variantImageData = variantImages[rowId];
-
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        ${variant.id ? `<input type="hidden" name="variants[${index}][id]" value="${variant.id}">` : ''}
-                        <input type="hidden" name="variants[${index}][combination]" value='${JSON.stringify(variant.combination || variant.attributes || [])}'>
-                        <input type="hidden" name="variants[${index}][attributes]" value='${JSON.stringify(variant.attributes || [])}'>
-                        <div class="flex items-center">
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">${combinationDisplay}</div>
-                                <div class="text-sm text-gray-500">${variant.attributes?.map(attr => attr.value || attr.attribute_value).join(' / ') || ''}</div>
-                            </div>
+                 html += `<div>`;
+                 html += `<input type="hidden" name="${fieldName}[specification_id]" value="${spec.id}">`;
+                 html += `<label class="block text-sm text-gray-600 mb-1">${spec.name} ${spec.is_required ? '<span class="text-red-500">*</span>' : ''}</label>`;
+                 
+                 if (['select', 'multiselect', 'radio'].includes(spec.input_type)) {
+                     html += `<select name="${fieldName}[specification_value_id]" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-1 focus:ring-blue-500">`;
+                     html += `<option value="">Select ${spec.name}</option>`;
+                     html += `<option value="">None</option>`;
+                     if(spec.values) {
+                         spec.values.forEach(val => {
+                             const selected = (existingValId == val.id) ? 'selected' : '';
+                             html += `<option value="${val.id}" ${selected}>${val.value}</option>`;
+                         });
+                     }
+                     html += `</select>`;
+                 } else if (spec.input_type === 'textarea') {
+                     const val = existingCustom || '';
+                     html += `<textarea name="${fieldName}[custom_value]" rows="3" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-1 focus:ring-blue-500">${val}</textarea>`;
+                 } else if (spec.input_type === 'checkbox') {
+                     const checked = existingCustom == '1' ? 'checked' : '';
+                     html += `
+                        <div class="flex items-center mt-2">
+                            <input type="hidden" name="${fieldName}[custom_value]" value="0">
+                            <input type="checkbox" name="${fieldName}[custom_value]" value="1" ${checked} class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-600">Yes</span>
                         </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <input type="text"
-                               name="variants[${index}][sku]"
-                               value="${variant.sku}"
-                               required
-                               class="w-full min-w-[150px] border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent variant-input"
-                               placeholder="Variant-SKU">
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500">₹</span>
-                            </div>
-                            <input type="number"
-                                   name="variants[${index}][price]"
-                                   value="${variant.price || 0}"
-                                   step="0.01"
-                                   min="0"
-                                   required
-                                   class="pl-8 w-full min-w-[120px] border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent variant-input"
-                                   placeholder="0.00">
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500">₹</span>
-                            </div>
-                            <input type="number"
-                                   name="variants[${index}][compare_price]"
-                                   value="${variant.compare_price || ''}"
-                                   step="0.01"
-                                   min="0"
-                                   class="pl-8 w-full min-w-[120px] border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent variant-input"
-                                   placeholder="0.00">
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500">₹</span>
-                            </div>
-                            <input type="number"
-                                   name="variants[${index}][cost_price]"
-                                   value="${variant.cost_price || ''}"
-                                   step="0.01"
-                                   min="0"
-                                   class="pl-8 w-full min-w-[120px] border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent variant-input"
-                                   placeholder="0.00">
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <input type="number"
-                               name="variants[${index}][stock_quantity]"
-                               value="${variant.stock_quantity || 0}"
-                               min="0"
-                               required
-                               class="w-full min-w-[100px] border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent variant-input"
-                               placeholder="0">
-                    </td>
-                    <td class="px-6 py-4">
-                        <select name="variants[${index}][status]"
-                                class="w-full min-w-[120px] border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent variant-input">
-                            <option value="active" ${variant.status === 'active' || variant.status === 1 ? 'selected' : ''}>Active</option>
-                            <option value="inactive" ${variant.status === 'inactive' || variant.status === 0 ? 'selected' : ''}>Inactive</option>
-                        </select>
-                    </td>
-                    <td class="px-6 py-4">
-                        <button type="button"
-                                onclick="openVariantImageModal('${rowId}')"
-                                class="btn-secondary text-sm px-4 py-2">
-                            <i class="fas fa-image mr-2"></i>Select Images
-                        </button>
-                        <div class="variant-images-preview mt-2 space-y-2" id="${rowId}-images">
-                            ${variantImageData ? `
-                                ${variantImageData.main_url ? `
-                                    <div class="flex items-center space-x-2">
-                                        <img src="${variantImageData.main_url}" class="w-12 h-12 rounded object-cover">
-                                        <span class="text-xs text-gray-600">Main</span>
-                                    </div>
-                                ` : ''}
-                                ${variantImageData.gallery_urls?.length ? `
-                                    <div class="text-xs text-gray-500">+${variantImageData.gallery_urls.length} gallery images</div>
-                                ` : ''}
-                            ` : ''}
-                        </div>
-                        <input type="hidden" name="variants[${index}][main_image_id]" id="${rowId}-main-image-id" value="${variantImageData?.main_id || ''}">
-                        <input type="hidden" name="variants[${index}][gallery_image_ids]" id="${rowId}-gallery-image-ids" value="${variantImageData?.gallery_ids ? JSON.stringify(variantImageData.gallery_ids) : ''}">
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center justify-center">
-                            <input type="radio" name="default_variant" value="${index}" ${variant.is_default ? 'checked' : ''}
-                                   class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center justify-center">
-                            <button type="button"
-                                    onclick="removeVariant('${rowId}')"
-                                    class="text-rose-600 hover:text-rose-800 p-2 rounded-full hover:bg-rose-50">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
+                     `;
+                 } else {
+                     const val = existingCustom || '';
+                     html += `<input type="text" name="${fieldName}[custom_value]" value="${val}" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-1 focus:ring-blue-500">`;
+                 }
+                 
+                 html += `</div>`;
+                 specIndex++;
+             });
+             
+             html += `</div></div>`;
+         });
 
-                tableBody.appendChild(row);
-            });
+         container.innerHTML = html;
+    }
+    
+    // Initial Load
+    const initialCategory = document.getElementById('main_category_id').value;
+    if(initialCategory) {
+        fetchSpecifications(initialCategory);
+    }
 
-            container.classList.remove('hidden');
-        }
 
-        // Update product
-        async function updateProduct() {
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
-            submitBtn.disabled = true;
+    // Media Manager
+    let currentMode = 'main';
+    let selectedMediaId = null;
+    let currentVariantIndex = null; // For variant images
 
-            // Clear previous errors
-            document.querySelectorAll('[id$="Error"]').forEach(el => {
-                el.classList.add('hidden');
-                el.textContent = '';
-            });
+    function openMediaModal(mode) {
+        currentMode = mode;
+        document.getElementById('media-modal').classList.remove('hidden');
+        loadMedia(1);
+    }
 
-            try {
-                // Collect form data
-                const formData = new FormData(document.getElementById('productForm'));
-                const data = {};
-
-                // Get product type
-                const productType = document.querySelector('input[name="product_type"]:checked').value;
-                data.product_type = productType;
-
-                // Convert FormData to object with proper array handling
-                for (let [key, value] of formData.entries()) {
-                    // Handle arrays
-                    if (key.endsWith('[]')) {
-                        const cleanKey = key.slice(0, -2);
-
-                        if (!data[cleanKey]) {
-                            data[cleanKey] = [];
-                        }
-
-                        if (cleanKey === 'gallery_image_ids') {
-                            const numValue = parseInt(value);
-                            if (!isNaN(numValue)) {
-                                data[cleanKey].push(numValue);
-                            }
-                        } else if (cleanKey === 'category_ids' || cleanKey === 'tag_ids') {
-                            const numValue = parseInt(value);
-                            if (!isNaN(numValue)) {
-                                data[cleanKey].push(numValue);
-                            }
-                        } else {
-                            data[cleanKey].push(value);
-                        }
-                    } else {
-                        // Handle special cases
-                        if (key === 'main_category_id' || key === 'brand_id' || key === 'tax_class_id') {
-                            data[key] = value ? parseInt(value) : null;
-                        } else if (key === 'price' || key === 'compare_price' || key === 'cost_price') {
-                            data[key] = value ? parseFloat(value) : null;
-                        } else if (key === 'stock_quantity' || key === 'weight' || key === 'length' ||
-                            key === 'width' || key === 'height') {
-                            data[key] = value ? parseFloat(value) : null;
-                        } else if (key === 'is_featured' || key === 'is_new' || key === 'is_bestseller' || key === 'manage_stock') {
-                            data[key] = value === 'on' ? true : false;
-                        } else if (key === 'status') {
-                            data[key] = value;
-                        } else if (key === 'main_image_id') {
-                            data[key] = value ? parseInt(value) : null;
-                        } else {
-                            data[key] = value;
-                        }
-                    }
-                }
-
-                // Ensure arrays exist
-                if (!data.category_ids) data.category_ids = [];
-                if (!data.tag_ids) data.tag_ids = [];
-                if (!data.gallery_image_ids) data.gallery_image_ids = [];
-
-                // Handle specifications
-                const specifications = [];
-                const specInputs = document.querySelectorAll('[name^="specifications["]');
-
-                // Group specifications by their ID
-                const specMap = {};
-                specInputs.forEach(input => {
-                    const name = input.name;
-                    const matches = name.match(/specifications\[([^\]]+)\]\[(\w+)\]/);
-                    if (matches) {
-                        const specKey = matches[1];
-                        const field = matches[2];
-
-                        if (!specMap[specKey]) {
-                            specMap[specKey] = {};
-                        }
-
-                        if (field === 'specification_id') {
-                            specMap[specKey][field] = parseInt(input.value);
-                        } else if (field === 'specification_value_id') {
-                            specMap[specKey][field] = input.value ? parseInt(input.value) : null;
-                        } else if (field === 'specification_value_ids') {
-                            if (!specMap[specKey][field]) {
-                                specMap[specKey][field] = [];
-                            }
-                            specMap[specKey][field].push(parseInt(input.value));
-                        } else if (field === 'custom_value') {
-                            if (input.type === 'checkbox') {
-                                specMap[specKey][field] = input.checked ? input.value : null;
-                            } else {
-                                specMap[specKey][field] = input.value || null;
-                            }
-                        }
-                    }
-                });
-
-                // Convert map to array
-                Object.values(specMap).forEach(spec => {
-                    if (spec.specification_id) {
-                        specifications.push(spec);
-                    }
-                });
-
-                if (specifications.length > 0) {
-                    data.specifications = specifications;
-                }
-
-                // Handle simple product fields
-                if (productType === 'simple') {
-                    // Ensure required fields exist
-                    if (!data.sku && document.getElementById('simpleSku')) {
-                        data.sku = document.getElementById('simpleSku').value;
-                    }
-                    if (!data.price && document.getElementById('simplePrice')) {
-                        data.price = parseFloat(document.getElementById('simplePrice').value) || 0;
-                    }
-                    if (!data.compare_price && document.getElementById('simpleComparePrice')) {
-                        const comparePrice = document.getElementById('simpleComparePrice').value;
-                        data.compare_price = comparePrice ? parseFloat(comparePrice) : null;
-                    }
-                    if (!data.cost_price && document.getElementById('simpleCostPrice')) {
-                        const costPrice = document.getElementById('simpleCostPrice').value;
-                        data.cost_price = costPrice ? parseFloat(costPrice) : null;
-                    }
-                    if (!data.stock_quantity && document.getElementById('simpleStock')) {
-                        data.stock_quantity = parseInt(document.getElementById('simpleStock').value) || 0;
-                    }
-                    if (!data.stock_status && document.getElementById('simpleStockStatus')) {
-                        data.stock_status = document.getElementById('simpleStockStatus').value;
-                    }
-                    if (data.manage_stock === undefined) {
-                        data.manage_stock = document.getElementById('manageStock')?.checked || false;
-                    }
-
-                    // For simple products, create variants array with single variant
-                    data.variants = [{
-                        sku: data.sku,
-                        price: data.price,
-                        compare_price: data.compare_price,
-                        cost_price: data.cost_price,
-                        stock_quantity: data.stock_quantity,
-                        status: data.status || 'active',
-                        is_default: true,
-                        main_image_id: data.main_image_id,
-                        gallery_image_ids: data.gallery_image_ids || []
-                    }];
-                } else {
-                    // Handle configurable product variants
-                    const variants = [];
-                    const variantRows = document.querySelectorAll('.variant-row');
-
-                    variantRows.forEach((row, index) => {
-                        const variant = {
-                            sku: row.querySelector(`input[name="variants[${index}][sku]"]`)?.value,
-                            price: parseFloat(row.querySelector(`input[name="variants[${index}][price]"]`)?.value) || 0,
-                            compare_price: row.querySelector(`input[name="variants[${index}][compare_price]"]`)?.value ?
-                                parseFloat(row.querySelector(`input[name="variants[${index}][compare_price]"]`).value) : null,
-                            cost_price: row.querySelector(`input[name="variants[${index}][cost_price]"]`)?.value ?
-                                parseFloat(row.querySelector(`input[name="variants[${index}][cost_price]"]`).value) : null,
-                            stock_quantity: parseInt(row.querySelector(`input[name="variants[${index}][stock_quantity]"]`)?.value) || 0,
-                            status: row.querySelector(`select[name="variants[${index}][status]"]`)?.value || 'active',
-                            is_default: document.querySelector(`input[name="default_variant"][value="${index}"]`)?.checked || false
-                        };
-
-                        // Get variant ID if exists
-                        const variantId = row.querySelector(`input[name="variants[${index}][id]"]`)?.value;
-                        if (variantId) {
-                            variant.id = parseInt(variantId);
-                        }
-
-                        // Get attributes from hidden input
-                        const attributesInput = row.querySelector(`input[name="variants[${index}][attributes]"]`);
-                        if (attributesInput && attributesInput.value) {
-                            try {
-                                const attributes = JSON.parse(attributesInput.value);
-                                variant.attributes = attributes;
-                            } catch (e) {
-                                console.error('Error parsing attributes:', e);
-                            }
-                        }
-
-                        // Get combination
-                        const combinationInput = row.querySelector(`input[name="variants[${index}][combination]"]`);
-                        if (combinationInput && combinationInput.value) {
-                            try {
-                                const combination = JSON.parse(combinationInput.value);
-                                variant.combination = combination;
-                            } catch (e) {
-                                console.error('Error parsing combination:', e);
-                            }
-                        }
-
-                        // Handle variant images
-                        const mainImageId = document.getElementById(`${row.id}-main-image-id`)?.value;
-                        if (mainImageId) {
-                            variant.main_image_id = parseInt(mainImageId);
-                        }
-
-                        const galleryIds = document.getElementById(`${row.id}-gallery-image-ids`)?.value;
-                        if (galleryIds) {
-                            try {
-                                const parsed = JSON.parse(galleryIds);
-                                if (Array.isArray(parsed)) {
-                                    variant.gallery_image_ids = parsed.filter(id => !isNaN(id));
-                                }
-                            } catch (e) {
-                                variant.gallery_image_ids = galleryIds.split(',')
-                                    .filter(id => id.trim() !== '')
-                                    .map(id => parseInt(id))
-                                    .filter(id => !isNaN(id));
-                            }
-                        } else {
-                            variant.gallery_image_ids = [];
-                        }
-
-                        variants.push(variant);
-                    });
-
-                    data.variants = variants;
-                }
-
-                // Remove the token from data
-                delete data._token;
-
-                console.log('Sending update data:', data);
-
-                const response = await axiosInstance.put(`/products/${productId}`, data);
-
-                if (response.data.success) {
-                    toastr.success('Product updated successfully!');
-
-                    // Redirect after delay
-                    setTimeout(() => {
-                        window.location.href = '{{ route('admin.products.index') }}';
-                    }, 1500);
-                } else {
-                    toastr.error(response.data.message || 'Failed to update product');
-                }
-            } catch (error) {
-                console.error('Update error:', error.response || error);
-
-                if (error.response && error.response.status === 422) {
-                    // Handle validation errors
-                    const errors = error.response.data.errors;
-
-                    Object.keys(errors).forEach(field => {
-                        // Map field names to error element IDs
-                        let errorElementId = field + 'Error';
-
-                        const errorElement = document.getElementById(errorElementId);
-                        if (errorElement) {
-                            errorElement.textContent = errors[field][0];
-                            errorElement.classList.remove('hidden');
-                        } else {
-                            // If no specific element, show general error
-                            toastr.error(`${field}: ${errors[field][0]}`);
-                        }
-                    });
-
-                    toastr.error('Please fix the validation errors');
-                } else {
-                    toastr.error(error.response?.data?.message || 'Failed to update product. Please try again.');
-                }
-            } finally {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }
-        }
-
-        // Delete product
-        async function deleteProduct() {
-            const result = await Swal.fire({
-                title: 'Are you sure?',
-                text: "This will delete the product and all its variants. This action cannot be undone.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel'
-            });
-
+    function closeMediaModal() {
+        document.getElementById('media-modal').classList.add('hidden');
+    }
+    
+    // Variant Modal Intent
+    function openVariantMediaModal(idx) {
+        currentVariantIndex = idx;
+        Swal.fire({
+            title: 'Manage Variant Images',
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Set Main Image',
+            denyButtonText: 'Add Gallery Images',
+        }).then((result) => {
             if (result.isConfirmed) {
-                try {
-                    const response = await axiosInstance.delete(`/products/${productId}`);
-
-                    if (response.data.success) {
-                        toastr.success('Product deleted successfully');
-                        setTimeout(() => {
-                            window.location.href = '{{ route('admin.products.index') }}';
-                        }, 1500);
-                    }
-                } catch (error) {
-                    toastr.error(error.response?.data?.message || 'Failed to delete product');
-                }
+                openMediaModal('variant-main');
+            } else if (result.isDenied) {
+                openMediaModal('variant-gallery');
             }
-        }
+        });
+    }
 
-        // Include all the other functions from create.blade.php
-        // These functions are identical to the create page
-
-        // Check SKU availability
-        async function checkSkuAvailability(sku) {
-            if (!sku) return false;
-
-            try {
-                const response = await axiosInstance.post('/products/check-sku', {
-                    sku: sku,
-                    exclude_id: productId
-                });
-
-                if (response.data.success) {
-                    const available = response.data.data.available;
-                    const errorElement = document.getElementById('skuError');
-
-                    if (!available) {
-                        errorElement.textContent = 'This SKU is already in use';
-                        errorElement.classList.remove('hidden');
-                        return false;
-                    } else {
-                        errorElement.classList.add('hidden');
-                        return true;
-                    }
-                }
-            } catch (error) {
-                console.error('Error checking SKU:', error);
-            }
-            return false;
-        }
-
-        // Generate variants (same as create)
-        async function generateVariants() {
-            // Prepare data for API call
-            const attributesData = [];
-            let baseSku = document.getElementById('productName').value.toUpperCase().replace(/[^A-Z0-9]/g, '')
-                .substring(0, 10) || 'PRODUCT';
-            let basePrice = parseFloat(document.getElementById('simplePrice')?.value) || 0;
-
-            Object.keys(selectedAttributes).forEach(attributeId => {
-                const attribute = selectedAttributes[attributeId];
-                if (attribute.values.length > 0) {
-                    attributesData.push({
-                        attribute_id: parseInt(attributeId),
-                        attribute_name: attribute.name,
-                        values: attribute.values
-                    });
-                }
+    async function loadMedia(page = 1, search = '') {
+        const grid = document.getElementById('media-grid');
+        grid.innerHTML = '<div class="col-span-full text-center">Loading...</div>';
+        
+        try {
+            const response = await axios.get('{{ route("admin.media.data") }}', {
+                params: { page, search }
             });
+            renderMediaGrid(response.data);
+        } catch (error) {
+            console.error(error);
+            grid.innerHTML = '<div class="col-span-full text-red-500">Error loading media</div>';
+        }
+    }
 
-            if (attributesData.length === 0) {
-                toastr.warning('Please select at least one attribute with options');
-                return;
-            }
+    function renderMediaGrid(data) {
+        const grid = document.getElementById('media-grid');
+        grid.innerHTML = '';
+        
+        data.data.forEach(media => {
+             const div = document.createElement('div');
+             div.className = `relative group cursor-pointer border rounded-lg overflow-hidden ${selectedMediaId === media.id ? 'ring-2 ring-blue-500' : ''}`;
+             div.onclick = () => selectMedia(media.id, media.url);
+             div.innerHTML = `
+                <img src="${media.thumb_url || media.url}" class="w-full h-32 object-cover">
+                <div class="p-2 text-xs truncate">${media.filename}</div>
+             `;
+             grid.appendChild(div);
+        });
 
-            // Show loading
-            const generateBtn = document.getElementById('generateVariantsBtn');
-            const originalText = generateBtn.innerHTML;
-            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
-            generateBtn.disabled = true;
+         const pag = document.getElementById('media-pagination');
+         let pagHtml = `<span class="text-sm">Page ${data.current_page} of ${data.last_page}</span>`;
+         pagHtml += `<div class="space-x-1">`;
+         if(data.prev_page_url) pagHtml += `<button type="button" onclick="loadMedia(${data.current_page - 1})" class="px-2 py-1 border rounded hover:bg-gray-50">Prev</button>`;
+         if(data.next_page_url) pagHtml += `<button type="button" onclick="loadMedia(${data.current_page + 1})" class="px-2 py-1 border rounded hover:bg-gray-50">Next</button>`;
+         pagHtml += `</div>`;
+         pag.innerHTML = pagHtml;
+    }
 
-            try {
-                const response = await axiosInstance.post('/products/generate-variants', {
-                    attributes: attributesData,
-                    base_sku: baseSku,
-                    base_price: basePrice
-                });
-
-                if (response.data.success) {
-                    const newVariants = response.data.data.variants || [];
-
-                    // Add to existing variants if any
-                    if (generatedVariants && generatedVariants.length > 0) {
-                        generatedVariants = [...generatedVariants, ...newVariants];
-                    } else {
-                        generatedVariants = newVariants;
-                    }
-
-                    displayGeneratedVariants(generatedVariants);
-                    toastr.success(response.data.data.message || `${newVariants.length} variants generated successfully`);
-                } else {
-                    toastr.error(response.data.message || 'Failed to generate variants');
-                }
-            } catch (error) {
-                console.error('Error generating variants:', error);
-                toastr.error(error.response?.data?.message || 'Failed to generate variants');
-            } finally {
-                generateBtn.innerHTML = originalText;
-                generateBtn.disabled = false;
+    function selectMedia(id, url) {
+        selectedMediaId = id;
+        const items = document.getElementById('media-grid').children;
+        for(let item of items) {
+            item.classList.remove('ring-2', 'ring-blue-500');
+            if(item.querySelector('img').src.includes(url)) {
+                 item.classList.add('ring-2', 'ring-blue-500');
             }
         }
+        
+        const btn = document.getElementById('media-select-btn');
+        btn.onclick = () => confirmSelection(id, url);
+    }
 
-        // Helper functions
-        function setContainerState(containerId, enabled) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
+    function confirmSelection(id, url) {
+        if(currentMode === 'main') {
+            document.getElementById('main_image_id').value = id;
+            document.getElementById('main-image-preview').innerHTML = `<img src="${url}" class="h-32 object-cover rounded border">`;
+        } else if (currentMode === 'gallery') {
+            addGalleryImage(id, url);
+        } else if (currentMode === 'variant-main') {
+            setVariantMainImage(currentVariantIndex, id, url);
+        } else if (currentMode === 'variant-gallery') {
+            addVariantGalleryImage(currentVariantIndex, id, url);
+        }
+        
+        if(!currentMode.includes('gallery')) {
+             closeMediaModal();
+        } else {
+             toastr.success('Image added to gallery');
+        }
+    }
+    
+    function addGalleryImage(id, url) {
+        const inputs = document.querySelectorAll('input[name="gallery_image_ids[]"]');
+        for(let input of inputs) {
+            if(input.value == id) return;
+        }
+        
+        const container = document.getElementById('gallery-container');
+        const div = document.createElement('div');
+        div.className = "relative group border rounded-lg overflow-hidden h-24";
+        div.innerHTML = `
+            <img src="${url}" class="w-full h-full object-cover">
+            <input type="hidden" name="gallery_image_ids[]" value="${id}">
+            <button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        `;
+        container.appendChild(div);
+    }
 
-            container.querySelectorAll('input, select, textarea').forEach(el => {
-                if (enabled) {
-                    el.disabled = false;
-                    if (el.dataset.required === 'true') {
-                        el.required = true;
-                    }
-                } else {
-                    if (el.required) {
-                        el.dataset.required = 'true';
-                    }
-                    el.required = false;
-                    el.disabled = true;
-                }
+    function setVariantMainImage(idx, id, url) {
+        const container = document.getElementById(`variant-images-${idx}`);
+        const input = document.getElementById(`variant-main-input-${idx}`);
+        
+        const existing = container.querySelector('.variant-main-thumb');
+        if(existing) existing.remove();
+        
+        input.value = id;
+        
+        const thumb = document.createElement('div');
+        thumb.className = 'relative w-10 h-10 variant-main-thumb border-2 border-blue-500';
+        thumb.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+        container.prepend(thumb);
+    }
+
+    function addVariantGalleryImage(idx, id, url) {
+        const container = document.getElementById(`variant-images-${idx}`);
+        const hiddenContainer = document.getElementById(`variant-gallery-inputs-${idx}`);
+        
+        if(hiddenContainer.querySelector(`input[value="${id}"]`)) return;
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = `variants[${idx}][gallery_image_ids][]`;
+        input.value = id;
+        hiddenContainer.appendChild(input);
+        
+        const thumb = document.createElement('div');
+        thumb.className = 'relative w-10 h-10 border border-gray-200';
+        thumb.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+        container.appendChild(thumb);
+    }
+    
+    async function handleFileUpload(input) {
+        if (!input.files.length) return;
+        
+        const formData = new FormData();
+        for (let i = 0; i < input.files.length; i++) {
+            formData.append('files[]', input.files[i]);
+        }
+        
+        try {
+            await axios.post('{{ route("admin.media.upload") }}', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
+            loadMedia(1); 
+        } catch (error) {
+            alert('Upload failed');
         }
-
-        // Add custom specification value
-        function addCustomSpecificationValue(specKey) {
-            const customDiv = document.getElementById(`custom_${specKey}`);
-            const select = document.querySelector(`select[name="specifications[${specKey}][specification_value_id]"]`);
-
-            if (customDiv.classList.contains('hidden')) {
-                customDiv.classList.remove('hidden');
-                if (select) select.required = false;
-            } else {
-                customDiv.classList.add('hidden');
-                if (select) select.required = true;
-            }
-        }
-
-        // Remove variant
-        function removeVariant(rowId) {
-            const row = document.getElementById(rowId);
-            if (row) {
-                if (confirm('Are you sure you want to remove this variant?')) {
-                    row.remove();
-                    updateVariantsCount();
-                    delete variantImages[rowId];
-                    toastr.success('Variant removed successfully');
-                }
-            }
-        }
-
-        // Update variants count
-        function updateVariantsCount() {
-            const rows = document.querySelectorAll('.variant-row');
-            const countElement = document.getElementById('variantsCount');
-            countElement.textContent = `${rows.length} variant${rows.length !== 1 ? 's' : ''}`;
-
-            if (rows.length === 0) {
-                document.getElementById('variantsContainer').classList.add('hidden');
-            }
-        }
-
-        // Make functions available globally
-        window.openMediaPicker = openMediaPicker;
-        window.closeMediaLibrary = closeMediaLibrary;
-        window.confirmMediaSelection = confirmMediaSelection;
-        window.removeMainImage = removeMainImage;
-        window.removeGalleryImage = removeGalleryImage;
-        window.openVariantImageModal = openVariantImageModal;
-        window.openVariantGalleryPicker = openVariantGalleryPicker;
-        window.closeVariantImageModal = closeVariantImageModal;
-        window.confirmVariantImages = confirmVariantImages;
-        window.removeVariant = removeVariant;
-        window.generateVariants = generateVariants;
-        window.selectProductType = selectProductType;
-        window.addCustomSpecificationValue = addCustomSpecificationValue;
-
-        // ==================== MEDIA LIBRARY FUNCTIONS ====================
-        // Copy all media library functions from your create.blade.php
-        // These are identical to the create page functions
-        // I'll include the main ones for reference
-
-        async function openMediaPicker(type) {
-            selectedMediaType = type;
-
-            try {
-                const response = await axiosInstance.get('/media');
-                if (response.data.success) {
-                    const mediaItems = response.data.data.data || response.data.data || [];
-
-                    console.log('Media items loaded:', mediaItems.length);
-
-                    const mediaGrid = document.getElementById('mediaGrid');
-                    const modalTitle = document.getElementById('mediaModalTitle');
-
-                    // Update modal title
-                    if (type === 'main') {
-                        modalTitle.textContent = 'Select Main Image';
-                    } else if (type === 'gallery') {
-                        modalTitle.textContent = 'Select Gallery Images';
-                    } else {
-                        modalTitle.textContent = 'Select Images';
-                    }
-
-                    // Clear and populate grid
-                    mediaGrid.innerHTML = '';
-
-                    if (!mediaItems || mediaItems.length === 0) {
-                        mediaGrid.innerHTML = `
-                            <div class="col-span-full text-center py-8">
-                                <i class="fas fa-inbox text-gray-400 text-2xl"></i>
-                                <p class="text-sm text-gray-500 mt-2">No media found</p>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    mediaItems.forEach(media => {
-                        const mediaItem = document.createElement('div');
-                        mediaItem.className = 'media-item relative group cursor-pointer';
-                        mediaItem.dataset.id = media.id;
-
-                        // Get the correct URL
-                        const mediaUrl = media.thumbnail_url || media.url || media.full_url ||
-                            media.path || '/images/default-image.jpg';
-                        mediaItem.dataset.url = mediaUrl;
-
-                        mediaItem.innerHTML = `
-                            <div class="relative overflow-hidden rounded-lg border-2 border-transparent group-hover:border-indigo-500 transition-colors">
-                                <img src="${mediaUrl}"
-                                     alt="${media.file_name || media.name || 'Media'}"
-                                     class="w-full h-32 object-cover"
-                                     onerror="this.src='/images/default-image.jpg'">
-                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity"></div>
-                                <div class="absolute top-2 right-2 hidden group-hover:block">
-                                    <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
-                                        <i class="fas fa-check text-white text-xs"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mt-2 text-xs text-gray-600 truncate">${media.file_name || media.name || 'Unnamed'}</p>
-                            <p class="text-xs text-gray-400 truncate">${media.size_formatted || ''}</p>
-                        `;
-
-                        mediaItem.addEventListener('click', function() {
-                            if (type === 'main') {
-                                // Single selection for main image
-                                document.querySelectorAll('#mediaGrid .media-item').forEach(item => {
-                                    item.classList.remove('selected-media');
-                                    item.querySelector('.border-2').classList.remove(
-                                        'border-indigo-500');
-                                    item.querySelector('.border-2').classList.add(
-                                        'border-transparent');
-                                });
-
-                                this.classList.add('selected-media');
-                                this.querySelector('.border-2').classList.remove('border-transparent');
-                                this.querySelector('.border-2').classList.add('border-indigo-500');
-
-                                selectedMediaId = this.dataset.id;
-                                selectedMediaUrl = this.dataset.url;
-                            } else {
-                                // Multiple selection for gallery
-                                this.classList.toggle('selected-media');
-                                const borderDiv = this.querySelector('.border-2');
-                                if (this.classList.contains('selected-media')) {
-                                    borderDiv.classList.remove('border-transparent');
-                                    borderDiv.classList.add('border-indigo-500');
-                                } else {
-                                    borderDiv.classList.remove('border-indigo-500');
-                                    borderDiv.classList.add('border-transparent');
-                                }
-                            }
-                        });
-
-                        mediaGrid.appendChild(mediaItem);
-                    });
-
-                    document.getElementById('mediaLibraryModal').classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Error loading media:', error);
-                toastr.error('Failed to load media library');
-            }
-        }
-
-        function closeMediaLibrary() {
-            document.getElementById('mediaLibraryModal').classList.add('hidden');
-            selectedMediaType = null;
-            selectedMediaId = null;
-            selectedMediaUrl = null;
-        }
-
-        function confirmMediaSelection() {
-            if (selectedMediaType === 'main') {
-                if (selectedMediaId && selectedMediaUrl) {
-                    document.getElementById('mainImageId').value = selectedMediaId;
-                    const preview = document.getElementById('mainImagePreview');
-                    preview.innerHTML = `
-                        <div class="relative w-full h-full">
-                            <img src="${selectedMediaUrl}" alt="Selected image" class="w-full h-full object-cover rounded-xl">
-                            <button type="button" onclick="removeMainImage()"
-                                    class="absolute top-2 right-2 w-8 h-8 bg-rose-500 text-white rounded-full flex items-center justify-center hover:bg-rose-600 transition-colors">
-                                <i class="fas fa-times text-sm"></i>
-                            </button>
-                        </div>
-                    `;
-                    closeMediaLibrary();
-                } else {
-                    toastr.warning('Please select an image first');
-                }
-            } else if (selectedMediaType === 'gallery') {
-                const selectedItems = document.querySelectorAll('#mediaGrid .media-item.selected-media');
-                if (selectedItems.length > 0) {
-                    const preview = document.getElementById('galleryPreview');
-                    preview.innerHTML = '';
-
-                    selectedGalleryImages = [];
-
-                    selectedItems.forEach((item, index) => {
-                        const mediaId = item.dataset.id;
-                        const mediaUrl = item.dataset.url;
-
-                        selectedGalleryImages.push({
-                            id: parseInt(mediaId),
-                            url: mediaUrl
-                        });
-
-                        // Add to preview
-                        const imgDiv = document.createElement('div');
-                        imgDiv.className = 'relative';
-                        imgDiv.innerHTML = `
-                            <div class="relative h-24">
-                                <img src="${mediaUrl}" alt="Gallery image" class="w-full h-full object-cover rounded-lg">
-                                <button type="button" onclick="removeGalleryImage(${index})"
-                                        class="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-rose-600">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        `;
-                        preview.appendChild(imgDiv);
-                    });
-
-                    // Update hidden inputs
-                    const galleryIds = selectedGalleryImages.map(img => img.id);
-                    const container = document.getElementById('simpleGallerySection');
-
-                    // Remove old inputs
-                    container.querySelectorAll('input[name="gallery_image_ids[]"]').forEach(el => el.remove());
-
-                    // Add new inputs
-                    galleryIds.forEach(id => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'gallery_image_ids[]';
-                        input.value = id;
-                        container.appendChild(input);
-                    });
-
-                    closeMediaLibrary();
-                } else {
-                    toastr.warning('Please select at least one image');
-                }
-            }
-        }
-
-        function removeMainImage() {
-            document.getElementById('mainImageId').value = '';
-            const preview = document.getElementById('mainImagePreview');
-            preview.innerHTML = `
-                <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-2"></i>
-                <span class="text-gray-500">Click to upload main image</span>
-                <span class="text-xs text-gray-400 mt-1">Recommended: 800x800px, PNG/JPG</span>
-            `;
-        }
-
-        function removeGalleryImage(index) {
-            selectedGalleryImages.splice(index, 1);
-
-            // Update preview
-            const preview = document.getElementById('galleryPreview');
-            preview.innerHTML = '';
-
-            selectedGalleryImages.forEach((img, idx) => {
-                const imgDiv = document.createElement('div');
-                imgDiv.className = 'relative';
-                imgDiv.innerHTML = `
-                    <div class="relative h-24">
-                        <img src="${img.url}" alt="Gallery image" class="w-full h-full object-cover rounded-lg">
-                        <button type="button" onclick="removeGalleryImage(${idx})"
-                                class="absolute top-1 right-1 w-6 h-6 bg-rose-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-rose-600">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `;
-                preview.appendChild(imgDiv);
-            });
-
-            if (selectedGalleryImages.length === 0) {
-                preview.innerHTML =
-                    '<div class="col-span-3 text-center text-gray-500 text-sm py-8">No gallery images selected</div>';
-            }
-
-            // Update hidden inputs
-            const galleryIds = selectedGalleryImages.map(img => img.id);
-            const container = document.getElementById('simpleGallerySection');
-
-            // Remove old inputs
-            container.querySelectorAll('input[name="gallery_image_ids[]"]').forEach(el => el.remove());
-
-            // Add new inputs
-            galleryIds.forEach(id => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'gallery_image_ids[]';
-                input.value = id;
-                container.appendChild(input);
-            });
-        }
-
-        // Variant Image Modal functions (copy from create.blade.php)
-        let variantSelectedMediaId = null;
-        let variantSelectedMediaUrl = null;
-        let variantSelectedGalleryImages = [];
-
-        async function openVariantImageModal(variantId) {
-            currentVariantForImages = variantId;
-            variantSelectedMediaId = null;
-            variantSelectedMediaUrl = null;
-            variantSelectedGalleryImages = [];
-
-            try {
-                const response = await axiosInstance.get('/media');
-                if (response.data.success) {
-                    const mediaItems = response.data.data.data || response.data.data || [];
-
-                    const mediaGrid = document.getElementById('variantMediaGrid');
-                    const modalTitle = document.getElementById('variantModalTitle');
-
-                    modalTitle.textContent = `Select Images for ${variantId.replace('variant-', 'Variant ')}`;
-
-                    // Clear and populate grid
-                    mediaGrid.innerHTML = '';
-
-                    if (!mediaItems || mediaItems.length === 0) {
-                        mediaGrid.innerHTML = `
-                            <div class="col-span-full text-center py-8">
-                                <i class="fas fa-inbox text-gray-400 text-2xl"></i>
-                                <p class="text-sm text-gray-500 mt-2">No media found</p>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    mediaItems.forEach(media => {
-                        const mediaItem = document.createElement('div');
-                        mediaItem.className = 'variant-media-item relative group cursor-pointer';
-                        mediaItem.dataset.id = media.id;
-
-                        // Get the correct URL
-                        const mediaUrl = media.thumbnail_url || media.url || media.full_url ||
-                            media.path || '/images/default-image.jpg';
-                        mediaItem.dataset.url = mediaUrl;
-
-                        mediaItem.innerHTML = `
-                            <div class="relative overflow-hidden rounded-lg border-2 border-transparent group-hover:border-indigo-500 transition-colors">
-                                <img src="${mediaUrl}"
-                                     alt="${media.file_name || media.name || 'Media'}"
-                                     class="w-full h-32 object-cover"
-                                     onerror="this.src='/images/default-image.jpg'">
-                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity"></div>
-                                <div class="absolute top-2 right-2 hidden group-hover:block">
-                                    <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
-                                        <i class="fas fa-check text-white text-xs"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mt-2 text-xs text-gray-600 truncate">${media.file_name || media.name || 'Unnamed'}</p>
-                        `;
-
-                        mediaItem.addEventListener('click', function() {
-                            // Single selection for variant main image
-                            document.querySelectorAll('#variantMediaGrid .variant-media-item').forEach(
-                                item => {
-                                    item.classList.remove('selected-media');
-                                    item.querySelector('.border-2').classList.remove(
-                                        'border-indigo-500');
-                                    item.querySelector('.border-2').classList.add(
-                                        'border-transparent');
-                                });
-
-                            this.classList.add('selected-media');
-                            this.querySelector('.border-2').classList.remove('border-transparent');
-                            this.querySelector('.border-2').classList.add('border-indigo-500');
-
-                            variantSelectedMediaId = this.dataset.id;
-                            variantSelectedMediaUrl = this.dataset.url;
-                        });
-
-                        mediaGrid.appendChild(mediaItem);
-                    });
-
-                    // Clear gallery preview
-                    const galleryPreview = document.getElementById('variantGalleryPreview');
-                    galleryPreview.innerHTML =
-                        '<div class="col-span-4 text-center text-gray-500 text-sm py-4">No gallery images selected</div>';
-
-                    document.getElementById('variantImageModal').classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Error loading media:', error);
-                toastr.error('Failed to load media library');
-            }
-        }
-
-        function closeVariantImageModal() {
-            document.getElementById('variantImageModal').classList.add('hidden');
-            currentVariantForImages = null;
-            variantSelectedMediaId = null;
-            variantSelectedMediaUrl = null;
-            variantSelectedGalleryImages = [];
-        }
-
-        function confirmVariantImages() {
-            if (currentVariantForImages) {
-                // Get selected gallery images
-                const selectedGalleryItems = document.querySelectorAll(
-                    '#variantMediaGrid .variant-gallery-item.selected-media');
-                variantSelectedGalleryImages = [];
-
-                selectedGalleryItems.forEach((item) => {
-                    variantSelectedGalleryImages.push({
-                        id: parseInt(item.dataset.id),
-                        url: item.dataset.url
-                    });
-                });
-
-                // Update variantImages object
-                variantImages[currentVariantForImages] = {
-                    main_id: variantSelectedMediaId,
-                    main_url: variantSelectedMediaUrl,
-                    gallery_ids: variantSelectedGalleryImages.map(img => img.id),
-                    gallery_urls: variantSelectedGalleryImages.map(img => img.url)
-                };
-
-                // Update hidden inputs
-                const mainImageIdInput = document.getElementById(`${currentVariantForImages}-main-image-id`);
-                const galleryImageIdsInput = document.getElementById(`${currentVariantForImages}-gallery-image-ids`);
-                const preview = document.getElementById(`${currentVariantForImages}-images`);
-
-                if (variantSelectedMediaId) {
-                    mainImageIdInput.value = variantSelectedMediaId;
-                }
-
-                // Set gallery images as JSON array
-                const galleryIds = variantSelectedGalleryImages.map(img => img.id);
-                galleryImageIdsInput.value = JSON.stringify(galleryIds);
-
-                // Update preview
-                preview.innerHTML = '';
-
-                // Show main image if selected
-                if (variantSelectedMediaId && variantSelectedMediaUrl) {
-                    preview.innerHTML += `
-                        <div class="flex items-center space-x-2 mb-2">
-                            <div class="relative">
-                                <img src="${variantSelectedMediaUrl}" alt="Main image" class="w-12 h-12 rounded object-cover">
-                                <span class="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">Main</span>
-                            </div>
-                            <span class="text-sm text-gray-600">Main Image</span>
-                        </div>
-                    `;
-                }
-
-                // Show gallery images if selected
-                if (variantSelectedGalleryImages.length > 0) {
-                    let galleryHtml =
-                        '<div class="mt-2"><p class="text-sm text-gray-600 mb-1">Gallery Images:</p><div class="flex flex-wrap gap-1">';
-                    variantSelectedGalleryImages.forEach((img, index) => {
-                        galleryHtml += `
-                            <div class="relative">
-                                <img src="${img.url}" alt="Gallery image ${index + 1}" class="w-12 h-12 object-cover rounded">
-                            </div>
-                        `;
-                    });
-                    galleryHtml += '</div></div>';
-                    preview.innerHTML += galleryHtml;
-                }
-
-                closeVariantImageModal();
-                toastr.success('Variant images updated successfully');
-            } else {
-                toastr.warning('Please select an image first');
-            }
-        }
-
-        async function openVariantGalleryPicker() {
-            try {
-                const response = await axiosInstance.get('/media');
-                if (response.data.success) {
-                    const mediaItems = response.data.data.data || response.data.data || [];
-
-                    // Clear and populate grid
-                    const mediaGrid = document.getElementById('variantMediaGrid');
-                    mediaGrid.innerHTML = '';
-
-                    const modalTitle = document.getElementById('variantModalTitle');
-                    modalTitle.textContent = 'Select Gallery Images';
-
-                    if (!mediaItems || mediaItems.length === 0) {
-                        mediaGrid.innerHTML = `
-                            <div class="col-span-full text-center py-8">
-                                <i class="fas fa-inbox text-gray-400 text-2xl"></i>
-                                <p class="text-sm text-gray-500 mt-2">No media found</p>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    mediaItems.forEach(media => {
-                        const mediaItem = document.createElement('div');
-                        mediaItem.className = 'variant-gallery-item relative group cursor-pointer';
-                        mediaItem.dataset.id = media.id;
-
-                        // Get the correct URL
-                        const mediaUrl = media.thumbnail_url || media.url || media.full_url ||
-                            media.path || '/images/default-image.jpg';
-                        mediaItem.dataset.url = mediaUrl;
-
-                        mediaItem.innerHTML = `
-                            <div class="relative overflow-hidden rounded-lg border-2 border-transparent group-hover:border-indigo-500 transition-colors">
-                                <img src="${mediaUrl}"
-                                     alt="${media.file_name || media.name || 'Media'}"
-                                     class="w-full h-32 object-cover"
-                                     onerror="this.src='/images/default-image.jpg'">
-                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity"></div>
-                                <div class="absolute top-2 right-2 hidden group-hover:block">
-                                    <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
-                                        <i class="fas fa-check text-white text-xs"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mt-2 text-xs text-gray-600 truncate">${media.file_name || media.name || 'Unnamed'}</p>
-                        `;
-
-                        mediaItem.addEventListener('click', function() {
-                            // Multiple selection for gallery
-                            this.classList.toggle('selected-media');
-                            const borderDiv = this.querySelector('.border-2');
-                            if (this.classList.contains('selected-media')) {
-                                borderDiv.classList.remove('border-transparent');
-                                borderDiv.classList.add('border-indigo-500');
-                            } else {
-                                borderDiv.classList.remove('border-indigo-500');
-                                borderDiv.classList.add('border-transparent');
-                            }
-                        });
-
-                        mediaGrid.appendChild(mediaItem);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading media:', error);
-                toastr.error('Failed to load media library');
-            }
-        }
-    </script>
+    }
+
+    document.getElementById('media-search').addEventListener('input', _.debounce((e) => {
+        loadMedia(1, e.target.value);
+    }, 500));
+</script>
 @endpush

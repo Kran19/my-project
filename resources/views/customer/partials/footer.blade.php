@@ -514,9 +514,7 @@
                     <li>
                         <a href="{{ route('customer.category.products', ['slug' => 'wedding-collection']) }}" class="footer-link text-sm text-gray-400">Wedding Collection</a>
                     </li>
-                    <li>
-                        <a href="{{ route('customer.category.products', ['slug' => 'silver-jewelry']) }}" class="footer-link text-sm text-gray-400">925 Silver</a>
-                    </li>
+                    
                     <li>
                         <a href="{{ route('customer.category.products', ['slug' => 'statement-pieces']) }}" class="footer-link text-sm text-gray-400">Statement Pieces</a>
                     </li>
@@ -645,9 +643,7 @@
                     <a href="{{ route('customer.page.contact') }}" class="hover:text-amber-300 transition">Sitemap</a>
                 </div>
             </div>
-            <p class="text-xs text-gray-500 mt-4">
-                Handcrafted with <i class="fas fa-heart text-amber-500 mx-1"></i> in India
-            </p>
+            
         </div>
     </div>
 </footer>

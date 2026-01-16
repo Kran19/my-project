@@ -61,7 +61,7 @@ class TaxRateController extends Controller
                     'id' => $taxRate->id,
                     'name' => $taxRate->name,
                     'tax_class_id' => $taxRate->tax_class_id,
-                    'tax_class_name' => $taxRate->taxClass->name,
+                    'tax_class_name' => $taxRate->taxClass?->name,
                     'country_code' => $taxRate->country_code,
                     'state_code' => $taxRate->state_code,
                     'zip_code' => $taxRate->zip_code,
@@ -107,7 +107,7 @@ class TaxRateController extends Controller
                 'id' => $taxRate->id,
                 'name' => $taxRate->name,
                 'rate' => $taxRate->rate,
-                'tax_class_name' => $taxRate->taxClass->name,
+                'tax_class_name' => $taxRate->taxClass?->name,
                 'is_active' => $taxRate->is_active,
             ], 'Tax rate created successfully', 201);
 
@@ -133,7 +133,7 @@ class TaxRateController extends Controller
                 'id' => $taxRate->id,
                 'name' => $taxRate->name,
                 'tax_class_id' => $taxRate->tax_class_id,
-                'tax_class_name' => $taxRate->taxClass->name,
+                'tax_class_name' => $taxRate->taxClass?->name,
                 'country_code' => $taxRate->country_code,
                 'state_code' => $taxRate->state_code,
                 'zip_code' => $taxRate->zip_code,
@@ -173,7 +173,7 @@ class TaxRateController extends Controller
                 'id' => $taxRate->id,
                 'name' => $taxRate->name,
                 'rate' => $taxRate->rate,
-                'tax_class_name' => $taxRate->taxClass->name,
+                'tax_class_name' => $taxRate->taxClass?->name,
                 'is_active' => $taxRate->is_active,
             ], 'Tax rate updated successfully');
 

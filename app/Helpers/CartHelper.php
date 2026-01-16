@@ -186,10 +186,18 @@ class CartHelper
 
     public function formatCartResponse($cart)
     {
+        $offer = null;
+        if (isset($cart->offer_id) && $cart->offer_id) {
+            $offer = \App\Models\Offer::find($cart->offer_id);
+        }
+
         return [
             'id' => $cart->id ?? null,
             'session_id' => $cart->session_id ?? session()->getId(),
             'items' => isset($cart->items) ? $cart->items->map(function ($item) {
+                if (!$item->variant || !$item->variant->product) {
+                    return null;
+                }
                 return [
                     'id' => $item->id,
                     'variant_id' => $item->product_variant_id,
@@ -203,13 +211,19 @@ class CartHelper
                     'attributes' => json_decode($item->attributes, true) ?? [],
                     'image' => $item->variant->display_image,
                 ];
-            })->toArray() : ($cart['items'] ?? []),
+            })->filter()->values()->toArray() : ($cart['items'] ?? []),
             'items_count' => isset($cart->items) ? (int) $cart->items->sum('quantity') : ($cart['items_count'] ?? 0),
             'subtotal' => (float) ($cart->subtotal ?? $cart['subtotal'] ?? 0),
             'tax_total' => (float) ($cart->tax_total ?? $cart['tax_total'] ?? 0),
             'shipping_total' => (float) ($cart->shipping_total ?? $cart['shipping_total'] ?? 0),
             'discount_total' => (float) ($cart->discount_total ?? $cart['discount_total'] ?? 0),
             'grand_total' => (float) ($cart->grand_total ?? $cart['grand_total'] ?? 0),
+            'offer' => $offer ? [
+                'id' => $offer->id,
+                'code' => $offer->code,
+                'name' => $offer->name,
+                'type' => $offer->offer_type
+            ] : null,
             'is_logged_in' => Auth::guard('customer')->check()
         ];
     }
@@ -223,17 +237,30 @@ class CartHelper
 
         // Database cart
         $subtotal = $cart->items()->sum('total');
+        $discountTotal = 0;
+        $offer = null;
+
+        // Apply offer discount if exists
+        if ($cart->offer_id) {
+            $offer = \App\Models\Offer::find($cart->offer_id);
+            if ($offer && $offer->isActive()) {
+                $discountTotal = $this->calculateDiscount($offer, $subtotal, $cart->items);
+            } else {
+                $cart->offer_id = null;
+            }
+        }
 
         // Calculate tax (simplified - 18% GST)
-        $taxTotal = $subtotal * 0.18;
+        $taxTotal = ($subtotal - $discountTotal) * 0.18;
 
         // Calculate shipping
-        $shippingTotal = $this->calculateShipping($subtotal);
+        $shippingTotal = ($offer && $offer->offer_type === 'free_shipping') ? 0 : $this->calculateShipping($subtotal - $discountTotal);
 
-        $grandTotal = $subtotal + $taxTotal + $shippingTotal;
+        $grandTotal = $subtotal - $discountTotal + $taxTotal + $shippingTotal;
 
         $cart->update([
             'subtotal' => $subtotal,
+            'discount_total' => $discountTotal,
             'tax_total' => $taxTotal,
             'shipping_total' => $shippingTotal,
             'grand_total' => $grandTotal
@@ -256,16 +283,54 @@ class CartHelper
             $itemsCount += $item['quantity'];
         }
 
-        $taxTotal = $subtotal * 0.18;
-        $shippingTotal = $this->calculateShipping($subtotal);
+        $discountTotal = 0;
+        if (isset($cart['offer_id'])) {
+            $offer = \App\Models\Offer::find($cart['offer_id']);
+            if ($offer && $offer->isActive()) {
+                $discountTotal = $this->calculateDiscount($offer, $subtotal, collect($cart['items']));
+            } else {
+                unset($cart['offer_id'], $cart['offer_code'], $cart['offer_type'], $cart['discount_value']);
+            }
+        }
+
+        $taxTotal = ($subtotal - $discountTotal) * 0.18;
+        $shippingTotal = isset($cart['offer_type']) && $cart['offer_type'] === 'free_shipping' ? 0 : $this->calculateShipping($subtotal - $discountTotal);
 
         $cart['subtotal'] = round($subtotal, 2);
+        $cart['discount_total'] = round($discountTotal, 2);
         $cart['tax_total'] = round($taxTotal, 2);
         $cart['shipping_total'] = round($shippingTotal, 2);
-        $cart['grand_total'] = round($subtotal + $taxTotal + $shippingTotal, 2);
+        $cart['grand_total'] = round($subtotal - $discountTotal + $taxTotal + $shippingTotal, 2);
         $cart['items_count'] = $itemsCount;
 
         return $cart;
+    }
+
+    private function calculateDiscount($offer, $subtotal, $items)
+    {
+        $discount = 0;
+
+        switch ($offer->offer_type) {
+            case 'percentage':
+                $discount = $subtotal * ($offer->discount_value / 100);
+                if ($offer->max_discount && $discount > $offer->max_discount) {
+                    $discount = $offer->max_discount;
+                }
+                break;
+
+            case 'fixed':
+                $discount = $offer->discount_value;
+                break;
+
+            case 'free_shipping':
+                $discount = 0;
+                break;
+
+            default:
+                $discount = 0;
+        }
+
+        return min($discount, $subtotal);
     }
 
     public function saveLocalCart($cart)
@@ -529,5 +594,128 @@ class CartHelper
         }
 
         return $this->createEmptyCartResponse();
+    }
+
+    public function applyCoupon($code)
+    {
+        $offer = \App\Models\Offer::where('code', $code)
+            ->where('status', true)
+            ->first();
+
+        if (!$offer) {
+            throw new \Exception('Invalid coupon code');
+        }
+
+        if (!$offer->isActive()) {
+            throw new \Exception('This coupon has expired');
+        }
+
+        $customerId = Auth::guard('customer')->id();
+        if (!$offer->canApply($customerId)) {
+            throw new \Exception('This coupon cannot be applied');
+        }
+
+        if (Auth::guard('customer')->check()) {
+            return $this->applyDatabaseCoupon($offer);
+        }
+
+        return $this->applyLocalCoupon($offer);
+    }
+
+    private function applyDatabaseCoupon($offer)
+    {
+        $customer = Auth::guard('customer')->user();
+        $cart = Cart::where('customer_id', $customer->id)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$cart || $cart->items->isEmpty()) {
+            throw new \Exception('Your cart is empty');
+        }
+
+        if ($offer->min_cart_amount && $cart->subtotal < $offer->min_cart_amount) {
+            throw new \Exception('Minimum cart amount of ₹' . $offer->min_cart_amount . ' required');
+        }
+
+        $cart->offer_id = $offer->id;
+        $cart->save();
+
+        $this->recalculateCartTotals($cart);
+
+        return [
+            'success' => true,
+            'message' => 'Coupon applied successfully',
+            'cart' => $this->formatCartResponse($cart->fresh(['items.variant.product', 'items.variant.images', 'items.variant.primaryImage.media', 'offer']))
+        ];
+    }
+
+    private function applyLocalCoupon($offer)
+    {
+        $cart = $this->getLocalCart();
+
+        if (empty($cart['items'])) {
+            throw new \Exception('Your cart is empty');
+        }
+
+        if ($offer->min_cart_amount && $cart['subtotal'] < $offer->min_cart_amount) {
+            throw new \Exception('Minimum cart amount of ₹' . $offer->min_cart_amount . ' required');
+        }
+
+        $cart['offer_id'] = $offer->id;
+        $cart['offer_code'] = $offer->code;
+        $cart['offer_type'] = $offer->offer_type;
+        $cart['discount_value'] = $offer->discount_value;
+
+        $cart = $this->recalculateLocalCartTotals($cart);
+        $this->saveLocalCart($cart);
+
+        return [
+            'success' => true,
+            'message' => 'Coupon applied successfully',
+            'cart' => $cart
+        ];
+    }
+
+    public function removeCoupon()
+    {
+        if (Auth::guard('customer')->check()) {
+            return $this->removeDatabaseCoupon();
+        }
+
+        return $this->removeLocalCoupon();
+    }
+
+    private function removeDatabaseCoupon()
+    {
+        $customer = Auth::guard('customer')->user();
+        $cart = Cart::where('customer_id', $customer->id)
+            ->where('status', 'active')
+            ->first();
+
+        if ($cart) {
+            $cart->offer_id = null;
+            $cart->save();
+            $this->recalculateCartTotals($cart);
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Coupon removed',
+            'cart' => $this->formatCartResponse($cart->fresh(['items.variant.product', 'items.variant.images', 'items.variant.primaryImage.media']))
+        ];
+    }
+
+    private function removeLocalCoupon()
+    {
+        $cart = $this->getLocalCart();
+        unset($cart['offer_id'], $cart['offer_code'], $cart['offer_type'], $cart['discount_value']);
+        $cart = $this->recalculateLocalCartTotals($cart);
+        $this->saveLocalCart($cart);
+
+        return [
+            'success' => true,
+            'message' => 'Coupon removed',
+            'cart' => $cart
+        ];
     }
 }

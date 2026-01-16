@@ -18,8 +18,15 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-     public function boot(): void
+    public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        \Illuminate\Support\Facades\View::composer('customer.partials.header', function ($view) {
+            $view->with('navCategories', \App\Models\Category::where('show_in_nav', true)
+                ->where('status', true)
+                ->orderBy('sort_order')
+                ->get());
+        });
     }
 }

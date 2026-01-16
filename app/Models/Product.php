@@ -158,4 +158,71 @@ class Product extends Model
     {
         return $this->hasManyThrough(CartItem::class, ProductVariant::class);
     }
+
+    // Accessors for simple product compatibility
+    public function getPriceAttribute()
+    {
+        return $this->defaultVariant->price ?? 0;
+    }
+
+    public function getSkuAttribute()
+    {
+        return $this->defaultVariant->sku ?? null;
+    }
+
+    public function getComparePriceAttribute()
+    {
+        return $this->defaultVariant->compare_price ?? null;
+    }
+
+    public function getStockQuantityAttribute()
+    {
+        return $this->defaultVariant->stock_quantity ?? 0;
+    }
+
+    public function getStockStatusAttribute()
+    {
+        return $this->defaultVariant->stock_status ?? 'out_of_stock';
+    }
+    
+    // Helper to get Main Image from Default Variant's Primary Image
+    public function getMainImageAttribute()
+    {
+        // Check if default variant exists and has images
+        // We need to load 'images' relation on variant via eager loading usually
+        // But for accessor, we try to access it if loaded
+        
+        $variant = $this->defaultVariant;
+        if (!$variant) return null;
+
+        // Assuming Variant has 'images' relation to Media via VariantImage
+        // Since we didn't see Variant model, we assume it has a relationship to media 
+        // Or we can check the pivot table 'variant_images'
+        
+        $primaryImage = $variant->images->where('pivot.is_primary', 1)->first();
+        if ($primaryImage) {
+            return $primaryImage->file_path; // or whatever the URL attribute is
+        }
+        
+        return $variant->images->first()?->file_path ?? null;
+    }
+
+    public function getMainImageIdAttribute()
+    {
+        $variant = $this->defaultVariant;
+        if (!$variant) return null;
+        
+        $primaryImage = $variant->images->where('pivot.is_primary', 1)->first();
+        if ($primaryImage) {
+            return $primaryImage->id;
+        }
+        
+        return $variant->images->first()?->id ?? null;
+    }
+    
+    public function getManageStockAttribute()
+    {
+        return true; // Default or column on product? Migration didn't show manage_stock on products table.
+        // Assuming true for now as migration didn't have it.
+    }
 }
