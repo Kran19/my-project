@@ -77,10 +77,15 @@ class Cart extends Model
     public function getTaxBreakdownAttribute()
     {
         $breakdown = [];
-        $this->loadMissing('items.productVariant.product.taxClass.rates');
+        $this->loadMissing('items.variant.product.taxClass.rates');
 
         foreach ($this->items as $item) {
-            $product = $item->productVariant->product;
+            // Skip items with missing variants
+            if (!$item->variant || !$item->variant->product) {
+                continue;
+            }
+            
+            $product = $item->variant->product;
             if ($product && $product->taxClass) {
                 foreach ($product->taxClass->rates as $rate) {
                     if ($rate->is_active) {

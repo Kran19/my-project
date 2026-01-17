@@ -119,7 +119,7 @@ class CartService
 
     public function getCart()
     {
-        return $this->cart->load(['items.productVariant.product', 'items.productVariant.variantImages.media']);
+        return $this->cart->load(['items.variant.product', 'items.variant.variantImages.media']);
     }
 
     public function getCartCount()
@@ -185,7 +185,7 @@ class CartService
 
     private function recalculateCart()
     {
-        $this->cart->load('items.productVariant.product.taxClass.rates');
+        $this->cart->load('items.variant.product.taxClass.rates');
 
         $subtotal = 0;
         $taxTotal = 0;
