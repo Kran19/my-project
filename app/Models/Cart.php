@@ -73,4 +73,33 @@ class Cart extends Model
             $query->where('status', true);
         });
     }
+
+    public function getTaxBreakdownAttribute()
+    {
+        $breakdown = [];
+        $this->loadMissing('items.productVariant.product.taxClass.rates');
+
+        foreach ($this->items as $item) {
+            $product = $item->productVariant->product;
+            if ($product && $product->taxClass) {
+                foreach ($product->taxClass->rates as $rate) {
+                    if ($rate->is_active) {
+                        $amount = $item->total * ($rate->rate / 100);
+                        $label = $rate->name;
+                        
+                        if (!isset($breakdown[$label])) {
+                            $breakdown[$label] = [
+                                'name' => $label,
+                                'rate' => (float)$rate->rate,
+                                'amount' => 0
+                            ];
+                        }
+                        $breakdown[$label]['amount'] += $amount;
+                    }
+                }
+            }
+        }
+        
+        return array_values($breakdown);
+    }
 }

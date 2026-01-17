@@ -466,6 +466,7 @@ class ProductService
             'is_bestseller' => (bool) $product->is_bestseller,
             'has_variants' => $product->product_type === 'configurable',
             'variants_count' => $product->variants->count(),
+            'default_variant_id' => $defaultVariant ? $defaultVariant->id : null,
             'materials' => $materials,
             'brand' => $product->brand ? $product->brand->name : null,
             'brand_id' => $product->brand_id,

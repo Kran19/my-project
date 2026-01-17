@@ -83,9 +83,9 @@ class CartHelper
     {
         $cart = $this->getLocalCart();
 
-        // Get variant
+        // Get variant with product and tax info
         $variant = ProductVariant::with([
-            'product',
+            'product.taxClass.rates',
             'images',
             'primaryImage.media'
         ])->findOrFail($variantId);
@@ -99,6 +99,19 @@ class CartHelper
             throw new \Exception('Insufficient stock available');
         }
 
+        // Prepare item tax details
+        $taxRates = [];
+        if ($variant->product->taxClass) {
+            foreach ($variant->product->taxClass->rates as $rate) {
+                if ($rate->is_active) {
+                    $taxRates[] = [
+                        'name' => $rate->name,
+                        'rate' => (float)$rate->rate
+                    ];
+                }
+            }
+        }
+
         // Check if item already exists
         $itemExists = false;
         foreach ($cart['items'] as &$item) {
@@ -108,6 +121,7 @@ class CartHelper
             ) {
                 $item['quantity'] += $quantity;
                 $item['total'] = $item['unit_price'] * $item['quantity'];
+                $item['tax_rates'] = $taxRates; // Update tax rates just in case
                 $itemExists = true;
                 break;
             }
@@ -125,7 +139,8 @@ class CartHelper
                 'total' => $variant->price * $quantity,
                 'attributes' => $attributes,
                 'image' => $variant->display_image,
-                'stock_quantity' => $variant->stock_quantity
+                'stock_quantity' => $variant->stock_quantity,
+                'tax_rates' => $taxRates
             ];
         }
 
@@ -154,6 +169,7 @@ class CartHelper
         $customer = Auth::guard('customer')->user();
 
         $cart = Cart::with([
+            'items.variant.product.taxClass.rates',
             'items.variant.product',
             'items.variant.images',
             'items.variant.primaryImage.media'
@@ -215,6 +231,7 @@ class CartHelper
             'items_count' => isset($cart->items) ? (int) $cart->items->sum('quantity') : ($cart['items_count'] ?? 0),
             'subtotal' => (float) ($cart->subtotal ?? $cart['subtotal'] ?? 0),
             'tax_total' => (float) ($cart->tax_total ?? $cart['tax_total'] ?? 0),
+            'tax_breakdown' => isset($cart->tax_breakdown) ? $cart->tax_breakdown : ($cart['tax_breakdown'] ?? []),
             'shipping_total' => (float) ($cart->shipping_total ?? $cart['shipping_total'] ?? 0),
             'discount_total' => (float) ($cart->discount_total ?? $cart['discount_total'] ?? 0),
             'grand_total' => (float) ($cart->grand_total ?? $cart['grand_total'] ?? 0),
@@ -236,6 +253,8 @@ class CartHelper
         }
 
         // Database cart
+        $cart->load('items.variant.product.taxClass.rates');
+        
         $subtotal = $cart->items()->sum('total');
         $discountTotal = 0;
         $offer = null;
@@ -250,8 +269,15 @@ class CartHelper
             }
         }
 
-        // Calculate tax (simplified - 18% GST)
-        $taxTotal = ($subtotal - $discountTotal) * 0.18;
+        // Calculate tax based on items
+        $taxTotal = 0;
+        $effectiveSubtotalRatio = $subtotal > 0 ? ($subtotal - $discountTotal) / $subtotal : 0;
+        
+        foreach ($cart->items as $item) {
+            $itemTotal = $item->total * $effectiveSubtotalRatio;
+            $taxRate = $item->variant->product->taxClass ? $item->variant->product->taxClass->total_rate : 0;
+            $taxTotal += ($itemTotal * ($taxRate / 100));
+        }
 
         // Calculate shipping
         $shippingTotal = ($offer && $offer->offer_type === 'free_shipping') ? 0 : $this->calculateShipping($subtotal - $discountTotal);
@@ -293,12 +319,36 @@ class CartHelper
             }
         }
 
-        $taxTotal = ($subtotal - $discountTotal) * 0.18;
+        $taxTotal = 0;
+        $taxBreakdown = [];
+        $effectiveSubtotalRatio = $subtotal > 0 ? ($subtotal - $discountTotal) / $subtotal : 0;
+
+        foreach ($cart['items'] as $item) {
+            $itemTotal = $item['total'] * $effectiveSubtotalRatio;
+            $rates = $item['tax_rates'] ?? [];
+            
+            foreach ($rates as $rate) {
+                $amount = $itemTotal * ($rate['rate'] / 100);
+                $taxTotal += $amount;
+                
+                $label = $rate['name'];
+                if (!isset($taxBreakdown[$label])) {
+                    $taxBreakdown[$label] = [
+                        'name' => $label,
+                        'rate' => $rate['rate'],
+                        'amount' => 0
+                    ];
+                }
+                $taxBreakdown[$label]['amount'] += $amount;
+            }
+        }
+
         $shippingTotal = isset($cart['offer_type']) && $cart['offer_type'] === 'free_shipping' ? 0 : $this->calculateShipping($subtotal - $discountTotal);
 
         $cart['subtotal'] = round($subtotal, 2);
         $cart['discount_total'] = round($discountTotal, 2);
         $cart['tax_total'] = round($taxTotal, 2);
+        $cart['tax_breakdown'] = array_values($taxBreakdown);
         $cart['shipping_total'] = round($shippingTotal, 2);
         $cart['grand_total'] = round($subtotal - $discountTotal + $taxTotal + $shippingTotal, 2);
         $cart['items_count'] = $itemsCount;

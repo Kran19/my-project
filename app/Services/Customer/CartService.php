@@ -185,10 +185,25 @@ class CartService
 
     private function recalculateCart()
     {
-        $subtotal = $this->cart->items()->sum('total');
-        // Calculate tax, shipping, discounts
-        $taxTotal = $this->calculateTax($subtotal);
-        $shippingTotal = $this->calculateShipping();
+        $this->cart->load('items.productVariant.product.taxClass.rates');
+
+        $subtotal = 0;
+        $taxTotal = 0;
+
+        foreach ($this->cart->items as $item) {
+            $subtotal += $item->total;
+            
+            $product = $item->productVariant->product;
+            $taxRate = 0;
+            
+            if ($product->taxClass) {
+                $taxRate = $product->taxClass->total_rate;
+            }
+            
+            $taxTotal += ($item->total * ($taxRate / 100));
+        }
+
+        $shippingTotal = $this->calculateShipping($subtotal);
         $discountTotal = $this->calculateDiscounts($subtotal);
 
         $grandTotal = $subtotal + $taxTotal + $shippingTotal - $discountTotal;
@@ -204,11 +219,11 @@ class CartService
 
     private function calculateTax($subtotal)
     {
-        // Implement tax calculation based on customer address
-        return 0; // Placeholder
+        // This method is now integrated into recalculateCart for per-item calculation
+        return 0;
     }
 
-    private function calculateShipping()
+    private function calculateShipping($subtotal = 0)
     {
         // Implement shipping calculation (will integrate with Shiprocket)
         return 0; // Placeholder

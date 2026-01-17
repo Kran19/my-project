@@ -159,7 +159,7 @@ class LocalCartService
         $cart = $this->getLocalCart();
 
         // Get product variant details
-        $variant = ProductVariant::with(['product', 'variantImages.media'])->find($variantId);
+        $variant = ProductVariant::with(['product.taxClass.rates', 'variantImages.media'])->find($variantId);
 
         if (!$variant) {
             throw new \Exception('Product variant not found');
@@ -197,6 +197,7 @@ class LocalCartService
                 'image' => optional($variant->variantImages->first()->media)->file_path ??
                           optional($variant->product->images->first()->media)->file_path ?? null,
                 'stock_quantity' => $variant->stock_quantity,
+                'tax_rate' => $variant->product->taxClass ? $variant->product->taxClass->total_rate : 0,
                 'added_at' => now()->timestamp
             ];
         }
@@ -253,10 +254,10 @@ class LocalCartService
         foreach ($cart['items'] as $item) {
             $subtotal += $item['total'];
             $itemsCount += $item['quantity'];
+            
+            $itemTaxRate = $item['tax_rate'] ?? 0;
+            $taxTotal += ($item['total'] * ($itemTaxRate / 100));
         }
-
-        // Calculate tax (simplified - 18% GST)
-        $taxTotal = $subtotal * 0.18;
 
         // Calculate shipping (free for orders above ₹999)
         $shippingTotal = $subtotal >= 999 ? 0 : 50;

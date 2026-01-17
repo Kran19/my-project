@@ -330,10 +330,20 @@
                                                 {{ $cart['shipping_total'] === 0 ? 'FREE' : '₹' . number_format($cart['shipping_total'], 2) }}
                                             </span>
                                         </div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-gray-600">Tax (GST 18%)</span>
-                                            <span class="font-semibold text-gray-800"
-                                                id="orderTax">₹{{ number_format($cart['tax_total'], 2) }}</span>
+                                        <div id="taxBreakdownContainer">
+                                            @if(!empty($cart['tax_breakdown']))
+                                                @foreach($cart['tax_breakdown'] as $tax)
+                                                    <div class="flex justify-between items-center mb-1">
+                                                        <span class="text-gray-600 text-sm">{{ $tax['name'] }}</span>
+                                                        <span class="font-semibold text-gray-800 text-sm">₹{{ number_format($tax['amount'], 2) }}</span>
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-gray-600">Tax</span>
+                                                    <span class="font-semibold text-gray-800" id="orderTax">₹{{ number_format($cart['tax_total'], 2) }}</span>
+                                                </div>
+                                            @endif
                                         </div>
                                         @if (isset($cart['discount_total']) && $cart['discount_total'] > 0)
                                             <div class="flex justify-between items-center">
@@ -879,7 +889,7 @@
         function updateOrderSummary(cartData) {
             // Format currency
             const formatCurrency = (amount) => {
-                return `${parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+                return `₹${parseFloat(amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             };
 
             // Update subtotal
@@ -888,39 +898,62 @@
                 subtotalElement.textContent = formatCurrency(cartData.subtotal);
             }
 
-            // Update tax
-            const taxElement = document.getElementById('orderTax');
-            if (taxElement && cartData.tax_total !== undefined) {
-                taxElement.textContent = formatCurrency(cartData.tax_total);
-            }
-
             // Update shipping
             const shippingElement = document.getElementById('shippingCost');
             if (shippingElement && cartData.shipping_total !== undefined) {
                 if (cartData.shipping_total === 0) {
                     shippingElement.textContent = 'FREE';
-                    shippingElement.classList.add('text-green-600');
-                    shippingElement.classList.remove('text-gray-800');
+                    shippingElement.className = 'font-semibold text-green-600';
                 } else {
                     shippingElement.textContent = formatCurrency(cartData.shipping_total);
-                    shippingElement.classList.remove('text-green-600');
-                    shippingElement.classList.add('text-gray-800');
+                    shippingElement.className = 'font-semibold text-gray-800';
                 }
             }
 
-            // Update discount
-            const discountElement = document.getElementById('orderDiscount');
-            if (discountElement && cartData.discount_total !== undefined && cartData.discount_total > 0) {
-                discountElement.textContent = `-${formatCurrency(cartData.discount_total)}`;
-                discountElement.parentElement.classList.remove('hidden');
-            } else if (discountElement) {
-                discountElement.parentElement.classList.add('hidden');
+            // Update tax breakdown
+            const taxContainer = document.getElementById('taxBreakdownContainer');
+            if (taxContainer && cartData.tax_breakdown) {
+                let taxHtml = '';
+                if (cartData.tax_breakdown.length > 0) {
+                    cartData.tax_breakdown.forEach(tax => {
+                        taxHtml += `
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-gray-600 text-sm">${tax.name}</span>
+                                <span class="font-semibold text-gray-800 text-sm">${formatCurrency(tax.amount)}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    taxHtml = `
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Tax</span>
+                            <span class="font-semibold text-gray-800" id="orderTax">${formatCurrency(cartData.tax_total)}</span>
+                        </div>
+                    `;
+                }
+                taxContainer.innerHTML = taxHtml;
+            } else {
+                const taxElement = document.getElementById('orderTax');
+                if (taxElement && cartData.tax_total !== undefined) {
+                    taxElement.textContent = formatCurrency(cartData.tax_total);
+                }
             }
 
             // Update total
             const totalElement = document.getElementById('totalAmount');
             if (totalElement && cartData.grand_total !== undefined) {
                 totalElement.textContent = formatCurrency(cartData.grand_total);
+            }
+
+            // Update discount
+            const discountElement = document.getElementById('orderDiscount');
+            if (discountElement && cartData.discount_total !== undefined) {
+                if (cartData.discount_total > 0) {
+                    discountElement.textContent = `-₹${parseFloat(cartData.discount_total).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    discountElement.parentElement.classList.remove('hidden');
+                } else {
+                    discountElement.parentElement.classList.add('hidden');
+                }
             }
         }
 

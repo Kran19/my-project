@@ -591,6 +591,7 @@
                                         <button type="button"
                                             class="btn-add-to-cart add-to-cart-btn"
                                             data-product-id="{{ $product['id'] }}"
+                                            data-variant-id="{{ $product['default_variant_id'] ?? $product['id'] }}"
                                             {{ !$product['is_in_stock'] ? 'disabled' : '' }}>
                                             <i class="fas fa-shopping-cart mr-2"></i>
                                             Add to Cart
@@ -735,6 +736,7 @@
                     e.stopPropagation();
 
                     const productId = this.getAttribute('data-product-id');
+                    const variantId = this.getAttribute('data-variant-id') || productId;
                     const button = this;
                     const originalText = button.innerHTML;
 
@@ -746,7 +748,7 @@
 
                     try {
                         const response = await axios.post('/cart/add', {
-                            variant_id: productId,
+                            variant_id: variantId,
                             quantity: 1
                         });
 

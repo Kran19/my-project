@@ -401,7 +401,7 @@
                                     <div class="flex gap-2">
                                         <button
                                             class="flex-1 bg-gray-900 text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 text-sm add-to-cart-btn hover:shadow-lg"
-                                            onclick="addToCart(this, {{ $product['id'] }})">
+                                            onclick="addToCart(this, {{ $product['default_variant_id'] ?? $product['id'] }})">
                                             <i class="fas fa-shopping-cart mr-2"></i>
                                             {{ $product['is_in_stock'] ? 'Add to Cart' : 'Out of Stock' }}
                                         </button>
