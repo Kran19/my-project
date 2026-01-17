@@ -380,7 +380,8 @@
                                         </span>
                                     @endif
 
-                                    <span id="discountBadge" class="hidden bg-gradient-to-r from-amber-600 to-amber-800 text-white text-xs px-3 py-1 rounded-full font-bold">
+                                    <span id="discountBadge"
+                                        class="hidden bg-gradient-to-r from-amber-600 to-amber-800 text-white text-xs px-3 py-1 rounded-full font-bold">
                                         <!-- Will be updated dynamically -->
                                     </span>
 
@@ -632,26 +633,29 @@
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-3">
-                                            <i class="fas fa-undo-alt text-amber-600"></i>
+                                            <i class="fas fa-gem text-amber-600"></i>
                                             <div>
-                                                <p class="font-medium">30-Day Returns</p>
-                                                <p class="text-sm text-gray-600">Easy return policy</p>
+                                                <p class="font-medium">Premium Materials</p>
+                                                <p class="text-sm text-gray-600">Selected for durability and finish</p>
                                             </div>
                                         </div>
+
                                         <div class="flex items-center gap-3">
                                             <i class="fas fa-shield-alt text-amber-600"></i>
                                             <div>
-                                                <p class="font-medium">Lifetime Warranty</p>
-                                                <p class="text-sm text-gray-600">On manufacturing</p>
+                                                <p class="font-medium">Quality Checked</p>
+                                                <p class="text-sm text-gray-600">Reviewed before dispatch</p>
                                             </div>
                                         </div>
+
                                         <div class="flex items-center gap-3">
-                                            <i class="fas fa-gem text-amber-600"></i>
+                                            <i class="fas fa-box-open text-amber-600"></i>
                                             <div>
-                                                <p class="font-medium">Certified Quality</p>
-                                                <p class="text-sm text-gray-600">BIS Hallmarked</p>
+                                                <p class="font-medium">Careful Packaging</p>
+                                                <p class="text-sm text-gray-600">Packed securely for safe delivery</p>
                                             </div>
                                         </div>
+
                                     </div>
                                 </div>
 
@@ -935,7 +939,8 @@
                 console.log('Product detail page loaded with:', productData);
 
                 // Configure Axios
-                axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]')
+                    .getAttribute('content');
                 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
                 // Initialize variant selection
@@ -992,7 +997,8 @@
                     const fullPath = imgPath.startsWith('http') ? imgPath : '/storage/' + imgPath;
 
                     const thumbnailDiv = document.createElement('div');
-                    thumbnailDiv.className = `thumbnail-item rounded-xl overflow-hidden border-2 ${index === 0 ? 'border-amber-500' : 'border-gray-200'} p-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-amber-500`;
+                    thumbnailDiv.className =
+                        `thumbnail-item rounded-xl overflow-hidden border-2 ${index === 0 ? 'border-amber-500' : 'border-gray-200'} p-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-amber-500`;
                     thumbnailDiv.dataset.image = fullPath;
 
                     thumbnailDiv.innerHTML = `
@@ -1183,7 +1189,9 @@
             // Update attribute button availability based on selected attributes
             function updateAttributeAvailability() {
                 // Get currently selected attributes
-                const currentSelected = { ...selectedAttributes };
+                const currentSelected = {
+                    ...selectedAttributes
+                };
 
                 // Loop through all attribute groups
                 Object.entries(attributeGroups).forEach(([attributeName, group]) => {
@@ -1198,7 +1206,10 @@
 
                         if (button) {
                             // Test if this option would lead to an available variant
-                            const testAttributes = { ...currentSelected, [attributeName]: option.value };
+                            const testAttributes = {
+                                ...currentSelected,
+                                [attributeName]: option.value
+                            };
                             const isAvailable = isAttributeCombinationAvailable(testAttributes);
 
                             if (isAvailable) {

@@ -965,37 +965,37 @@ body {
     .bangles-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .bangles-side {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .ring-grid {
         grid-template-columns: repeat(2, 1fr);
         grid-auto-rows: 200px;
     }
-    
+
     .ring-item:nth-child(1) {
         grid-column: span 2;
         grid-row: span 1;
     }
-    
+
     .ring-item:nth-child(4) {
         grid-row: span 1;
     }
-    
+
     .ring-item:nth-child(6) {
         grid-column: span 2;
     }
-    
+
     .bracelets-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .earrings-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .testimonials-grid, .awards-grid, .features-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -1005,108 +1005,108 @@ body {
     .collection-section {
         padding: 2rem 5%;
     }
-    
+
     .section-title h2 {
         font-size: 1.8rem;
     }
-    
+
     /* Bangles - 2 Column Grid */
     .bangles-grid {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .bangles-main {
         min-height: 350px;
     }
-    
+
     .bangles-side {
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
     }
-    
+
     .bangle-item {
         min-height: 220px;
     }
-    
+
     /* Ring - Single Column Stacked */
     .ring-grid {
         grid-template-columns: 1fr;
         grid-auto-rows: auto;
         gap: 20px;
     }
-    
+
     .ring-item {
         min-height: 280px;
         grid-column: span 1 !important;
         grid-row: span 1 !important;
     }
-    
+
     /* Necklaces - Keep Horizontal Scroll */
     .necklaces-grid {
         flex-direction: row;
     }
-    
+
     .necklace-item {
         min-width: 85%;
         min-height: 350px;
     }
-    
+
     /* Bracelets - Single Column */
     .bracelets-grid {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .bracelet-main {
         min-height: 350px;
     }
-    
+
     .bracelet-side {
         display: grid;
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .bracelet-item {
         min-height: 250px;
         margin: 0 !important;
     }
-    
+
     /* Earrings - 2 Column Grid */
     .earrings-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
     }
-    
+
     .earring-item {
         min-height: 250px;
         transform: none !important;
     }
-    
+
     /* Pendants - Single Column with proper spacing */
     .pendants-grid {
         flex-direction: column;
         gap: 30px;
         padding: 10px;
     }
-    
+
     .pendant-item {
         width: 100%;
         transform: none !important;
     }
-    
+
     .pendant-item-image {
         width: 100%;
         max-width: 280px;
         height: 280px;
         margin: 0 auto;
     }
-    
+
     .pendant-item-info {
         width: 100%;
     }
-    
+
     .testimonials-grid, .awards-grid, .features-grid {
         grid-template-columns: 1fr;
     }
@@ -1161,13 +1161,13 @@ body {
             <h2>{{ $section['title'] }}</h2>
             @if($section['subtitle']) <p>{{ $section['subtitle'] }}</p> @endif
         </div>
-        
+
         <div class="bangles-grid">
             @php
                 $mainProduct = $products[0] ?? null;
                 $subProducts = array_slice($products, 1, 4);
             @endphp
-            
+
             @if($mainProduct)
             <div class="bangles-main">
                 <img src="{{ asset('storage/' . $mainProduct['main_image']) }}" alt="{{ $mainProduct['name'] }}">
@@ -1176,7 +1176,7 @@ body {
                 <a href="{{ route('customer.products.details', $mainProduct['slug']) }}" class="view-btn">View Details</a>
             </div>
             @endif
-            
+
             <div class="bangles-side">
                 @foreach($subProducts as $product)
                 <div class="bangle-item">
@@ -1197,7 +1197,7 @@ body {
             <h2>{{ $section['title'] }}</h2>
             @if($section['subtitle']) <p>{{ $section['subtitle'] }}</p> @endif
         </div>
-        
+
         <div class="ring-grid">
             @foreach($products as $index => $product)
             @if($loop->index < 6)
@@ -1219,7 +1219,7 @@ body {
             <h2>{{ $section['title'] }}</h2>
             @if($section['subtitle']) <p>{{ $section['subtitle'] }}</p> @endif
         </div>
-        
+
         <div class="necklaces-grid">
             @foreach($products as $product)
             @if($loop->index < 8)
@@ -1241,7 +1241,7 @@ body {
             <h2>{{ $section['title'] }}</h2>
             @if($section['subtitle']) <p>{{ $section['subtitle'] }}</p> @endif
         </div>
-        
+
         <div class="bracelets-grid">
             @php
                 $mainProduct = $products[0] ?? null;
@@ -1249,7 +1249,7 @@ body {
                 $leftProducts = array_slice($sideProducts, 0, 2);
                 $rightProducts = array_slice($sideProducts, 2, 2);
             @endphp
-            
+
             <div class="bracelet-side">
                 @foreach($leftProducts as $product)
                 <div class="bracelet-item">
@@ -1260,7 +1260,7 @@ body {
                 </div>
                 @endforeach
             </div>
-            
+
             @if($mainProduct)
             <div class="bracelet-main">
                 <img src="{{ asset('storage/' . $mainProduct['main_image']) }}" alt="{{ $mainProduct['name'] }}">
@@ -1272,7 +1272,7 @@ body {
                 <a href="{{ route('customer.products.details', $mainProduct['slug']) }}" class="view-btn">View Details</a>
             </div>
             @endif
-            
+
             <div class="bracelet-side">
                 @foreach($rightProducts as $product)
                 <div class="bracelet-item">
@@ -1293,7 +1293,7 @@ body {
             <h2>{{ $section['title'] }}</h2>
             @if($section['subtitle']) <p>{{ $section['subtitle'] }}</p> @endif
         </div>
-        
+
         <div class="earrings-grid">
             @foreach($products as $index => $product)
             @if($loop->index < 6)
@@ -1315,7 +1315,7 @@ body {
             <h2>{{ $section['title'] }}</h2>
             @if($section['subtitle']) <p>{{ $section['subtitle'] }}</p> @endif
         </div>
-        
+
         <div class="pendants-grid">
             @foreach($products as $index => $product)
             @if($loop->index < 5)
@@ -1343,7 +1343,7 @@ body {
         <p>What Our Customers Say</p>
         <p>Join thousands of satisfied customers who love our imitation jewellery</p>
     </div>
-    
+
     <div class="testimonials-grid">
         <div class="testimonial-card">
             <div class="testimonial-text">
@@ -1360,7 +1360,7 @@ body {
                 </div>
             </div>
         </div>
-        
+
         <div class="testimonial-card">
             <div class="testimonial-text">
                 "Perfect gift for my wife anniversary. She loved it! The customer service was excellent."
@@ -1376,7 +1376,7 @@ body {
                 </div>
             </div>
         </div>
-        
+
         <div class="testimonial-card">
             <div class="testimonial-text">
                 "I wear their imitation earrings every day. Comfortable, stylish, and doesn't cause any allergies."
@@ -1396,12 +1396,12 @@ body {
 </section>
 
 <!-- Awards Section -->
-<section class="awards-section">
+{{-- <section class="awards-section">
     <div class="section-title">
         <h2>Our Credentials</h2>
         <p>Quality you can trust, excellence you can see</p>
     </div>
-    
+
     <div class="awards-grid">
         <div class="award-card">
             <div class="award-icon">
@@ -1410,7 +1410,7 @@ body {
             <h3>Award Winning Quality</h3>
             <p>Recognized for excellence in imitation jewellery design</p>
         </div>
-        
+
         <div class="award-card">
             <div class="award-icon">
                 <i class="fas fa-certificate"></i>
@@ -1418,7 +1418,7 @@ body {
             <h3>Certified Materials</h3>
             <p>All materials are certified safe and hypoallergenic</p>
         </div>
-        
+
         <div class="award-card">
             <div class="award-icon">
                 <i class="fas fa-calendar-alt"></i>
@@ -1426,7 +1426,7 @@ body {
             <h3>Trusted Since 2010</h3>
             <p>Over a decade of serving satisfied customers</p>
         </div>
-        
+
         <div class="award-card">
             <div class="award-icon">
                 <i class="fas fa-star"></i>
@@ -1435,7 +1435,7 @@ body {
             <p>Consistently high ratings from our customers</p>
         </div>
     </div>
-</section>
+</section> --}}
 
 <!-- Why Choose Us -->
 <section class="features-section">
@@ -1443,7 +1443,7 @@ body {
         <h2>Why Choose Us</h2>
         <p>Experience the difference with our premium imitation jewellery services</p>
     </div>
-    
+
     <div class="features-grid">
         <div class="feature-card">
             <div class="feature-icon">
@@ -1452,7 +1452,7 @@ body {
             <h3>Easy Returns</h3>
             <p>30-day hassle-free return policy</p>
         </div>
-        
+
         <div class="feature-card">
             <div class="feature-icon">
                 <i class="fas fa-money-bill-wave"></i>
@@ -1460,7 +1460,7 @@ body {
             <h3>COD Available</h3>
             <p>Pay when your order arrives</p>
         </div>
-        
+
         <div class="feature-card">
             <div class="feature-icon">
                 <i class="fas fa-shipping-fast"></i>
@@ -1468,7 +1468,7 @@ body {
             <h3>Free Shipping</h3>
             <p>On all orders over ₹999</p>
         </div>
-        
+
         <div class="feature-card">
             <div class="feature-icon">
                 <i class="fas fa-lock"></i>
@@ -1543,10 +1543,10 @@ const swiper = new Swiper('.swiper', {
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
         e.preventDefault();
-        
+
         const targetId = this.getAttribute('href');
         if(targetId === '#') return;
-        
+
         const targetElement = document.querySelector(targetId);
         if(targetElement) {
             window.scrollTo({
