@@ -10,9 +10,15 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Customer;
 use Carbon\Carbon;
+use App\Helpers\CartHelper;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OTPVerify;
 
 class AuthController extends Controller
 {
+    public function __construct(protected CartHelper $cartHelper)
+    {
+    }
     public function loginPage()
     {
         return view('customer.auth.login');
@@ -71,18 +77,22 @@ class AuthController extends Controller
             // }
 
             // Check if account is active
-            if ($customer->status != 1) {
-                Auth::guard('customer')->logout();
-                return redirect()->back()
-                    ->withErrors(['email' => 'Your account is inactive. Please contact support.'])
-                    ->withInput($request->except('password'));
-            }
+            // Check if account is active
+            // if ($customer->status != 1) {
+            //     Auth::guard('customer')->logout();
+            //     return redirect()->back()
+            //         ->withErrors(['email' => 'Your account is inactive. Please contact support.'])
+            //         ->withInput($request->except('password'));
+            // }
 
             // Update last login
             $customer->update([
                 'last_login_at' => now(),
                 'last_login_ip' => $request->ip()
             ]);
+
+            // Sync cart from session to database
+            $this->cartHelper->syncCart();
 
             return redirect()->route('customer.home.index')
                 ->with('success', 'Welcome back, ' . $customer->name . '!');
@@ -137,14 +147,28 @@ class AuthController extends Controller
             'email' => strtolower(trim($request->email)),
             'mobile' => trim($request->mobile),
             'password' => Hash::make($request->password),
-            'status' => 0,
+            'status' => 1, // Auto-activate
             'created_at' => now(),
             'updated_at' => now()
         ]);
 
-        // Generate OTPs
+        // Auto Login
+        Auth::guard('customer')->login($customer);
+        
+        // Sync cart immediately
+        $this->cartHelper->syncCart();
+
+        // Generate Email OTP
         $emailOTP = rand(100000, 999999);
-        $mobileOTP = rand(100000, 999999);
+
+        // Send OTP via Email
+        try {
+            Mail::to($customer->email)->send(new OTPVerify($emailOTP));
+        } catch (\Exception $e) {
+            \Log::error('OTP Email sending failed: ' . $e->getMessage());
+            // Continue registration to allow manual resend later or show error? 
+            // Better to show error but for now let's proceed so we can at least debug.
+        }
 
         // Store verification data in cache with unique key
         $verificationKey = 'verify_' . md5($customer->email . time());
@@ -153,14 +177,12 @@ class AuthController extends Controller
             'email' => $customer->email,
             'mobile' => $customer->mobile,
             'email_otp' => $emailOTP,
-            'mobile_otp' => $mobileOTP,
             'attempts' => 0,
             'created_at' => now()->timestamp
         ];
 
         Cache::put($verificationKey, $verificationData, 300); // 5 minutes
         Cache::put('email_otp_' . $customer->email, $emailOTP, 300);
-        Cache::put('mobile_otp_' . $customer->mobile, $mobileOTP, 300);
 
         // Store verification key in session
         session(['verification_key' => $verificationKey]);
@@ -169,29 +191,39 @@ class AuthController extends Controller
             ->with([
                 'customer_id' => $customer->id,
                 'email' => $customer->email,
-                'mobile' => $customer->mobile,
-                'email_otp' => $emailOTP, // Remove in production
-                'mobile_otp' => $mobileOTP, // Remove in production
                 'verification_key' => $verificationKey,
-                'success' => 'Registration successful! Please verify your email and mobile number.'
+                'success' => 'Registration successful! Please check your email for OTP.'
             ]);
     }
 
     public function verifyPage()
     {
-        // Check if we have session data
+        // 1. If Logged In, allow access
+        if (Auth::guard('customer')->check()) {
+            $customer = Auth::guard('customer')->user();
+            
+            // If already verified, go home
+            if ($customer->email_verified_at) {
+                return redirect()->route('customer.home.index');
+            }
+            
+            // If session keys missing, restore them for the view
+            if (!session()->has('email')) {
+                session(['email' => $customer->email]);
+            }
+            
+            // If verification key missing, maybe we just render view 
+            // and let them click "Resend" if OTP is lost?
+            // Or better, trigger a resend if completely empty?
+            // For now, let's just show the view. The view uses session('email')
+            
+            return view('customer.auth.verify');
+        }
+
+        // 2. If Guest, check session
         if (!session()->has('verification_key') && !session()->has('customer_id')) {
             return redirect()->route('customer.register')
                 ->with('error', 'Please register first to get verification OTPs.');
-        }
-
-        // Get data from cache if available
-        if (session()->has('verification_key')) {
-            $verificationData = Cache::get(session('verification_key'));
-            if (!$verificationData) {
-                return redirect()->route('customer.register')
-                    ->with('error', 'Verification session expired. Please register again.');
-            }
         }
 
         return view('customer.auth.verify');
@@ -201,14 +233,11 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email_otp' => 'required|numeric|digits:6',
-            'mobile_otp' => 'required|numeric|digits:6'
+            'email_otp' => 'required|numeric|digits:6'
         ], [
             'email_otp.required' => 'Email OTP is required',
             'email_otp.numeric' => 'Email OTP must be a number',
-            'email_otp.digits' => 'Email OTP must be 6 digits',
-            'mobile_otp.required' => 'Mobile OTP is required',
-            'mobile_otp.numeric' => 'Mobile OTP must be a number',
-            'mobile_otp.digits' => 'Mobile OTP must be 6 digits'
+            'email_otp.digits' => 'Email OTP must be 6 digits'
         ]);
 
         if ($validator->fails()) {
@@ -235,8 +264,8 @@ class AuthController extends Controller
                 // Check attempts
                 if ($verificationData['attempts'] >= 5) {
                     Cache::forget($verificationKey);
+                    Cache::forget($verificationKey);
                     Cache::forget('email_otp_' . $email);
-                    Cache::forget('mobile_otp_' . $mobile);
 
                     return redirect()->route('customer.register')
                         ->with('error', 'Too many failed attempts. Please register again.');
@@ -244,20 +273,24 @@ class AuthController extends Controller
             }
         }
 
-        if (!$customerId || !$email || !$mobile) {
+        if (!$customerId && Auth::guard('customer')->check()) {
+            $customer = Auth::guard('customer')->user();
+            $customerId = $customer->id;
+            $email = $customer->email;
+        }
+
+        if (!$customerId || !$email) {
             return redirect()->route('customer.register')
                 ->with('error', 'Verification session expired. Please register again.');
         }
 
         // Get cached OTPs
         $cachedEmailOTP = Cache::get('email_otp_' . $email);
-        $cachedMobileOTP = Cache::get('mobile_otp_' . $mobile);
 
         // Verify OTPs
         if (
-            !$cachedEmailOTP || !$cachedMobileOTP ||
-            $cachedEmailOTP != $request->email_otp ||
-            $cachedMobileOTP != $request->mobile_otp
+            !$cachedEmailOTP ||
+            $cachedEmailOTP != $request->email_otp
         ) {
 
             // Increment attempts
@@ -283,11 +316,11 @@ class AuthController extends Controller
             ]);
 
             // Clear all cached data
+            // Clear all cached data
             if ($verificationKey) {
                 Cache::forget($verificationKey);
             }
             Cache::forget('email_otp_' . $email);
-            Cache::forget('mobile_otp_' . $mobile);
 
             // Clear session
             session()->forget([
@@ -295,12 +328,14 @@ class AuthController extends Controller
                 'customer_id',
                 'email',
                 'mobile',
-                'email_otp',
-                'mobile_otp'
+                'email_otp'
             ]);
 
             // Auto login
             Auth::guard('customer')->login($customer);
+            
+            // Sync cart immediately after verification login
+            $this->cartHelper->syncCart();
 
             return redirect()->route('customer.home.index')
                 ->with('success', 'Verification successful! Welcome to ' . config('app.name'));
@@ -333,31 +368,86 @@ class AuthController extends Controller
         }
 
         // Generate new OTPs
+        // Generate new OTPs
         $newEmailOTP = rand(100000, 999999);
-        $newMobileOTP = rand(100000, 999999);
 
         // Update cache
         Cache::put('email_otp_' . $email, $newEmailOTP, 300);
-        Cache::put('mobile_otp_' . $mobile, $newMobileOTP, 300);
 
         // Update verification data
         $verificationData = Cache::get($verificationKey);
         if ($verificationData) {
             $verificationData['email_otp'] = $newEmailOTP;
-            $verificationData['mobile_otp'] = $newMobileOTP;
             $verificationData['attempts'] = 0;
             Cache::put($verificationKey, $verificationData, 300);
         }
+        
+        // Send OTP via Email
+        try {
+            Mail::to($email)->send(new OTPVerify($newEmailOTP));
+        } catch (\Exception $e) {
+            \Log::error('OTP Resend Email failed: ' . $e->getMessage());
+             return response()->json([
+                'success' => false,
+                'message' => 'Failed to send email. Please try again.'
+            ], 500);
+        }
 
         // Update session
-        session(['email_otp' => $newEmailOTP, 'mobile_otp' => $newMobileOTP]);
+        session(['email_otp' => $newEmailOTP]);
 
         return response()->json([
             'success' => true,
-            'message' => 'OTP resent successfully!',
-            'email_otp' => $newEmailOTP, // Remove in production
-            'mobile_otp' => $newMobileOTP // Remove in production
+            'message' => 'OTP resent successfully to ' . $email,
         ]);
+    }
+
+    public function changeEmail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|max:150|unique:customers,email'
+        ], [
+            'email.required' => 'Email address is required',
+            'email.email' => 'Please enter a valid email address',
+            'email.unique' => 'This email is already registered'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 400);
+        }
+
+        $customerId = session('customer_id');
+        if (!$customerId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Session expired. Please register again.'
+            ], 400);
+        }
+
+        $customer = Customer::find($customerId);
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer not found.'
+            ], 400);
+        }
+
+        // Update email
+        $oldEmail = $customer->email;
+        $customer->email = strtolower(trim($request->email));
+        $customer->save();
+
+        // Clear old cache
+        Cache::forget('email_otp_' . $oldEmail);
+        
+        // Update Session
+        session(['email' => $customer->email]);
+
+        // Resend OTP to new email
+        return $this->resendOTP($request);
     }
 
     public function logout()

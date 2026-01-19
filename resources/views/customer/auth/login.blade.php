@@ -13,13 +13,7 @@
             </div>
 
             <div class="bg-white rounded-2xl shadow-xl p-8">
-                <!-- Demo Credentials -->
-                <div class="mb-6 p-4 bg-amber-50 rounded-lg">
-                    <p class="text-sm text-amber-800 text-center">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Demo Credentials: user@example.com / password123
-                    </p>
-                </div>
+                
 
                 <!-- Success Message -->
                 @if(session('success'))

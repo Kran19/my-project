@@ -325,6 +325,7 @@ Route::name('customer.')->group(function () {
     Route::get('/verify', [CustomerAuth::class, 'verifyPage'])->name('verify');
     Route::post('/verify', [CustomerAuth::class, 'verify'])->name('verify.submit');
     Route::post('/resend-otp', [CustomerAuth::class, 'resendOTP'])->name('otp.resend');
+    Route::post('/change-email', [CustomerAuth::class, 'changeEmail'])->name('auth.change-email');
 
     Route::post('/logout', [CustomerAuth::class, 'logout'])->name('logout');
 

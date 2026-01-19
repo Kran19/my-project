@@ -574,7 +574,7 @@
                 <div class="space-y-3 text-sm text-gray-400">
                     <p class="flex items-center gap-2">
                         <i class="fas fa-phone text-amber-400"></i>
-                        <span>+91 18001 24567</span>
+                        <span>+91  7490003767</span>
                     </p>
                     <p class="flex items-center gap-2">
                         <i class="fas fa-envelope text-amber-400"></i>

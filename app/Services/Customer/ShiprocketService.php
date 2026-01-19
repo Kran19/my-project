@@ -143,13 +143,17 @@ class ShiprocketService
                     
                     $errorMsg = 'Shipping service unavailable.';
                     if ($response->status() === 403) {
-                         $errorMsg = 'Shipping service unauthorized to this location (403). Verify pickup pincode.';
+                         $errorMsg = 'Shipping service unauthorized (403).';
                     }
+                    
+                    // improved error debugging
+                    $apiError = $response->json()['message'] ?? 'Unknown error';
+                    $errorMsg .= ' Reason: ' . $apiError;
 
                     return [
                         'success' => false,
                         'message' => $errorMsg,
-                        'debug_error' => $response->json()['message'] ?? 'Unknown error'
+                        'debug_error' => $apiError
                     ];
                 }
             }

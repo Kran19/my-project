@@ -33,7 +33,7 @@
             <div class="flex items-center justify-between">
                 <!-- Logo -->
                 <a href="{{ route('customer.home.index') }}" class="flex items-center gap-3">
-                    <img src="{{ asset('logo.jpeg') }}" alt="APIQO Jewellery" class="h-10 w-10 rounded-full">
+                    <img src="{{ asset('images/logo.png') }}" alt="APIQO Jewellery" class="h-10 w-10 rounded-full">
                     <span class="brand-title text-xl text-amber-800 font-bold">APIQO Jewellery</span>
                 </a>
                 
@@ -48,7 +48,7 @@
                 <div class="flex items-center gap-4">
                     <a href="tel:+911800124567" class="text-gray-600 hover:text-amber-700 text-sm">
                         <i class="fas fa-phone-alt mr-1"></i>
-                        +91 18001 24567
+                        +91  7490003767
                     </a>
                 </div>
             </div>
