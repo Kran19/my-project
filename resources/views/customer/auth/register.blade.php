@@ -80,7 +80,7 @@
                             <button type="button" onclick="togglePassword('passwordInput')"
                                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600 transition-colors"
                                 aria-label="Toggle password visibility">
-                                <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                                <i class="fas fa-eye" id="passwordInputToggleIcon"></i>
                             </button>
                         </div>
                         <div class="mt-2 p-3 bg-gray-50 rounded-lg">
@@ -121,7 +121,7 @@
                             <button type="button" onclick="togglePassword('confirmPasswordInput')"
                                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-600 transition-colors"
                                 aria-label="Toggle password visibility">
-                                <i class="fas fa-eye" id="confirmPasswordToggleIcon"></i>
+                                <i class="fas fa-eye" id="confirmPasswordInputToggleIcon"></i>
                             </button>
                         </div>
                         <div id="passwordMatch" class="hidden mt-1">
@@ -185,15 +185,11 @@
     </div>
 @endsection
 
-@push('scripts')
+@section('scripts')
 <script>
 function togglePassword(inputId) {
     const passwordInput = document.getElementById(inputId);
     const toggleIcon = document.getElementById(inputId + 'ToggleIcon');
-
-    if (!toggleIcon) {
-        toggleIcon = document.getElementById('passwordToggleIcon');
-    }
 
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
@@ -377,4 +373,4 @@ function showErrorToast(message) {
     }, 5000);
 }
 </script>
-@endpush
+@endsection

@@ -22,7 +22,7 @@ class OfferController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Offer::query()->with(['categories', 'variants.variant.product', 'rewards.product']);
+            $query = Offer::query()->with(['categories', 'variants.product', 'rewards.product']);
 
             // Search filter
             if ($request->has('search') && $request->search) {
@@ -116,7 +116,7 @@ class OfferController extends Controller
                 return response()->json([
                     'success' => false,
                     'errors' => $validator->errors(),
-                    'message' => 'Validation failed'
+                    'message' => $validator->errors()->first()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
@@ -171,7 +171,7 @@ class OfferController extends Controller
     public function show($id)
     {
         try {
-            $offer = Offer::with(['categories', 'variants.variant.product', 'rewards.product', 'rewards.variant'])
+            $offer = Offer::with(['categories', 'variants.product', 'rewards.product', 'rewards.variant'])
                          ->findOrFail($id);
 
             return response()->json([
@@ -227,7 +227,7 @@ class OfferController extends Controller
                 return response()->json([
                     'success' => false,
                     'errors' => $validator->errors(),
-                    'message' => 'Validation failed'
+                    'message' => $validator->errors()->first()
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 

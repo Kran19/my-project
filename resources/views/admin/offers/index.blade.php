@@ -1765,37 +1765,54 @@
         // Save offer (create or update)
         async function saveOffer() {
             const form = document.getElementById('offerForm');
-            const formData = new FormData();
-
-            // Collect form data
-            const formElements = form.elements;
-            for (let element of formElements) {
-                if (element.name && element.type !== 'button' && element.type !== 'submit') {
-                    if (element.type === 'checkbox') {
-                        formData.append(element.name, element.checked ? '1' : '0');
-                    } else if (element.type === 'radio') {
-                        if (element.checked) {
-                            formData.append(element.name, element.value);
-                        }
-                    } else {
-                        if (element.value) {
-                            formData.append(element.name, element.value);
-                        }
-                    }
+            
+            // Build JSON payload
+            const payload = {};
+            
+            // Basic fields
+            payload.name = document.getElementById('name').value;
+            payload.code = document.getElementById('code').value;
+            payload.offer_type = document.getElementById('offer_type').value;
+            payload.status = document.getElementById('status').checked ? 1 : 0;
+            payload.is_auto_apply = document.getElementById('is_auto_apply').checked ? 1 : 0;
+            payload.is_stackable = document.getElementById('is_stackable').checked ? 1 : 0;
+            
+            // Numeric fields (only add if has value)
+            const numericFields = [
+                'discount_value', 'max_discount', 'buy_qty', 'get_qty', 
+                'min_cart_amount', 'max_cart_amount', 'max_uses', 'uses_per_customer'
+            ];
+            
+            numericFields.forEach(field => {
+                const el = form.querySelector(`[name="${field}"]`);
+                if (el && el.value !== '') {
+                    payload[field] = el.value;
                 }
-            }
-
-            // Add selected categories
+            });
+            
+            // Dates
+            const startsAt = document.getElementById('starts_at').value;
+            const endsAt = document.getElementById('ends_at').value;
+            if (startsAt) payload.starts_at = startsAt;
+            if (endsAt) payload.ends_at = endsAt;
+            
+            // Categories (Array of IDs)
             const selectedCategories = [];
             document.querySelectorAll('input[name="categories[]"]:checked').forEach(checkbox => {
-                selectedCategories.push(checkbox.value);
+                selectedCategories.push(parseInt(checkbox.value));
             });
-            formData.append('categories', JSON.stringify(selectedCategories));
-
-            // Add selected variants
+            if (selectedCategories.length > 0) {
+                payload.categories = selectedCategories;
+            }
+            
+            // Variants (Array of IDs)
             const variantsInput = document.getElementById('variants');
             if (variantsInput.value) {
-                formData.append('variants', variantsInput.value);
+                try {
+                    payload.variants = JSON.parse(variantsInput.value);
+                } catch (e) {
+                    console.error('Error parsing variants', e);
+                }
             }
 
             const method = isEditing ? 'put' : 'post';
@@ -1809,19 +1826,16 @@
             submitBtn.disabled = true;
 
             // Clear previous errors
-            ['nameError', 'codeError', 'offer_typeError'].forEach(errorId => {
-                const errorElement = document.getElementById(errorId);
-                if (errorElement) {
-                    errorElement.classList.add('hidden');
-                    errorElement.textContent = '';
-                }
+            document.querySelectorAll('[id$="Error"]').forEach(el => {
+                el.classList.add('hidden');
+                el.textContent = '';
             });
 
             try {
                 const response = await axiosInstance({
                     method: method,
                     url: url,
-                    data: formData,
+                    data: payload,
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -1838,17 +1852,33 @@
                     ]);
                 }
             } catch (error) {
+                console.error('Save offer error:', error);
+                
                 if (error.response?.status === 422) {
                     // Validation errors
                     const errors = error.response.data.errors;
                     Object.keys(errors).forEach(field => {
-                        const errorElement = document.getElementById(field + 'Error');
+                        // Handle array errors like 'categories.1' -> 'categoriesError' ? 
+                        // Or just show first error.
+                        // We map 'categories.*' to 'categoriesError' potentially?
+                        // But mostly simple field names work.
+                        
+                        let domId = field + 'Error';
+                        if (field.includes('.')) {
+                             // e.g. categories.1 -> categoriesError
+                             const parts = field.split('.');
+                             domId = parts[0] + 'Error';
+                        }
+                        
+                        const errorElement = document.getElementById(domId);
                         if (errorElement) {
                             errorElement.textContent = errors[field][0];
                             errorElement.classList.remove('hidden');
                         }
                     });
-                    toastr.error('Please fix the validation errors');
+                    
+                    // Show the specific error message from backend if available
+                    toastr.error(error.response.data.message || 'Please fix the validation errors');
                 } else {
                     toastr.error(error.response?.data?.message || 'Failed to save offer');
                 }

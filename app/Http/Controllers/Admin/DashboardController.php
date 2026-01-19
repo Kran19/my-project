@@ -50,12 +50,14 @@ class DashboardController extends Controller
             : ($currentMonthOrders > 0 ? 100 : 0);
 
         // Total Products
-        $totalProducts = DB::table('products')->count();
+        $totalProducts = DB::table('products')->whereNull('deleted_at')->count();
         $lastMonthProducts = DB::table('products')
+            ->whereNull('deleted_at')
             ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
             ->count();
 
         $currentMonthProducts = DB::table('products')
+            ->whereNull('deleted_at')
             ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
             ->count();
 
@@ -64,12 +66,14 @@ class DashboardController extends Controller
             : ($currentMonthProducts > 0 ? 100 : 0);
 
         // Total Customers
-        $totalCustomers = DB::table('customers')->count();
+        $totalCustomers = DB::table('customers')->whereNull('deleted_at')->count();
         $lastMonthCustomers = DB::table('customers')
+            ->whereNull('deleted_at')
             ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
             ->count();
 
         $currentMonthCustomers = DB::table('customers')
+            ->whereNull('deleted_at')
             ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
             ->count();
 
@@ -103,12 +107,16 @@ class DashboardController extends Controller
 
         // Low Stock Products (stock_quantity < 10)
         $lowStockProducts = DB::table('product_variants')
+            ->join('products', 'product_variants.product_id', '=', 'products.id')
+            ->whereNull('products.deleted_at')
             ->where('stock_quantity', '<', 10)
             ->where('stock_quantity', '>', 0)
             ->count();
 
         // Out of Stock Products
         $outOfStockProducts = DB::table('product_variants')
+            ->join('products', 'product_variants.product_id', '=', 'products.id')
+            ->whereNull('products.deleted_at')
             ->where('stock_quantity', '<=', 0)
             ->count();
 
@@ -168,6 +176,7 @@ class DashboardController extends Controller
         $topProducts = DB::table('order_items')
             ->join('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
             ->join('products', 'product_variants.product_id', '=', 'products.id')
+            ->whereNull('products.deleted_at')
             ->select(
                 'products.id',
                 'products.name',
@@ -235,6 +244,8 @@ class DashboardController extends Controller
             ->join('products', 'product_variants.product_id', '=', 'products.id')
             ->join('category_product', 'products.id', '=', 'category_product.product_id')
             ->join('categories', 'category_product.category_id', '=', 'categories.id')
+            ->whereNull('products.deleted_at')
+            ->whereNull('categories.deleted_at')
             ->select(
                 'categories.id',
                 'categories.name',
@@ -309,6 +320,8 @@ class DashboardController extends Controller
                 ->join('products', 'product_variants.product_id', '=', 'products.id')
                 ->join('category_product', 'products.id', '=', 'category_product.product_id')
                 ->join('categories', 'category_product.category_id', '=', 'categories.id')
+                ->whereNull('products.deleted_at')
+                ->whereNull('categories.deleted_at')
                 ->select(
                     'categories.name',
                     DB::raw('SUM(order_items.total) as total_revenue')
