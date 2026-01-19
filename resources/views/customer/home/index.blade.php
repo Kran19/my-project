@@ -1005,6 +1005,34 @@ body {
     .collection-section {
         padding: 2rem 5%;
     }
+    
+    /* Hero Banner Responsive */
+    .promo-slider {
+        height: 50vh;
+        min-height: 300px;
+    }
+
+    .slide-content {
+        left: 5%;
+        width: 90%;
+        max-width: none;
+        text-align: center;
+    }
+
+    .slide-content h2 {
+        font-size: 2rem;
+    }
+
+    .slide-content p {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .shop-btn {
+        padding: 0.8rem 2rem;
+        font-size: 1rem;
+    }
+
 
     .section-title h2 {
         font-size: 1.8rem;
