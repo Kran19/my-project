@@ -12,23 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Update product variants table defaults
-        Schema::table('product_variants', function (Blueprint $table) {
-            $table->decimal('weight', 8, 3)->default(0.100)->change();
-            $table->decimal('length', 8, 2)->default(10.00)->change();
-            $table->decimal('width', 8, 2)->default(10.00)->change();
-            $table->decimal('height', 8, 2)->default(10.00)->change();
-        });
-
-        // Update products table defaults
-        Schema::table('products', function (Blueprint $table) {
-            $table->decimal('weight', 8, 3)->default(0.100)->change();
-            $table->decimal('length', 8, 2)->default(10.00)->change();
-            $table->decimal('width', 8, 2)->default(10.00)->change();
-            $table->decimal('height', 8, 2)->default(10.00)->change();
-        });
-
-        // Update existing NULL or 0 records
+        // Update existing NULL or 0 records FIRST to avoid data truncation
         DB::table('product_variants')
             ->whereNull('weight')
             ->orWhere('weight', 0)
@@ -69,6 +53,21 @@ return new class extends Migration
             ->whereNull('height')
             ->orWhere('height', 0)
             ->update(['height' => 10.00]);
+
+        // Now update table schema defaults
+        Schema::table('product_variants', function (Blueprint $table) {
+            $table->decimal('weight', 8, 3)->default(0.100)->change();
+            $table->decimal('length', 8, 2)->default(10.00)->change();
+            $table->decimal('width', 8, 2)->default(10.00)->change();
+            $table->decimal('height', 8, 2)->default(10.00)->change();
+        });
+
+        Schema::table('products', function (Blueprint $table) {
+            $table->decimal('weight', 8, 3)->default(0.100)->change();
+            $table->decimal('length', 8, 2)->default(10.00)->change();
+            $table->decimal('width', 8, 2)->default(10.00)->change();
+            $table->decimal('height', 8, 2)->default(10.00)->change();
+        });
     }
 
     /**
