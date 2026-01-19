@@ -68,8 +68,8 @@ class HomeController extends Controller
             /* ------------------------------
              | TESTIMONIALS
              |------------------------------*/
-            $testimonials = Testimonial::where('status', 1)
-                ->orderBy('sort_order')
+            $testimonials = Testimonial::where('is_active', true)
+                ->latest()
                 ->limit(3)
                 ->get();
 

@@ -167,6 +167,24 @@ $navItems = [
         ],
     ],
 
+    'pages' => [
+        'title' => 'Pages',
+        'icon' => 'fas fa-file-alt',
+        'route' => 'admin.pages.index',
+    ],
+
+    'reviews' => [
+        'title' => 'Reviews',
+        'icon' => 'fas fa-star',
+        'route' => 'admin.reviews.index',
+    ],
+
+    'testimonials' => [
+        'title' => 'Testimonials',
+        'icon' => 'fas fa-quote-right',
+        'route' => 'admin.testimonials.index',
+    ],
+
     'settings' => [
         'title' => 'Settings',
         'icon' => 'fas fa-cog',

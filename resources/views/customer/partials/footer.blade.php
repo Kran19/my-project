@@ -496,7 +496,7 @@
                     </span>
                     <span class="feature-badge text-xs text-gray-300">
                         <i class="fas fa-shipping-fast mr-1 text-amber-400"></i>
-                        Free Shipping
+                        Free Shipping on orders over 1499
                     </span>
                 </div>
             </div>
@@ -515,12 +515,8 @@
                         <a href="{{ route('customer.category.products', ['slug' => 'wedding-collection']) }}" class="footer-link text-sm text-gray-400">Wedding Collection</a>
                     </li>
                     
-                    <li>
-                        <a href="{{ route('customer.category.products', ['slug' => 'statement-pieces']) }}" class="footer-link text-sm text-gray-400">Statement Pieces</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('customer.page.contact') }}" class="footer-link text-sm text-gray-400">Gift Cards</a>
-                    </li>
+                   
+                   
                 </ul>
             </div>
 
@@ -535,13 +531,13 @@
                         <a href="{{ route('customer.page.shipping-policy') }}" class="footer-link text-sm text-gray-400">Shipping & Delivery</a>
                     </li>
                     <li>
-                        <a href="#" class="footer-link text-sm text-gray-400">Returns & Exchanges</a>
+                        <a href="{{ route('customer.page.show', 'returns-exchanges') }}" class="footer-link text-sm text-gray-400">Returns & Exchanges</a>
                     </li>
                     <li>
                         <a href="{{ route('customer.page.size-guide') }}" class="footer-link text-sm text-gray-400">Size Guide</a>
                     </li>
                     <li>
-                        <a href="#" class="footer-link text-sm text-gray-400">Care Instructions</a>
+                        <a href="{{ route('customer.page.show', 'care-instructions') }}" class="footer-link text-sm text-gray-400">Care Instructions</a>
                     </li>
                     <li>
                         <a href="{{ route('customer.page.faq') }}" class="footer-link text-sm text-gray-400">FAQs</a>
@@ -556,18 +552,12 @@
                     <li>
                         <a href="{{ route('customer.page.about') }}" class="footer-link text-sm text-gray-400">Our Story</a>
                     </li>
-                    <li>
-                        <a href="{{ route('customer.page.about') }}#craftsmanship" class="footer-link text-sm text-gray-400">Craftsmanship</a>
-                    </li>
+                   
                     <li>
                         <a href="{{ route('customer.page.about') }}#sustainability" class="footer-link text-sm text-gray-400">Sustainability</a>
                     </li>
-                    <li>
-                        <a href="{{ route('customer.page.about') }}#press" class="footer-link text-sm text-gray-400">Press</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('customer.page.contact') }}?section=careers" class="footer-link text-sm text-gray-400">Careers</a>
-                    </li>
+                    
+                  
                 </ul>
 
                 <!-- Contact Info -->

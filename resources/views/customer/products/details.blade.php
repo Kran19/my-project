@@ -822,12 +822,9 @@
                                 </div>
                             </div>
 
-                            @if ($product['review_count'] > 0)
-                                <div class="text-center py-8">
-                                    <p class="text-gray-600">Reviews will be displayed here</p>
-                                    <p class="text-sm text-gray-500 mt-2">(Review system integration pending)</p>
-                                </div>
-                            @else
+                            @include('customer.products.partials.reviews', ['reviews' => $reviews ?? collect()])
+
+                            @if (!isset($reviews) || $reviews->count() == 0)
                                 <div class="text-center py-12">
                                     <i class="fas fa-comment text-gray-300 text-5xl mb-4"></i>
                                     <h4 class="text-lg font-semibold text-gray-700 mb-2">No Reviews Yet</h4>

@@ -38,6 +38,7 @@ class Product extends Model
         'meta_description',
         'meta_keywords',
         'canonical_url',
+        'cod_available',
         'product_code',
     ];
 
@@ -57,6 +58,32 @@ class Product extends Model
     {
         return $this->belongsTo(Brand::class);
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function getRatingAttribute()
+    {
+        // Use loaded reviews if available relative to performance, or simple avg
+        if ($this->relationLoaded('reviews')) {
+            return $this->reviews->avg('rating') ?? 0;
+        }
+        // Fallback or optimized query could go here, but for now simple 0.
+        // Ideally we might want to store avg_rating in product table and update it on review save,
+        // but dynamic is fine for now.
+        return $this->reviews()->avg('rating') ?? 0;
+    }
+
+    public function getReviewCountAttribute()
+    {
+        if ($this->relationLoaded('reviews')) {
+            return $this->reviews->count();
+        }
+        return $this->reviews()->count();
+    
+}
 
     public function mainCategory(): BelongsTo
     {
@@ -129,10 +156,7 @@ class Product extends Model
         return $this->hasMany(ProductSpecification::class);
     }
 
-    public function reviews(): HasMany
-    {
-        return $this->hasMany(ProductReview::class);
-    }
+
 
     public function approvedReviews(): HasMany
     {

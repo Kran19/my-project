@@ -1345,53 +1345,33 @@ body {
     </div>
 
     <div class="testimonials-grid">
+        @forelse($testimonials as $testimonial)
         <div class="testimonial-card">
             <div class="testimonial-text">
-                "The quality is exceptional! My imitation jewellery necklace arrived beautifully packaged and looks even better in person."
+                "{{ $testimonial->message }}"
             </div>
             <div class="testimonial-author">
-                <div class="author-avatar">PS</div>
+                <div class="author-avatar">
+                    @if($testimonial->image)
+                        <img src="{{ asset('storage/' . $testimonial->image) }}" alt="{{ $testimonial->name }}" class="w-full h-full object-cover">
+                    @else
+                        {{ strtoupper(substr($testimonial->name, 0, 2)) }}
+                    @endif
+                </div>
                 <div class="author-info">
-                    <h4>Priya Sharma</h4>
-                    <p>Mumbai</p>
+                    <h4>{{ $testimonial->name }}</h4>
+                    <p>{{ $testimonial->designation }}</p>
                     <div class="verified">
                         <i class="fas fa-check-circle"></i> Verified
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="testimonial-card">
-            <div class="testimonial-text">
-                "Perfect gift for my wife anniversary. She loved it! The customer service was excellent."
-            </div>
-            <div class="testimonial-author">
-                <div class="author-avatar">RM</div>
-                <div class="author-info">
-                    <h4>Rahul Mehta</h4>
-                    <p>Delhi</p>
-                    <div class="verified">
-                        <i class="fas fa-check-circle"></i> Verified
-                    </div>
-                </div>
-            </div>
+        @empty
+        <div class="col-span-3 text-center py-8 text-gray-500">
+            No testimonials yet.
         </div>
-
-        <div class="testimonial-card">
-            <div class="testimonial-text">
-                "I wear their imitation earrings every day. Comfortable, stylish, and doesn't cause any allergies."
-            </div>
-            <div class="testimonial-author">
-                <div class="author-avatar">AP</div>
-                <div class="author-info">
-                    <h4>Ananya Patel</h4>
-                    <p>Bangalore</p>
-                    <div class="verified">
-                        <i class="fas fa-check-circle"></i> Verified
-                    </div>
-                </div>
-            </div>
-        </div>
+        @endforelse
     </div>
 </section>
 

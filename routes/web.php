@@ -292,6 +292,15 @@ Route::prefix('admin')->group(function () {
         |--------------------------------------------------------------------------
         */
         Route::get('/settings', [AdminSetting::class, 'index'])->name('admin.settings.index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | PAGES MANAGEMENT
+        |--------------------------------------------------------------------------
+        */
+        Route::resource('pages', App\Http\Controllers\Admin\PageController::class, ['as' => 'admin']);
+        Route::resource('reviews', App\Http\Controllers\Admin\ReviewController::class, ['as' => 'admin']);
+        Route::resource('testimonials', App\Http\Controllers\Admin\TestimonialController::class, ['as' => 'admin']);
     });
 
 });
@@ -425,15 +434,25 @@ Route::name('customer.')->group(function () {
     | CMS STATIC PAGES
     |--------------------------------------------------------------------------
     */
+    /*
+    |--------------------------------------------------------------------------
+    | CMS STATIC PAGES
+    |--------------------------------------------------------------------------
+    */
     Route::prefix('page')->group(function () {
-        Route::get('/about', [CustomerPage::class, 'about'])->name('page.about');
-        Route::get('/contact', [CustomerPage::class, 'contact'])->name('page.contact');
-        Route::get('/faq', [CustomerPage::class, 'faq'])->name('page.faq');
-        Route::get('/terms', [CustomerPage::class, 'terms'])->name('page.terms');
-        Route::get('/privacy-policy', [CustomerPage::class, 'privacy'])->name('page.privacy');
-        Route::get('/shipping-policy', [CustomerPage::class, 'shipping'])->name('page.shipping-policy');
-        Route::get('/size-guide', [CustomerPage::class, 'sizeGuide'])->name('page.size-guide');
-
+        // Dynamic Page Route
+        Route::get('/{slug}', [CustomerPage::class, 'show'])->name('page.show');
+        
+        // Keep named routes for backward compatibility if needed, but point them to the dynamic show method or redirect
+        // Ideally, we update the footer to use 'customer.page.show' with slug.
+        // For now, let's Map specific hardcoded routes to the dynamic one if we want to keep route names.
+        Route::get('/about', [CustomerPage::class, 'show'])->defaults('slug', 'about-us')->name('page.about');
+        Route::get('/contact', [CustomerPage::class, 'show'])->defaults('slug', 'contact-us')->name('page.contact');
+        Route::get('/faq', [CustomerPage::class, 'show'])->defaults('slug', 'faq')->name('page.faq');
+        Route::get('/terms', [CustomerPage::class, 'show'])->defaults('slug', 'terms-and-conditions')->name('page.terms');
+        Route::get('/privacy-policy', [CustomerPage::class, 'show'])->defaults('slug', 'privacy-policy')->name('page.privacy');
+        Route::get('/shipping-policy', [CustomerPage::class, 'show'])->defaults('slug', 'shipping-policy')->name('page.shipping-policy');
+        Route::get('/size-guide', [CustomerPage::class, 'show'])->defaults('slug', 'size-guide')->name('page.size-guide');
     });
 
     /*

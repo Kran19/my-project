@@ -160,10 +160,17 @@ class ProductController extends Controller
             }
 
             $relatedProducts = $this->productService->getRelatedProducts($product['id'], 4);
+            
+            // Fetch reviews
+            $reviews = \App\Models\Review::where('product_id', $product['id'])
+                        ->where('status', true)
+                        ->latest()
+                        ->get();
 
             return view('customer.products.details', [
                 'product' => $product,
                 'relatedProducts' => $relatedProducts,
+                'reviews' => $reviews,
                 'title' => $product['name'] . ' - APIQO Fashion Jewelry',
                 'meta_title' => $product['meta_title'] ?? $product['name'],
                 'meta_description' => $product['meta_description'] ?? $product['short_description'],

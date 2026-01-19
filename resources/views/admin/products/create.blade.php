@@ -195,6 +195,92 @@
                 <!-- Generated Variants Table -->
                 <div id="variants-container" class="overflow-x-auto">
                      <!-- Variants Table -->
+                     @if(old('variants'))
+                        <table class="min-w-full divide-y divide-gray-200 border">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Variant</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-32">SKU</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Price</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Stock</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-48">Images</th>
+                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16">Default</th>
+                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @foreach(old('variants') as $idx => $variant)
+                                    <tr id="variant-row-{{ $idx }}">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
+                                            @php
+                                                // Reconstruct variant name from hidden inputs if possible, or just Show "Variant X"
+                                                // Since we don't have the attribute names easily accessible without parsing the array, 
+                                                // we can try to look at the attributes array.
+                                                $name = 'Variant ' . ($idx + 1);
+                                                if(isset($variant['attributes']) && is_array($variant['attributes'])) {
+                                                    // We might need to fetch attribute names from JS or server, but for now let's just loop
+                                                    // Actually, we can't easily get the human readable values here without passing them.
+                                                    // But we can keep the hidden inputs.
+                                                }
+                                            @endphp
+                                            {{ $name }}
+                                            
+                                            @if(isset($variant['attributes']))
+                                                @foreach($variant['attributes'] as $i => $attr)
+                                                    <input type="hidden" name="variants[{{ $idx }}][attributes][{{ $i }}][attribute_id]" value="{{ $attr['attribute_id'] ?? '' }}">
+                                                    <input type="hidden" name="variants[{{ $idx }}][attributes][{{ $i }}][attribute_value_id]" value="{{ $attr['attribute_value_id'] ?? '' }}">
+                                                @endforeach
+                                            @endif
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <input type="text" name="variants[{{ $idx }}][sku]" value="{{ $variant['sku'] ?? '' }}" class="w-full px-2 py-1 border rounded text-sm {{ $errors->has('variants.'.$idx.'.sku') ? 'border-red-500' : '' }}">
+                                            @error('variants.'.$idx.'.sku') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <input type="number" name="variants[{{ $idx }}][price]" value="{{ $variant['price'] ?? '' }}" step="0.01" class="w-full px-2 py-1 border rounded text-sm {{ $errors->has('variants.'.$idx.'.price') ? 'border-red-500' : '' }}">
+                                            @error('variants.'.$idx.'.price') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <input type="number" name="variants[{{ $idx }}][stock_quantity]" value="{{ $variant['stock_quantity'] ?? '' }}" class="w-full px-2 py-1 border rounded text-sm {{ $errors->has('variants.'.$idx.'.stock_quantity') ? 'border-red-500' : '' }}">
+                                            @error('variants.'.$idx.'.stock_quantity') <p class="text-red-500 text-xs">{{ $message }}</p> @enderror
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <div id="variant-images-{{ $idx }}" class="flex gap-1 flex-wrap">
+                                                {{-- Re-render main image if exists --}}
+                                                @if(!empty($variant['main_image_id']))
+                                                    {{-- We don't have the URL easily unless we fetch it. 
+                                                         For now, just show a placeholder or count. 
+                                                         Ideally we pass URLs or let JS handle it. 
+                                                         But simply keeping the ID is enough to SAVE again. --}}
+                                                    <div class="text-xs text-green-600 font-bold">Main Img Set</div>
+                                                @endif
+                                            </div>
+                                            <button type="button" onclick="openVariantMediaModal({{ $idx }})" class="text-xs text-blue-600 hover:text-blue-800 mt-1">Manage Images</button>
+                                            <input type="hidden" name="variants[{{ $idx }}][main_image_id]" id="variant-main-input-{{ $idx }}" value="{{ $variant['main_image_id'] ?? '' }}">
+                                            
+                                            <div id="variant-gallery-inputs-{{ $idx }}">
+                                                @if(isset($variant['gallery_image_ids']))
+                                                    @foreach($variant['gallery_image_ids'] as $gid)
+                                                        <input type="hidden" name="variants[{{ $idx }}][gallery_image_ids][]" value="{{ $gid }}">
+                                                    @endforeach
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2 text-center">
+                                            <input type="radio" name="default_variant_index" value="{{ $idx }}" {{ (old('default_variant_index') == $idx) ? 'checked' : '' }}
+                                                onchange="document.querySelectorAll('.is-default-input').forEach((el, i) => el.value = (i === {{ $idx }} ? '1' : '0'))">
+                                            <input type="hidden" id="is-default-{{ $idx }}" name="variants[{{ $idx }}][is_default]" value="{{ (old('variants.'.$idx.'.is_default') ?? '0') }}" class="is-default-input">
+                                        </td>
+                                        <td class="px-3 py-2 text-center">
+                                            <button type="button" onclick="removeVariant({{ $idx }})" class="text-red-500 hover:text-red-700">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                     @endif
                 </div>
             </div>
 
@@ -340,6 +426,12 @@
                                 <option value="{{ $tax->id }}" {{ old('tax_class_id') == $tax->id ? 'selected' : '' }}>{{ $tax->name }} ({{ number_format($tax->total_rate, 2) }}%)</option>
                             @endforeach
                         </select>
+                    </div>
+
+                    <div class="flex items-center space-x-2 pt-2">
+                        <input type="checkbox" name="cod_available" id="cod_available" value="1" {{ old('cod_available') ? 'checked' : '' }}
+                            class="rounded text-blue-500 focus:ring-blue-500 h-4 w-4">
+                        <label for="cod_available" class="text-sm text-gray-700">COD Available</label>
                     </div>
                  </div>
             </div>

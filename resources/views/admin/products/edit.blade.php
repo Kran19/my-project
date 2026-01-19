@@ -378,14 +378,15 @@
 
                      <div>
                         <label for="tax_class_id" class="block text-sm font-medium text-gray-700 mb-1">Tax Class</label>
-                        <select name="tax_class_id" id="tax_class_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">None</option>
-                            @foreach($taxClasses as $tax)
-                                <option value="{{ $tax->id }}" {{ old('tax_class_id', $product->tax_class_id) == $tax->id ? 'selected' : '' }}>{{ $tax->name }} ({{ number_format($tax->total_rate, 2) }}%)</option>
-                            @endforeach
                         </select>
                     </div>
-                 </div>
+
+                    <div class="flex items-center space-x-2 pt-2">
+                        <input type="checkbox" name="cod_available" id="cod_available" value="1" {{ old('cod_available', $product->cod_available) ? 'checked' : '' }}
+                            class="rounded text-blue-500 focus:ring-blue-500 h-4 w-4">
+                        <label for="cod_available" class="text-sm text-gray-700">COD Available</label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -83,10 +83,10 @@
 
             <!-- Desktop Navigation -->
             <nav class="hidden md:flex items-center space-x-8">
-                <a href="{{ route('customer.home.index') }}" class="nav-link">Home</a>
-                <a href="{{ route('customer.products.list') }}" class="nav-link">All Categories</a>
+                <a href="{{ route('customer.home.index') }}" class="nav-link {{ request()->routeIs('customer.home.index') ? 'active' : '' }}">Home</a>
+                <a href="{{ route('customer.products.list') }}" class="nav-link {{ request()->routeIs('customer.products.list') ? 'active' : '' }}">All Categories</a>
                 @foreach($navCategories as $category)
-                    <a href="{{ route('customer.category.products', $category->slug) }}" class="nav-link">{{ $category->name }}</a>
+                    <a href="{{ route('customer.category.products', $category->slug) }}" class="nav-link {{ request()->routeIs('customer.category.products') && request('slug') == $category->slug ? 'active' : '' }}">{{ $category->name }}</a>
                 @endforeach
             </nav>
 
@@ -268,6 +268,33 @@
 
         <!-- Add some CSS for mobile links -->
         <style>
+            .nav-link {
+                color: #4b5563; /* text-gray-600 */
+                font-weight: 500;
+                transition: color 0.2s;
+                position: relative;
+            }
+
+            .nav-link:hover {
+                color: #92400e; /* text-amber-800 */
+            }
+
+            .nav-link.active {
+                color: #92400e; /* text-amber-800 */
+                font-weight: 700;
+            }
+
+            .nav-link.active::after {
+                content: '';
+                position: absolute;
+                bottom: -4px;
+                left: 0;
+                width: 100%;
+                height: 2px;
+                background-color: #d97706; /* amber-600 */
+                border-radius: 99px;
+            }
+
             .mobile-link {
                 display: block;
                 padding: 12px 16px;
