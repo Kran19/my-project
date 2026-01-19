@@ -196,7 +196,7 @@ class CartService
             $product = $item->productVariant->product;
             $taxRate = 0;
             
-            if ($product->taxClass) {
+            if ($product && $product->taxClass) {
                 $taxRate = $product->taxClass->total_rate;
             }
             

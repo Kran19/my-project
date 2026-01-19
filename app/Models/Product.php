@@ -45,6 +45,7 @@ class Product extends Model
         'is_featured' => 'boolean',
         'is_new' => 'boolean',
         'is_bestseller' => 'boolean',
+        'cod_available' => 'boolean',
         'weight' => 'decimal:3',
         'length' => 'decimal:2',
         'width' => 'decimal:2',

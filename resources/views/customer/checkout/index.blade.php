@@ -227,45 +227,14 @@
                                     <!-- Shipping Method -->
                                     <div class="mt-6">
                                         <label class="block text-sm font-medium text-gray-700 mb-4">Shipping Method</label>
-                                        <div class="space-y-3">
-                                            @php
-                                                $shippingMethods = [
-                                                    'standard' => [
-                                                        'name' => 'Standard Shipping',
-                                                        'days' => '5-7 business days',
-                                                        'cost' => $cart['subtotal'] >= 999 ? 0 : 50,
-                                                    ],
-                                                    'express' => [
-                                                        'name' => 'Express Shipping',
-                                                        'days' => '2-3 business days',
-                                                        'cost' => 199,
-                                                    ],
-                                                    'overnight' => [
-                                                        'name' => 'Overnight Shipping',
-                                                        'days' => 'Next business day',
-                                                        'cost' => 499,
-                                                    ],
-                                                ];
-                                            @endphp
+                                        <div class="space-y-3" id="shipping-method-container">
+                                            <!-- Dynamic shipping methods container -->
 
-                                            @foreach ($shippingMethods as $key => $method)
-                                                <label
-                                                    class="flex items-center p-4 border border-gray-300 rounded-xl cursor-pointer hover:border-amber-500">
-                                                    <input type="radio" name="shipping_method"
-                                                        value="{{ $key }}" class="mr-3 text-amber-600"
-                                                        {{ $loop->first ? 'checked' : '' }}
-                                                        data-cost="{{ $method['cost'] }}">
-                                                    <div class="flex-1">
-                                                        <p class="font-medium text-gray-800">{{ $method['name'] }}</p>
-                                                        <p class="text-sm text-gray-600">{{ $method['days'] }}</p>
-                                                    </div>
-                                                    <span
-                                                        class="font-bold {{ $method['cost'] == 0 ? 'text-green-600' : 'text-amber-700' }}"
-                                                        id="{{ $key }}ShippingCost">
-                                                        {{ $method['cost'] == 0 ? 'FREE' : '₹' . number_format($method['cost'], 2) }}
-                                                    </span>
-                                                </label>
-                                            @endforeach
+                                            <!-- Dynamic shipping methods will be loaded here -->
+                                            <div id="shipping-method-placeholder" class="p-4 border border-dashed border-gray-300 rounded-xl text-center text-gray-500">
+                                                <i class="fas fa-truck mb-2 text-xl"></i>
+                                                <p>Enter your pincode to check delivery availability and rates</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -295,6 +264,8 @@
 
 
                                     <!-- Cash on Delivery -->
+                                    <!-- Cash on Delivery -->
+                                    @if($codAvailable)
                                     <label
                                         class="flex items-center p-4 border border-gray-300 rounded-xl cursor-pointer hover:border-amber-500">
                                         <input type="radio" name="payment_method" value="cod"
@@ -305,6 +276,18 @@
                                         </div>
                                         <i class="fas fa-money-bill-wave text-gray-400 text-xl"></i>
                                     </label>
+                                    @else
+                                    <label
+                                        class="flex items-center p-4 border border-gray-200 rounded-xl bg-gray-50 cursor-not-allowed opacity-60">
+                                        <input type="radio" name="payment_method" value="cod" disabled
+                                            class="mr-3 text-gray-400">
+                                        <div class="flex-1">
+                                            <p class="font-medium text-gray-500">Cash on Delivery</p>
+                                            <p class="text-xs text-red-500">Not available for one or more items in your cart</p>
+                                        </div>
+                                        <i class="fas fa-money-bill-wave text-gray-400 text-xl"></i>
+                                    </label>
+                                    @endif
                                 </div>
                             </div>
 
@@ -396,11 +379,19 @@
                                             @endif
                                         </span>
                                     </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Tax (GST 18%)</span>
-                                        <span class="font-semibold"
-                                            id="orderTax">₹{{ number_format($cart['tax_total'], 2) }}</span>
-                                    </div>
+                                    @if(isset($cart['tax_breakdown']) && count($cart['tax_breakdown']) > 0)
+                                        @foreach($cart['tax_breakdown'] as $tax)
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-600">{{ $tax['name'] }} ({{ $tax['rate'] }}%)</span>
+                                                <span class="font-semibold text-gray-800">₹{{ number_format($tax['amount'], 2) }}</span>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Tax</span>
+                                            <span class="font-semibold" id="orderTax">₹{{ number_format($cart['tax_total'], 2) }}</span>
+                                        </div>
+                                    @endif
 
                                     @if ($cart['discount_total'] > 0)
                                         <div class="flex justify-between">
@@ -493,6 +484,37 @@
             setupPincodeValidation();
         }
 
+        function setupFormValidation() {
+            const form = document.getElementById('checkoutForm');
+            if (!form) return;
+
+            const requiredFields = form.querySelectorAll('[required]');
+            
+            requiredFields.forEach(field => {
+                field.addEventListener('input', function() {
+                    if (this.value.trim() !== '') {
+                        this.classList.remove('border-red-500');
+                        // Remove error message if exists
+                        const errorMsg = this.parentNode.querySelector('.text-red-600.text-xs');
+                        if (errorMsg) errorMsg.remove();
+                    }
+                });
+
+                field.addEventListener('invalid', function(e) {
+                    e.preventDefault();
+                    this.classList.add('border-red-500');
+                    
+                    // Add error message if not exists
+                    if (!this.parentNode.querySelector('.text-red-600')) {
+                        const msg = document.createElement('span');
+                        msg.className = 'text-red-600 text-xs mt-1 block';
+                        msg.textContent = 'This field is required';
+                        this.parentNode.appendChild(msg);
+                    }
+                });
+            });
+        }
+
         function setupPaymentMethods(codAvailable, paymentMethods) {
             const onlinePaymentRadio = document.querySelector('input[name="payment_method"][value="online"]');
             const codRadio = document.querySelector('input[name="payment_method"][value="cod"]');
@@ -576,17 +598,22 @@
 
             shippingRadios.forEach(radio => {
                 radio.addEventListener('change', function() {
-                    let shippingFee = currentShipping;
+                    let shippingFee = 0;
 
-                    // Calculate new shipping fee based on selection
-                    if (this.value === 'standard') {
-                        shippingFee = subtotal >=
-                            {{ config('services.shipping.free_shipping_min_amount', 999) }} ? 0 :
-                            {{ config('services.shipping.standard_cost', 50) }};
-                    } else if (this.value === 'express') {
-                        shippingFee = {{ config('services.shipping.express_cost', 199) }};
-                    } else if (this.value === 'overnight') {
-                        shippingFee = {{ config('services.shipping.overnight_cost', 499) }};
+                    // Calculate new shipping fee based on selection using data-cost attribute
+                    if (this.dataset.cost) {
+                        shippingFee = parseFloat(this.dataset.cost);
+                    } else {
+                         // Fallback for hardcoded methods if any remain (legacy support)
+                         if (this.value === 'standard') {
+                            shippingFee = subtotal >=
+                                {{ config('services.shipping.free_shipping_min_amount', 999) }} ? 0 :
+                                {{ config('services.shipping.standard_cost', 50) }};
+                        } else if (this.value === 'express') {
+                            shippingFee = {{ config('services.shipping.express_cost', 199) }};
+                        } else if (this.value === 'overnight') {
+                            shippingFee = {{ config('services.shipping.overnight_cost', 499) }};
+                        }
                     }
 
                     // Calculate new total
@@ -719,19 +746,48 @@
         }
 
         function updateShippingOptions(couriers) {
-            const container = document.getElementById('shipping-options-dynamic');
+            const container = document.getElementById('shipping-method-container');
             if (!container) return;
 
             container.innerHTML = '';
+            
+            // Remove placeholder if exists (container.innerHTML = '' already does this, but good to be explicit in comment)
+            
+            // Sort couriers by rate cheap to expensive
+            couriers.sort((a, b) => a.rate - b.rate);
 
-            couriers.slice(0, 3).forEach(courier => {
-                container.innerHTML += `
-            <div class="p-3 border rounded-lg mb-2">
-                <strong>${courier.name}</strong><br>
-                ₹${courier.rate} • ${courier.estimated_days} days
-            </div>
-        `;
+            couriers.slice(0, 3).forEach((courier, index) => {
+                const isFirst = index === 0;
+                const cost = parseFloat(courier.rate);
+                
+                const html = `
+                <label class="flex items-center p-4 border border-gray-300 rounded-xl cursor-pointer hover:border-amber-500">
+                    <input type="radio" name="shipping_method"
+                        value="${courier.courier_id}" class="mr-3 text-amber-600"
+                        ${isFirst ? 'checked' : ''}
+                        data-cost="${cost}"
+                        data-name="${courier.name}">
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-800">${courier.name} (${courier.service_type})</p>
+                        <p class="text-sm text-gray-600">Estimated delivery: ${courier.estimated_days} days</p>
+                    </div>
+                    <span class="font-bold text-amber-700">
+                        ₹${cost.toFixed(2)}
+                    </span>
+                </label>`;
+                
+                container.insertAdjacentHTML('beforeend', html);
             });
+
+            // Re-attach event listeners to new radio buttons
+            const cartData = @json($cart);
+            setupShippingCostCalculations(cartData);
+            
+            // Trigger change event on the first (checked) radio to update totals
+            const firstRadio = container.querySelector('input[type="radio"]:checked');
+            if (firstRadio) {
+                firstRadio.dispatchEvent(new Event('change'));
+            }
         }
 
 
@@ -766,8 +822,9 @@
         }
 
         // Add CSS for animations
-        const style = document.createElement('style');
-        style.textContent = `
+        (function() {
+            const style = document.createElement('style');
+            style.textContent = `
     @keyframes slideInRight {
         from {
             opacity: 0;
@@ -797,7 +854,8 @@
         cursor: not-allowed !important;
     }
 `;
-        document.head.appendChild(style);
+            document.head.appendChild(style);
+        })();
     </script>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

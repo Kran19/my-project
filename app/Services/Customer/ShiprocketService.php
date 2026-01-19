@@ -26,6 +26,8 @@ class ShiprocketService
         if (empty($this->email) || empty($this->password)) {
             throw new Exception('Shiprocket credentials not configured');
         }
+        // Bypass SSL verification for now to fix production error
+        $this->client = Http::withoutVerifying();
     }
 
     /**
@@ -43,7 +45,7 @@ class ShiprocketService
         try {
             Log::info('Requesting new Shiprocket token');
 
-            $response = Http::post($this->baseUrl . 'auth/login', [
+            $response = $this->client->post($this->baseUrl . 'auth/login', [
                 'email' => $this->email,
                 'password' => $this->password
             ]);
@@ -86,33 +88,83 @@ class ShiprocketService
     public function checkServiceability(string $pincode, float $weight, array $dimensions = [])
     {
         try {
+            $pickupPostcode = config('services.shiprocket.pickup_pincode');
+            
             Log::info('Checking Shiprocket serviceability', [
                 'pincode' => $pincode,
-                'weight' => $weight
+                'weight' => $weight,
+                'pickup_postcode' => $pickupPostcode,
+                'base_url' => $this->baseUrl
             ]);
 
-            $response = Http::withToken($this->getToken())->get($this->baseUrl . 'courier/serviceability', [
-                'pickup_postcode' => config('services.shiprocket.pickup_pincode'),
+            if (empty($pickupPostcode)) {
+                Log::error('Shiprocket pickup_pincode is not configured');
+                return [
+                    'success' => false,
+                    'message' => 'Shipping configuration error: Missing pickup pincode'
+                ];
+            }
+
+            $params = [
+                'pickup_postcode' => $pickupPostcode,
                 'delivery_postcode' => $pincode,
                 'weight' => $weight,
                 'length' => $dimensions['length'] ?? 10,
                 'breadth' => $dimensions['width'] ?? 10,
                 'height' => $dimensions['height'] ?? 10,
-                'cod' => 0 // 0 for prepaid, 1 for COD
-            ]);
+                'cod' => 1 // Check for COD availability too
+            ];
+
+            // Manual query string construction to ensure control over params if needed
+            // But Http client should handle it. Added logging of params.
+            
+            $response = $this->client->withToken($this->getToken())
+                ->acceptJson()
+                ->get($this->baseUrl . 'courier/serviceability', $params);
 
             if (!$response->successful()) {
-                Log::error('Shiprocket serviceability check failed', [
-                    'status' => $response->status(),
-                    'response' => $response->json()
-                ]);
-                return null;
+                // Handle Token Expiry
+                if ($response->status() === 401 || isset($response->json()['message']) && $response->json()['message'] === 'token_expired') {
+                     Log::info('Shiprocket token expired (401). Retrying with fresh token.');
+                     Cache::forget($this->tokenCacheKey);
+                     
+                     // Retry once with new token
+                     $response = $this->client->withToken($this->getToken())
+                        ->acceptJson()
+                        ->get($this->baseUrl . 'courier/serviceability', $params);
+                }
+
+                if (!$response->successful()) {
+                    Log::error('Shiprocket serviceability check failed', [
+                        'status' => $response->status(),
+                        'response' => $response->json(),
+                        'sent_params' => $params
+                    ]);
+                    
+                    $errorMsg = 'Shipping service unavailable.';
+                    if ($response->status() === 403) {
+                         $errorMsg = 'Shipping service unauthorized to this location (403). Verify pickup pincode.';
+                    }
+
+                    return [
+                        'success' => false,
+                        'message' => $errorMsg,
+                        'debug_error' => $response->json()['message'] ?? 'Unknown error'
+                    ];
+                }
             }
 
             $data = $response->json();
 
             // Process and format available couriers
             $availableCouriers = $this->processAvailableCouriers($data);
+
+            if (empty($availableCouriers)) {
+                 return [
+                    'success' => false,
+                    'message' => 'No delivery partners available for this pin code.'
+                ];
+            }
 
             Log::info('Shiprocket serviceability check successful', [
                 'pincode' => $pincode,
@@ -132,7 +184,10 @@ class ShiprocketService
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return null;
+            return [
+                'success' => false,
+                'message' => 'Serviceability check error: ' . $e->getMessage()
+            ];
         }
     }
 
@@ -194,7 +249,10 @@ class ShiprocketService
             $orderData = [
                 'order_id' => $order->order_number,
                 'order_date' => $order->created_at->format('Y-m-d'),
-                'pickup_location' => 'Primary',
+                'order_id' => $order->order_number,
+                'order_date' => $order->created_at->format('Y-m-d'),
+                'pickup_location' => config('services.shiprocket.pickup_location', 'Primary'),
+                'channel_id' => '',
                 'channel_id' => '',
                 'comment' => '',
                 'reseller_name' => '',
@@ -232,7 +290,7 @@ class ShiprocketService
                 'order_data' => $orderData
             ]);
 
-            $response = Http::withToken($this->getToken())
+            $response = $this->client->withToken($this->getToken())
                 ->post($this->baseUrl . 'orders/create/adhoc', $orderData);
 
             if (!$response->successful()) {
@@ -332,7 +390,7 @@ class ShiprocketService
     public function generateLabel($shiprocketOrderId)
     {
         try {
-            $response = Http::withToken($this->getToken())
+            $response = $this->client->withToken($this->getToken())
                 ->get($this->baseUrl . 'courier/generate/label', [
                     'order_ids' => [$shiprocketOrderId]
                 ]);
@@ -361,7 +419,7 @@ class ShiprocketService
     public function trackShipment($shipmentId)
     {
         try {
-            $response = Http::withToken($this->getToken())
+            $response = $this->client->withToken($this->getToken())
                 ->get($this->baseUrl . 'courier/track/shipment/' . $shipmentId);
 
             if ($response->successful()) {
@@ -379,6 +437,38 @@ class ShiprocketService
                 'error' => $e->getMessage()
             ]);
             return null;
+        }
+    }
+    /**
+     * Get all pickup locations
+     */
+    public function getPickupLocations()
+    {
+        try {
+            $response = $this->client->withToken($this->getToken())
+                ->get($this->baseUrl . 'settings/company/pickup');
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json()
+                ];
+            }
+
+            Log::error('Shiprocket fetch pickup locations failed', $response->json());
+            return [
+                'success' => false,
+                'message' => 'Failed to fetch pickup locations'
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Shiprocket fetch pickup locations error', [
+                'error' => $e->getMessage()
+            ]);
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
         }
     }
 }

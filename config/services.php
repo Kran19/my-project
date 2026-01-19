@@ -52,6 +52,7 @@ return [
         'pickup_state' => env('SHIPROCKET_PICKUP_STATE'),
         'pickup_country' => env('SHIPROCKET_PICKUP_COUNTRY'),
         'pickup_phone' => env('SHIPROCKET_PICKUP_PHONE'),
+        'pickup_location' => env('SHIPROCKET_PICKUP_LOCATION', 'Primary'),
     ],
 
     'shipping' => [

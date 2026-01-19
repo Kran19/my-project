@@ -87,7 +87,7 @@
                         <span>Dashboard</span>
                     </a>
 
-                    <a href="{{ route('customer.wishlist') }}"
+                    <a href="{{ route('customer.wishlist.index') }}"
                        class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-amber-50">
                         <i class="fas fa-heart"></i>
                         <span>My Wishlist</span>

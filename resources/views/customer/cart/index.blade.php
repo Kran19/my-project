@@ -322,14 +322,7 @@
                                             <span class="font-semibold text-gray-800"
                                                 id="orderSubtotal">₹{{ number_format($cart['subtotal'], 2) }}</span>
                                         </div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-gray-600">Shipping</span>
-                                            <span
-                                                class="font-semibold {{ $cart['shipping_total'] === 0 ? 'text-green-600' : 'text-gray-800' }}"
-                                                id="shippingCost">
-                                                {{ $cart['shipping_total'] === 0 ? 'FREE' : '₹' . number_format($cart['shipping_total'], 2) }}
-                                            </span>
-                                        </div>
+                                        {{-- Shipping Removed --}}
                                         <div id="taxBreakdownContainer">
                                             @if(!empty($cart['tax_breakdown']))
                                                 @foreach($cart['tax_breakdown'] as $tax)
@@ -374,7 +367,7 @@
                                                 id="totalAmount">₹{{ number_format($cart['grand_total'], 2) }}</span>
                                         </div>
                                         <p class="text-xs md:text-sm text-gray-600 mt-2"><i
-                                                class="fas fa-info-circle mr-1"></i> Includes all taxes and shipping</p>
+                                                class="fas fa-info-circle mr-1"></i> Shipping & taxes calculated at checkout</p>
                                     </div>
                                     @if (session('customer_logged_in'))
                                         <!-- User is logged in - Direct checkout -->
@@ -898,17 +891,7 @@
                 subtotalElement.textContent = formatCurrency(cartData.subtotal);
             }
 
-            // Update shipping
-            const shippingElement = document.getElementById('shippingCost');
-            if (shippingElement && cartData.shipping_total !== undefined) {
-                if (cartData.shipping_total === 0) {
-                    shippingElement.textContent = 'FREE';
-                    shippingElement.className = 'font-semibold text-green-600';
-                } else {
-                    shippingElement.textContent = formatCurrency(cartData.shipping_total);
-                    shippingElement.className = 'font-semibold text-gray-800';
-                }
-            }
+            // Shipping update removed
 
             // Update tax breakdown
             const taxContainer = document.getElementById('taxBreakdownContainer');

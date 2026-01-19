@@ -87,7 +87,11 @@ class CheckoutController extends Controller
             'checkout_data' => $request->all()
         ]);
 
-        $amountInPaise = (int) round($cart['grand_total'] * 100);
+        // Calculate correct total including shipping
+        $shippingCost = $request->input('shipping_cost', 0);
+        $grandTotal = $cart['subtotal'] + $cart['tax_total'] + $shippingCost - ($cart['discount_total'] ?? 0);
+
+        $amountInPaise = (int) round($grandTotal * 100);
 
         $razorpayOrder = $this->razorpayService->createOrderByAmount($amountInPaise);
 
@@ -102,7 +106,7 @@ class CheckoutController extends Controller
         return view('customer.checkout.payment', [
             'keyId' => $razorpayOrder['key_id'],
             'orderId' => $razorpayOrder['order_id'],
-            'amount' => $cart['grand_total'],
+            'amount' => $grandTotal,
             'customer' => Auth::guard('customer')->user()
         ]);
     }
@@ -233,8 +237,12 @@ class CheckoutController extends Controller
         // Store checkout data for callback
         session(['checkout_data' => $request->all()]);
 
+        // Calculate correct total including shipping
+        $shippingCost = $request->input('shipping_cost', 0);
+        $grandTotal = $cart['subtotal'] + $cart['tax_total'] + $shippingCost - ($cart['discount_total'] ?? 0);
+
         // Razorpay expects paise
-        $amountInPaise = (int) round($cart['grand_total'] * 100);
+        $amountInPaise = (int) round($grandTotal * 100);
 
         $razorpayOrder = $this->razorpayService
             ->createOrderByAmount($amountInPaise);

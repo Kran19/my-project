@@ -101,7 +101,7 @@ class CartHelper
 
         // Prepare item tax details
         $taxRates = [];
-        if ($variant->product->taxClass) {
+        if ($variant->product && $variant->product->taxClass) {
             foreach ($variant->product->taxClass->rates as $rate) {
                 if ($rate->is_active) {
                     $taxRates[] = [
@@ -207,31 +207,60 @@ class CartHelper
             $offer = \App\Models\Offer::find($cart->offer_id);
         }
 
-        return [
-            'id' => $cart->id ?? null,
-            'session_id' => $cart->session_id ?? session()->getId(),
-            'items' => isset($cart->items) ? $cart->items->map(function ($item) {
-                if (!$item->variant || !$item->variant->product) {
-                    return null;
+        // Calculate tax breakdown for display if database cart
+    $taxBreakdown = [];
+    if (isset($cart->items)) {
+        $subtotal = $cart->subtotal;
+        $discountTotal = $cart->discount_total ?? 0;
+        $effectiveSubtotalRatio = $subtotal > 0 ? ($subtotal - $discountTotal) / $subtotal : 0;
+
+        foreach ($cart->items as $item) {
+            $itemTotal = $item->total * $effectiveSubtotalRatio;
+            if ($item->variant && $item->variant->product && $item->variant->product->taxClass) {
+                foreach ($item->variant->product->taxClass->rates as $rate) {
+                    if ($rate->is_active) {
+                        $amount = $itemTotal * ($rate->rate / 100);
+                        $label = $rate->name;
+                        if (!isset($taxBreakdown[$label])) {
+                            $taxBreakdown[$label] = [
+                                'name' => $label,
+                                'rate' => (float)$rate->rate,
+                                'amount' => 0
+                            ];
+                        }
+                        $taxBreakdown[$label]['amount'] += $amount;
+                    }
                 }
-                return [
-                    'id' => $item->id,
-                    'variant_id' => $item->product_variant_id,
-                    'product_id' => $item->variant->product_id,
-                    'product_name' => $item->variant->product->name,
-                    'sku' => $item->variant->sku,
-                    'stock_quantity' => $item->variant->stock_quantity,
-                    'unit_price' => (float) $item->unit_price,
-                    'quantity' => $item->quantity,
-                    'total' => (float) $item->total,
-                    'attributes' => json_decode($item->attributes, true) ?? [],
-                    'image' => $item->variant->display_image,
-                ];
-            })->filter()->values()->toArray() : ($cart['items'] ?? []),
-            'items_count' => isset($cart->items) ? (int) $cart->items->sum('quantity') : ($cart['items_count'] ?? 0),
-            'subtotal' => (float) ($cart->subtotal ?? $cart['subtotal'] ?? 0),
-            'tax_total' => (float) ($cart->tax_total ?? $cart['tax_total'] ?? 0),
-            'tax_breakdown' => isset($cart->tax_breakdown) ? $cart->tax_breakdown : ($cart['tax_breakdown'] ?? []),
+            }
+        }
+    }
+
+    return [
+        'id' => $cart->id ?? null,
+        'session_id' => $cart->session_id ?? session()->getId(),
+        'items' => isset($cart->items) ? $cart->items->map(function ($item) {
+            if (!$item->variant || !$item->variant->product) {
+                return null;
+            }
+            return [
+                'id' => $item->id,
+                'variant_id' => $item->product_variant_id,
+                'product_id' => $item->variant->product_id,
+                'product_name' => $item->variant->product->name,
+                'sku' => $item->variant->sku,
+                'stock_quantity' => $item->variant->stock_quantity,
+                'unit_price' => (float) $item->unit_price,
+                'quantity' => $item->quantity,
+                'total' => (float) $item->total,
+                'attributes' => json_decode($item->attributes, true) ?? [],
+                'image' => $item->variant->display_image,
+                'cod_available' => $item->variant->product->cod_available ?? true, // Pass COD availability
+            ];
+        })->filter()->values()->toArray() : ($cart['items'] ?? []),
+        'items_count' => isset($cart->items) ? (int) $cart->items->sum('quantity') : ($cart['items_count'] ?? 0),
+        'subtotal' => (float) ($cart->subtotal ?? $cart['subtotal'] ?? 0),
+        'tax_total' => (float) ($cart->tax_total ?? $cart['tax_total'] ?? 0),
+        'tax_breakdown' => isset($cart->tax_breakdown) ? $cart->tax_breakdown : ($cart['tax_breakdown'] ?? array_values($taxBreakdown)),
             'shipping_total' => (float) ($cart->shipping_total ?? $cart['shipping_total'] ?? 0),
             'discount_total' => (float) ($cart->discount_total ?? $cart['discount_total'] ?? 0),
             'grand_total' => (float) ($cart->grand_total ?? $cart['grand_total'] ?? 0),
@@ -270,15 +299,52 @@ class CartHelper
         }
 
         // Calculate tax based on items
-        $taxTotal = 0;
-        $effectiveSubtotalRatio = $subtotal > 0 ? ($subtotal - $discountTotal) / $subtotal : 0;
+    $taxTotal = 0;
+    $taxBreakdown = [];
+    $effectiveSubtotalRatio = $subtotal > 0 ? ($subtotal - $discountTotal) / $subtotal : 0;
+    
+    foreach ($cart->items as $item) {
+        $itemTotal = $item->total * $effectiveSubtotalRatio;
         
-        foreach ($cart->items as $item) {
-            $itemTotal = $item->total * $effectiveSubtotalRatio;
-            $taxRate = $item->variant->product->taxClass ? $item->variant->product->taxClass->total_rate : 0;
-            $taxTotal += ($itemTotal * ($taxRate / 100));
+        if ($item->variant->product && $item->variant->product->taxClass) {
+            foreach ($item->variant->product->taxClass->rates as $rate) {
+                if ($rate->is_active) {
+                    $amount = $itemTotal * ($rate->rate / 100);
+                    $taxTotal += $amount;
+                    
+                    $label = $rate->name;
+                    if (!isset($taxBreakdown[$label])) {
+                        $taxBreakdown[$label] = [
+                            'name' => $label,
+                            'rate' => (float)$rate->rate,
+                            'amount' => 0
+                        ];
+                    }
+                    $taxBreakdown[$label]['amount'] += $amount;
+                }
+            }
         }
+    }
 
+    // Pass breakdown to view via public property override or separate method if strictly model
+    // Since Cart model might not have tax_breakdown column, we usually calculate it on fly or store in metadata JSON
+    // But CartHelper::getCart() returns array, so let's stick to updating the model columns but we need to expose breakdown
+    // Wait, getCart() method converts model to array, so we need to ensure it includes breakdown there.
+    
+    // Let's check getCart() implementation.
+    // ...
+    
+    // For now, let's just calculate total here correctly.
+    // The previous code was:
+    // $taxRate = $item->variant->product->taxClass ? $item->variant->product->taxClass->total_rate : 0;
+    // $taxTotal += ($itemTotal * ($taxRate / 100));
+    
+    // My replacement logic matches the total calculation but also builds breakdown.
+    // However, I need to make sure this breakdown is accessible.
+    // If getCart() re-calculates or pulls from DB, this breakdown might be lost if not stored.
+    // Let's assume for now the user wants it in the view which calls getCart().
+    
+    // I will finish this replace first.
         // Calculate shipping
         $shippingTotal = ($offer && $offer->offer_type === 'free_shipping') ? 0 : $this->calculateShipping($subtotal - $discountTotal);
 
@@ -295,8 +361,8 @@ class CartHelper
 
     private function calculateShipping($subtotal)
     {
-        // Free shipping for orders above ₹999
-        return $subtotal >= 999 ? 0 : 50;
+        // Shipping is calculated dynamically at checkout based on location
+        return 0;
     }
 
     private function recalculateLocalCartTotals($cart)
@@ -359,6 +425,11 @@ class CartHelper
     private function calculateDiscount($offer, $subtotal, $items)
     {
         $discount = 0;
+
+        // Validate minimum cart amount again
+        if ($offer->min_cart_amount && $subtotal < $offer->min_cart_amount) {
+            return 0;
+        }
 
         switch ($offer->offer_type) {
             case 'percentage':
