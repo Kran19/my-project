@@ -188,21 +188,70 @@ class CheckoutController extends Controller
         $cart = $this->cartHelper->getCart();
         $weight = $this->calculateCartWeight($cart);
 
+        $dimensions = $this->calculateCartDimensions($cart);
+
         return response()->json(
-            $this->shiprocketService->checkServiceability($request->pincode, $weight)
+            $this->shiprocketService->checkServiceability($request->pincode, $weight, $dimensions)
         );
     }
 
     /* =====================================================
      | HELPERS
      ===================================================== */
+    private function calculateCartDimensions($cart): array
+    {
+        $length = 10;
+        $width = 10;
+        $height = 10;
+        
+        // Simple bounding box logic: max dimensions
+        // A more complex logic would be volume based or 3D packing, but max of each dim 
+        // ensures the box is at least big enough for the largest item.
+        // Then we can sum heights? Or just take max of all?
+        // Let's take max of Length/Width and sum of Heights? 
+        // Shiprocket expects a single box dimension.
+        // Ideally we should sum volume and estimate box, but max(L), max(W), max(H) 
+        // is safer default than 10x10x10 if we have large items.
+        // Let's iterate.
+
+        $maxLength = 10;
+        $maxWidth = 10;
+        $maxHeight = 10;
+
+        foreach ($cart['items'] as $item) {
+             $variant = ProductVariant::where('sku', $item['sku'])->first();
+             // Fallback to product if variant dims are null (which shouldn't be due to default, but safety)
+             // Prioritize variant > product > default 10
+             
+             $l = $variant->length ?? ($item->product->length ?? 10);
+             $w = $variant->width ?? ($item->product->width ?? 10);
+             $h = $variant->height ?? ($item->product->height ?? 10);
+             
+             if ($l > $maxLength) $maxLength = $l;
+             if ($w > $maxWidth) $maxWidth = $w;
+             // Height might be additive if stacked? 
+             // For now let's just take max height too to keep shipping cost low/reasonable 
+             // unless we want to sum heights. 
+             // User requested "cheap price", so max dims is better than sum dims 
+             // (which implies stacking everything vertically).
+             if ($h > $maxHeight) $maxHeight = $h;
+        }
+
+        return [
+            'length' => $maxLength,
+            'width' => $maxWidth,
+            'height' => $maxHeight
+        ];
+    }
+
     private function calculateCartWeight($cart): float
     {
         $weight = 0;
 
         foreach ($cart['items'] as $item) {
             $variant = ProductVariant::where('sku', $item['sku'])->first();
-            $weight += ($variant->weight ?? 0.5) * $item['quantity'];
+            $itemWeight = $variant->weight ?? ($item->product->weight ?? 0.1);
+            $weight += $itemWeight * $item['quantity'];
         }
 
         return max($weight, 0.1);

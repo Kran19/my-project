@@ -279,11 +279,12 @@ class ShiprocketService
                 'transaction_charges' => 0,
                 'total_discount' => $order->discount_total,
                 'sub_total' => $order->subtotal + $order->tax_total,
-                'length' => 10,
-                'breadth' => 10,
-                'height' => 10,
-                'weight' => $weight,
             ];
+            
+            // Add dimensions and weight
+            $dimensions = $this->calculateOrderDimensions($order);
+            $orderData = array_merge($orderData, $dimensions);
+            $orderData['weight'] = $weight;
 
             // Add COD amount if applicable
             if ($order->payment_method === 'cod') {
@@ -350,6 +351,35 @@ class ShiprocketService
         }
     }
 
+    private function calculateOrderDimensions(Order $order): array
+    {
+        $maxLength = 10;
+        $maxWidth = 10;
+        $maxHeight = 10;
+
+        foreach ($order->items as $item) {
+             // We need to access ProductVariant. 
+             // OrderItem has relation ->variant()
+             $variant = $item->variant;
+             
+             if ($variant) {
+                 $l = $variant->length ?? ($item->product->length ?? 10);
+                 $w = $variant->width ?? ($item->product->width ?? 10);
+                 $h = $variant->height ?? ($item->product->height ?? 10);
+                 
+                 if ($l > $maxLength) $maxLength = $l;
+                 if ($w > $maxWidth) $maxWidth = $w;
+                 if ($h > $maxHeight) $maxHeight = $h;
+             }
+        }
+
+        return [
+            'length' => $maxLength,
+            'breadth' => $maxWidth,
+            'height' => $maxHeight
+        ];
+    }
+
     /**
      * Calculate total weight of order
      */
@@ -359,11 +389,12 @@ class ShiprocketService
 
         foreach ($order->items as $item) {
             $variant = $item->variant;
-            $productWeight = $variant->weight ?? ($item->product->weight ?? 0.5);
+            // Use 0.1 as default now as per migration
+            $productWeight = $variant->weight ?? ($item->product->weight ?? 0.1);
             $weight += $productWeight * $item->quantity;
         }
 
-        return max($weight, 0.1); // Minimum 100g
+        return max($weight, 0.1); 
     }
 
     /**
