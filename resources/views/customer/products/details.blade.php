@@ -380,9 +380,13 @@
                                         </span>
                                     @endif
 
+                                    @php
+                                        $hasDiscount = isset($product['compare_price']) && $product['compare_price'] > $product['price'];
+                                        $discountPercent = $hasDiscount ? round((($product['compare_price'] - $product['price']) / $product['compare_price']) * 100) : 0;
+                                    @endphp
                                     <span id="discountBadge"
-                                        class="hidden bg-gradient-to-r from-amber-600 to-amber-800 text-white text-xs px-3 py-1 rounded-full font-bold">
-                                        <!-- Will be updated dynamically -->
+                                        class="{{ $hasDiscount ? '' : 'hidden' }} bg-gradient-to-r from-amber-600 to-amber-800 text-white text-xs px-3 py-1 rounded-full font-bold">
+                                        {{ $hasDiscount ? $discountPercent . '% OFF' : '' }}
                                     </span>
 
                                     @if ($product['is_featured'])
@@ -438,11 +442,11 @@
                                         <span class="text-4xl font-bold text-gray-900" id="currentPriceDisplay">
                                             ₹{{ number_format($product['price'], 0) }}
                                         </span>
-                                        <span id="comparePriceDisplay" class="hidden text-xl text-gray-400 line-through">
-                                            <!-- Will be updated dynamically -->
+                                        <span id="comparePriceDisplay" class="{{ $hasDiscount ? '' : 'hidden' }} text-xl text-gray-400 line-through">
+                                            {{ $hasDiscount ? '₹' . number_format($product['compare_price'], 0) : '' }}
                                         </span>
-                                        <span id="discountPercentDisplay" class="hidden text-lg font-bold text-green-600">
-                                            <!-- Will be updated dynamically -->
+                                        <span id="discountPercentDisplay" class="{{ $hasDiscount ? '' : 'hidden' }} text-lg font-bold text-green-600">
+                                            {{ $hasDiscount ? 'Save ' . $discountPercent . '%' : '' }}
                                         </span>
                                     </div>
                                     <p class="text-sm text-gray-600">
