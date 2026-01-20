@@ -3,18 +3,6 @@
 @section('title', 'Edit Customer - Admin Panel')
 
 @section('content')
-<script>
-    // Static user data for demonstration
-    const userData = {
-        id: 1,
-        name: "John Doe",
-        email: "john.doe@example.com",
-        phone: "+1 (555) 123-4567",
-        status: "active",
-        address: "123 Main St, New York, NY 10001"
-    };
-</script>
-
 <div class="max-w-4xl mx-auto">
     <div class="mb-8">
         <div class="flex justify-between items-center">
@@ -30,43 +18,40 @@
 
     <!-- Premium Card -->
     <div class="bg-white shadow-sm border border-gray-200 rounded-2xl p-8">
-        <form id="editCustomerForm" class="space-y-8" action="{{ route('admin.users.update', '') }}/1" method="POST">
+        <form id="editCustomerForm" class="space-y-8" action="{{ route('admin.users.update', $user->id) }}">
             @csrf
             @method('PUT')
 
-            <input type="hidden" id="userId" value="1">
+            <input type="hidden" id="userId" value="{{ $user->id }}">
 
             <!-- Section: Basic Info -->
             <div>
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="form-label">First Name *</label>
-                        <input type="text" id="editFirstName" name="first_name" class="form-input" required>
-                    </div>
-                    <div>
-                        <label class="form-label">Last Name *</label>
-                        <input type="text" id="editLastName" name="last_name" class="form-input" required>
+                    <div class="md:col-span-2">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" name="name" class="form-input" value="{{ $user->name }}" required>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     <div>
                         <label class="form-label">Email *</label>
-                        <input type="email" id="editEmail" name="email" class="form-input" required>
+                        <input type="email" name="email" class="form-input" value="{{ $user->email }}" required>
                     </div>
                     <div>
-                        <label class="form-label">Phone</label>
-                        <input type="text" id="editPhone" name="phone" class="form-input">
+                        <label class="form-label">Mobile</label>
+                        <input type="text" name="mobile" class="form-input" value="{{ $user->mobile }}">
                     </div>
                 </div>
             </div>
 
             <!-- Section: Address -->
-            <div>
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Address</h3>
-                <textarea id="editAddress" name="address" rows="3" class="form-input"></textarea>
-            </div>
+            <!-- Note: Address field is not in the model based on controller analysis, removing or keeping as UI placeholder if needed?
+                 Controller only validates name, email, mobile, status, is_block.
+                 I will hide it for now to avoid confusion as it won't be saved, or I can leave it but it won't persist.
+                 Given the strict instructions, I will align with the controller.
+            -->
 
             <!-- Section: Login & Status -->
             <div>
@@ -74,12 +59,23 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="form-label">New Password</label>
-                        <input type="password" id="editPassword" name="password" class="form-input" placeholder="Leave blank to keep current">
+                        <input type="password" name="password" class="form-input" placeholder="Leave blank to keep current">
                     </div>
-                    <div class="flex items-center space-x-3 mt-7">
-                        <input type="checkbox" id="editActiveStatus" name="active" class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        <label for="editActiveStatus" class="text-sm text-gray-700">Active Account</label>
+                    <div class="space-y-4 mt-2">
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" id="status" name="status" class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" {{ $user->status ? 'checked' : '' }}>
+                            <label for="status" class="text-sm text-gray-700">Active Account</label>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" id="is_block" name="is_block" class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" {{ $user->is_block ? 'checked' : '' }}>
+                            <label for="is_block" class="text-sm text-gray-700">Block Account</label>
+                        </div>
                     </div>
+                </div>
+                 <!-- Block Reason (Visible only if blocked) -->
+                 <div id="blockReasonContainer" class="mt-4 {{ $user->is_block ? '' : 'hidden' }}">
+                    <label class="form-label">Block Reason</label>
+                    <textarea name="block_reason" rows="2" class="form-input" placeholder="Reason for blocking account...">{{ $user->block_reason }}</textarea>
                 </div>
             </div>
 
@@ -98,63 +94,86 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Fill the form fields with user data
-    const nameParts = userData.name.split(" ");
-    document.getElementById('editFirstName').value = nameParts[0] || '';
-    document.getElementById('editLastName').value = nameParts.slice(1).join(" ") || '';
-    document.getElementById('editEmail').value = userData.email || '';
-    document.getElementById('editPhone').value = userData.phone || '';
-    document.getElementById('editAddress').value = userData.address || '';
-    document.getElementById('editActiveStatus').checked = userData.status === 'active';
-});
+    // Toggle block reason visibility
+    const blockCheckbox = document.getElementById('is_block');
+    const blockReasonContainer = document.getElementById('blockReasonContainer');
 
-document.getElementById('editCustomerForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Validate form
-    const firstName = document.getElementById('editFirstName').value;
-    const lastName = document.getElementById('editLastName').value;
-    const email = document.getElementById('editEmail').value;
-    
-    if (!firstName || !lastName || !email) {
-        toastr.error("Please fill all required fields");
-        return;
-    }
-    
-    // Show loading
-    Swal.fire({
-        title: 'Updating Customer...',
-        text: 'Please wait while we update customer information',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
+    blockCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            blockReasonContainer.classList.remove('hidden');
+        } else {
+            blockReasonContainer.classList.add('hidden');
         }
     });
-    
-    // Simulate API call
-    setTimeout(() => {
-        Swal.close();
-        
-        // Update local data (in real app, this would be backend update)
-        const userIndex = window.usersData.findIndex(u => u.id === userData.id);
-        if (userIndex !== -1) {
-            window.usersData[userIndex] = {
-                ...window.usersData[userIndex],
-                name: `${firstName} ${lastName}`,
-                email: email,
-                phone: document.getElementById('editPhone').value,
-                address: document.getElementById('editAddress').value,
-                status: document.getElementById('editActiveStatus').checked ? 'active' : 'inactive'
-            };
-        }
-        
-        toastr.success("Customer updated successfully!");
-        
-        // Redirect back
-        setTimeout(() => {
-            window.location.href = "{{ route('admin.users.index') }}";
-        }, 800);
-    }, 1500);
+
+    // Form Submission
+    document.getElementById('editCustomerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const form = this;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+
+        // Prepare data
+        const formData = new FormData(form);
+        // Add checkboxes explicitly if unchecked (FormData doesn't include unchecked checkboxes)
+        if (!form.querySelector('[name="status"]').checked) formData.append('status', '0');
+        else formData.append('status', '1');
+
+        if (!form.querySelector('[name="is_block"]').checked) formData.append('is_block', '0');
+        else formData.append('is_block', '1');
+
+        // Initial check for password confirmation if password field was present
+        // (Controller doesn't validate password on update unless complex logic, but here we just send what we have)
+        // Converting FormData to JSON object for fetch
+        const data = {};
+        formData.forEach((value, key) => {
+            // handle booleans for checkboxes if needed, but backend validation 'boolean' works with 0/1 or true/false strings usually
+            // Laravel validation 'boolean' accepts 0, 1, '0', '1', true, false.
+            if (key === 'status' || key === 'is_block') {
+                 data[key] = value === '1' || value === 'on' ? 1 : 0;
+            } else {
+                data[key] = value;
+            }
+        });
+
+
+        fetch(form.action, {
+            method: 'POST', // Using POST with _method PUT
+            headers: {
+                'Content-Type': 'application/json', // Using JSON as Controller expects
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            },
+            body: JSON.stringify({
+                ...data,
+                _method: 'PUT' // Spoof PUT
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                toastr.success(data.message || "Customer updated successfully!");
+                setTimeout(() => {
+                    window.location.href = "{{ route('admin.users.index') }}";
+                }, 1000);
+            } else {
+                toastr.error(data.message || "Error updating customer");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            toastr.error("An unexpected error occurred");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        });
+    });
 });
 </script>
 

@@ -331,21 +331,23 @@
                                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
 
 
-                                    <!-- Discount Badge -->
-                                    @if ($product['discount_percent'] > 0)
-                                        <div
-                                            class="absolute top-4 right-4 bg-gradient-to-r from-amber-600 to-amber-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                                            {{ $product['discount_percent'] }}% OFF
-                                        </div>
-                                    @endif
+                                    <div class="absolute top-4 right-4 flex flex-col gap-2 items-end">
+                                        <!-- Discount Badge -->
+                                        @if ($product['discount_percent'] > 0)
+                                            <div
+                                                class="bg-gradient-to-r from-amber-600 to-amber-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                                                {{ $product['discount_percent'] }}% OFF
+                                            </div>
+                                        @endif
 
-                                    <!-- New Badge -->
-                                    @if ($product['is_new'])
-                                        <div
-                                            class="absolute top-4 right-4 bg-gradient-to-r from-green-600 to-green-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                                            NEW
-                                        </div>
-                                    @endif
+                                        <!-- New Badge -->
+                                        @if ($product['is_new'])
+                                            <div
+                                                class="bg-gradient-to-r from-green-600 to-green-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                                                NEW
+                                            </div>
+                                        @endif
+                                    </div>
 
                                     <!-- Wishlist Button -->
                                     <button onclick="addToWishlist({{ $product['id'] }})"
@@ -405,11 +407,7 @@
                                             <i class="fas fa-shopping-cart mr-2"></i>
                                             {{ $product['is_in_stock'] ? 'Add to Cart' : 'Out of Stock' }}
                                         </button>
-                                        <button onclick="addToWishlist({{ $product['id'] }})"
-                                            class="w-12 h-12 bg-amber-600 text-white rounded-full flex items-center justify-center hover:bg-amber-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg wishlist-btn"
-                                            data-product-id="{{ $product['id'] }}">
-                                            <i class="fas fa-heart"></i>
-                                        </button>
+
                                     </div>
                                 </div>
                             </div>
