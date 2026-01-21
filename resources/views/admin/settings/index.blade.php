@@ -227,6 +227,8 @@
 
 @push('scripts')
 <script>
+
+
 // Axios instance
 const axiosInstance = axios.create({
     baseURL: '{{ url('') }}/api/admin',
@@ -236,6 +238,8 @@ const axiosInstance = axios.create({
         'Accept': 'application/json'
     }
 });
+
+
 
 // Global variables
 let settingsData = {};
@@ -276,6 +280,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load settings from API
 async function loadSettings() {
+
+    
     try {
         // Show loading
         document.getElementById('loadingState').classList.remove('hidden');
@@ -284,14 +290,17 @@ async function loadSettings() {
         // Load all settings groups
         const response = await axiosInstance.get('/settings/groups');
 
+
         if (response.data.success) {
             settingsData = response.data.data;
+      
+            
             populateForm(settingsData);
 
             // Show form, hide loading
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('settingsForm').classList.remove('hidden');
-
+            
             // Set up currency symbol
             const currency = document.querySelector('select[name="currency"]')?.value || 'USD';
             updateCurrencySymbol(currency);
@@ -301,10 +310,21 @@ async function loadSettings() {
             throw new Error('Failed to load settings');
         }
     } catch (error) {
-        console.error('Error loading settings:', error);
+     
+        
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('settingsForm').classList.remove('hidden');
-        toastr.error('Failed to load settings');
+        
+        let errorMessage = 'Failed to load settings';
+        if (error.response?.status === 401) {
+            errorMessage = 'Authentication failed. Please login again.';
+        } else if (error.response?.status === 404) {
+            errorMessage = 'Settings endpoint not found';
+        } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        }
+        
+        toastr.error(errorMessage);
     }
 }
 
@@ -589,4 +609,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (emailInput) emailInput.value = adminEmail;
 });
 
+</script>
 @endpush

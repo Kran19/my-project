@@ -526,8 +526,6 @@
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, initializing attributes...');
-
         // Initialize Tabulator tables
         initializeAttributesTable([]);
 
@@ -542,14 +540,11 @@
 
     // Refresh all data
     async function refreshAllData() {
-        console.log('Refreshing all data...');
-
         try {
             await Promise.all([
                 loadAttributesData(),
                 loadStatistics()
             ]);
-            console.log('All data refreshed successfully');
         } catch (error) {
             console.error('Error refreshing data:', error);
             toastr.error('Failed to load data');
@@ -558,14 +553,11 @@
 
     // Load attributes data
     async function loadAttributesData() {
-        console.log('Loading attributes data...');
-
         try {
             const response = await axiosInstance.get('/attributes');
 
             if (response.data.success) {
                 const attributes = response.data.data.data || [];
-                console.log('Loaded', attributes.length, 'attributes');
 
                 if (attributesTable) {
                     attributesTable.setData(attributes);
@@ -579,8 +571,6 @@
 
     // Load statistics
     async function loadStatistics() {
-        console.log('Loading statistics...');
-
         try {
             const response = await axiosInstance.get('/attributes/statistics');
 
@@ -599,14 +589,11 @@
 
     // Load attribute values
     async function loadAttributeValues(attributeId) {
-        console.log('Loading values for attribute:', attributeId);
-
         try {
             const response = await axiosInstance.get(`/attributes/${attributeId}/values`);
 
             if (response.data.success) {
                 const values = response.data.data.data || [];
-                console.log('Loaded', values.length, 'values');
 
                 // Update attribute info
                 const attribute = response.data.data.attribute;
@@ -634,7 +621,6 @@
 
     // Initialize attributes table
     function initializeAttributesTable(data) {
-        console.log('Initializing attributes table...');
 
         attributesTable = new Tabulator("#attributesTable", {
             data: data,
@@ -699,7 +685,7 @@
                     width: 100,
                     sorter: "string",
                     hozAlign: "center",
-                    headerFilter: "select",
+                    headerFilter: "list",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -760,7 +746,7 @@
                     field: "is_variant",
                     width: 100,
                     hozAlign: "center",
-                    headerFilter: "select",
+                    headerFilter: "list",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -784,7 +770,7 @@
                     field: "is_filterable",
                     width: 100,
                     hozAlign: "center",
-                    headerFilter: "select",
+                    headerFilter: "list",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -808,7 +794,7 @@
                     field: "status",
                     width: 100,
                     hozAlign: "center",
-                    headerFilter: "select",
+                    headerFilter: "list",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -873,14 +859,12 @@
 
         // Setup table events
         attributesTable.on("tableBuilt", function() {
-            console.log("Attributes table built successfully");
             setupTableFunctionality();
         });
     }
 
     // Initialize values table
     function initializeValuesTable(data, attributeType) {
-        console.log('Initializing values table for type:', attributeType);
 
         const columns = [
             {
@@ -1053,7 +1037,6 @@
         });
 
         valuesTable.on("tableBuilt", function() {
-            console.log("Values table built successfully");
             setupValuesTableFunctionality();
         });
     }

@@ -378,6 +378,11 @@
 
                      <div>
                         <label for="tax_class_id" class="block text-sm font-medium text-gray-700 mb-1">Tax Class</label>
+                        <select name="tax_class_id" id="tax_class_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">None</option>
+                            @foreach($taxClasses as $tax)
+                                <option value="{{ $tax->id }}" {{ old('tax_class_id', $product->tax_class_id) == $tax->id ? 'selected' : '' }}>{{ $tax->name }} ({{ number_format($tax->total_rate, 2) }}%)</option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -728,7 +733,20 @@
         }
     }
 
-    document.getElementById('media-search').addEventListener('input', _.debounce((e) => {
+    // Simple debounce function
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    document.getElementById('media-search').addEventListener('input', debounce((e) => {
         loadMedia(1, e.target.value);
     }, 500));
 </script>

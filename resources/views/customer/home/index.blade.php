@@ -109,14 +109,15 @@
     --transition: all 0.3s ease;
 }
 
-* {
+/* Scoped to home page content only */
+.home-page * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-body {
+.home-page {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #fefefe;
     color: var(--text-dark);
     line-height: 1.6;
@@ -1143,6 +1144,7 @@ body {
 @endsection
 
 @section('content')
+<div class="home-page">
 
 <!-- Hero Section -->
 <section class="promo-slider">
@@ -1515,6 +1517,7 @@ body {
 <div id="notificationToast" class="notification-toast">
     <i class="fas fa-check-circle text-green-500"></i>
     <span id="toastMessage">Product added to cart!</span>
+</div>
 </div>
 @endsection
 

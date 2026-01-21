@@ -477,7 +477,6 @@
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Categories module initialized');
 
             // Load data
             loadCategoriesData();
@@ -547,7 +546,6 @@
                     direction: 'asc'
                 },
                 ajaxResponse: function(url, params, response) {
-                    console.log('Ajax response:', response);
                     if (response.success) {
                         // Ensure we're returning the correct data structure
                         if (response.data && response.data.data) {
@@ -637,7 +635,7 @@
                         field: "status",
                         width: 120,
                         hozAlign: "center",
-                        headerFilter: "select",
+                        headerFilter: "list",
                         headerFilterParams: {
                             values: {
                                 "": "All",
@@ -727,7 +725,6 @@
 
             // Fix layout after table is built
             categoriesTable.on("tableBuilt", function() {
-                console.log("Tabulator table built successfully");
 
                 // Redraw table to ensure proper layout
                 setTimeout(() => {
@@ -753,7 +750,6 @@
                 $(document).on('change', '.toggle-category-status', function(e) {
                     const categoryId = $(this).data('id');
                     const isActive = $(this).is(':checked');
-                    console.log('Toggling category status:', categoryId, 'to', isActive);
                     toggleCategoryStatus(categoryId, isActive);
                 });
             });
@@ -771,7 +767,6 @@
                     }
                 });
 
-                console.log('Categories API Response:', response.data);
 
                 if (response.data.success) {
                     // CORRECTED: Access data from response.data.data
@@ -809,17 +804,14 @@
 
         // Update pagination info
         function updatePaginationInfo(meta) {
-            console.log('Pagination updated:', meta);
             // You can update custom pagination UI here if needed
         }
 
         // Load statistics from API
         async function loadStatistics() {
-            console.log('Loading statistics from API...');
 
             try {
                 const response = await axiosInstance.get('/categories/statistics');
-                console.log('Statistics API Response:', response.data);
 
                 if (response.data.success) {
                     const stats = response.data.data;
@@ -837,7 +829,6 @@
 
         // Load parent categories for dropdown
         async function loadParentCategories(excludeId = null) {
-            console.log('Loading parent categories for dropdown...');
 
             try {
                 const params = {};
@@ -848,7 +839,7 @@
                 const response = await axiosInstance.get('/categories/dropdown', {
                     params
                 });
-                console.log('Parent categories API Response:', response.data);
+
 
                 if (response.data.success) {
                     const categories = response.data.data;

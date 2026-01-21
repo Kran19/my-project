@@ -372,8 +372,6 @@
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, initializing tags module...');
-
         // Initialize Tabulator first with empty data
         initializeTagsTable([]);
 
@@ -389,15 +387,12 @@
 
     // Refresh all data
     async function refreshAllData() {
-        console.log('Refreshing all data...');
-
         try {
             await Promise.all([
                 loadTagsData(),
                 loadStatistics(),
                 loadPopularTags()
             ]);
-            console.log('All data refreshed successfully');
         } catch (error) {
             console.error('Error refreshing data:', error);
         }
@@ -405,15 +400,11 @@
 
     // Load tags data and update Tabulator
     async function loadTagsData() {
-        console.log('Loading tags data from API...');
-
         try {
             const response = await axiosInstance.get('/tags');
-            console.log('Tags API Response:', response.data);
 
             if (response.data.success) {
                 const tags = response.data.data?.data || response.data.data || [];
-                console.log('Loaded', tags.length, 'tags');
 
                 // Update Tabulator data
                 if (tagsTable) {
@@ -429,11 +420,8 @@
 
     // Load statistics from API
     async function loadStatistics() {
-        console.log('Loading statistics from API...');
-
         try {
             const response = await axiosInstance.get('/tags/statistics');
-            console.log('Statistics API Response:', response.data);
 
             if (response.data.success) {
                 const stats = response.data.data;
@@ -449,7 +437,6 @@
 
     // Load popular tags from API
     async function loadPopularTags() {
-        console.log('Loading popular tags from API...');
         const container = document.getElementById('popularTags');
 
         try {
@@ -491,7 +478,6 @@
 
     // Initialize Tabulator table
     function initializeTagsTable(data) {
-        console.log('Initializing Tabulator table...');
 
         if (tagsTable) {
             tagsTable.destroy();
@@ -671,7 +657,6 @@
 
         // Set up table events
         tagsTable.on("tableBuilt", function() {
-            console.log("Tabulator table built successfully");
             setupTabulatorEvents();
         });
     }

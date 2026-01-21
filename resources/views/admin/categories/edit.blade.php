@@ -141,7 +141,6 @@
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Category edit page loaded for ID:', {{ $id }});
         loadCategoryData();
     });
 
@@ -152,7 +151,6 @@
 
             if (response.data.success) {
                 categoryData = response.data.data;
-                console.log('Category data loaded:', categoryData);
 
                 // Load other data in parallel
                 await Promise.all([
@@ -212,7 +210,6 @@
 
             if (response.data.success) {
                 allAttributes = response.data.data || [];
-                console.log('Attributes loaded:', allAttributes.length);
             }
         } catch (error) {
             console.error('Error loading attributes:', error);
@@ -227,7 +224,6 @@
 
             if (response.data.success) {
                 allSpecGroups = response.data.data || [];
-                console.log('Spec groups loaded:', allSpecGroups.length);
             }
         } catch (error) {
             console.error('Error loading specification groups:', error);
@@ -727,7 +723,6 @@
                 }
             });
 
-            console.log('Media API Response:', response.data);
 
             if (response.data.success) {
                 const mediaItems = response.data.data || response.data;
