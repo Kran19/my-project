@@ -32,6 +32,7 @@ Route::prefix('admin')->middleware('api')->group(function () {
         ]);
 
         Route::post('logout', [AdminApiAuthController::class, 'logout']);
+        Route::post('profile/update', [AdminApiAuthController::class, 'updateProfile']);
 
 
         // Media Module Routes

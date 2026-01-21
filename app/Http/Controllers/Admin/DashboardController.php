@@ -9,8 +9,10 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // ==================== REGULAR VIEW RENDER ====================
+
         // Get date ranges
         $today = Carbon::today();
         $yesterday = Carbon::yesterday();
@@ -312,30 +314,49 @@ class DashboardController extends Controller
 
     public function getChartData(Request $request)
     {
-        $type = $request->get('type', 'category');
+        // Handle Chart Data Request
+        if ($request->has('chart')) {
+            $type = $request->get('chart');
 
-        if ($type === 'category') {
-            $categories = DB::table('order_items')
-                ->join('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
-                ->join('products', 'product_variants.product_id', '=', 'products.id')
-                ->join('category_product', 'products.id', '=', 'category_product.product_id')
-                ->join('categories', 'category_product.category_id', '=', 'categories.id')
-                ->whereNull('products.deleted_at')
-                ->whereNull('categories.deleted_at')
-                ->select(
-                    'categories.name',
-                    DB::raw('SUM(order_items.total) as total_revenue')
-                )
-                ->join('orders', 'order_items.order_id', '=', 'orders.id')
-                ->where('orders.status', '!=', 'cancelled')
-                ->groupBy('categories.id', 'categories.name')
-                ->orderBy('total_revenue', 'desc')
-                ->limit(8)
-                ->get();
+            if ($type === 'category') {
+                $categories = DB::table('order_items')
+                    ->join('product_variants', 'order_items.product_variant_id', '=', 'product_variants.id')
+                    ->join('products', 'product_variants.product_id', '=', 'products.id')
+                    ->join('category_product', 'products.id', '=', 'category_product.product_id')
+                    ->join('categories', 'category_product.category_id', '=', 'categories.id')
+                    ->whereNull('products.deleted_at')
+                    ->whereNull('categories.deleted_at')
+                    ->select(
+                        'categories.name',
+                        DB::raw('SUM(order_items.total) as total_revenue')
+                    )
+                    ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                    ->where('orders.status', '!=', 'cancelled')
+                    ->groupBy('categories.id', 'categories.name')
+                    ->orderBy('total_revenue', 'desc')
+                    ->limit(8)
+                    ->get();
 
-            return response()->json([
-                'categories' => $categories
-            ]);
+                return response()->json([
+                    'categories' => $categories
+                ]);
+            }
+        }
+
+        // Handle Update Request (e.g. Abandoned Carts)
+        if ($request->has('update')) {
+            $type = $request->get('update');
+            
+            if ($type === 'carts') {
+                 $abandonedCarts = DB::table('carts')
+                    ->where('status', 'active')
+                    ->where('updated_at', '<', Carbon::now()->subHours(24))
+                    ->count();
+
+                return response()->json([
+                    'abandoned_carts' => $abandonedCarts
+                ]);
+            }
         }
 
         return response()->json([]);

@@ -56,11 +56,6 @@ class Media extends Model
         return $this->hasMany(AttributeValue::class, 'image_id');
     }
 
-    public function testimonial(): HasMany
-    {
-        return $this->hasMany(Testimonial::class, 'author_image_id');
-    }
-
     public function variantImages(): HasMany
     {
         return $this->hasMany(VariantImage::class);

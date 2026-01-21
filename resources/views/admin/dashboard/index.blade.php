@@ -598,7 +598,9 @@
 
             try {
                 // Fetch category data via AJAX
-                const response = await fetch('{{ route("admin.dashboard") }}?chart=category');
+                const response = await fetch('{{ route("admin.dashboard.data") }}?chart=category', {
+                    headers: { 'Accept': 'application/json' }
+                });
                 const data = await response.json();
 
                 if (data.categories) {
@@ -627,7 +629,9 @@
 
         // Update abandoned carts count in real-time (every 5 minutes)
         function updateAbandonedCarts() {
-            fetch('{{ route("admin.dashboard") }}?update=carts')
+            fetch('{{ route("admin.dashboard.data") }}?update=carts', {
+                headers: { 'Accept': 'application/json' }
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.abandoned_carts !== undefined) {

@@ -48,5 +48,34 @@ class AdminApiAuthController extends Controller
         return response()->json(['message' => 'Logged out']);
     }
 
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:admins,email,' . $user->id,
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        if ($request->filled('password')) {
+            $user->password_hash = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'admin' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ]
+        ]);
+    }
+
 
 }

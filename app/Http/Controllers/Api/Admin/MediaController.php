@@ -508,8 +508,6 @@ class MediaController extends Controller
             return true;
         if ($media->attributeValues()->exists())
             return true;
-        if ($media->testimonial()->exists())
-            return true;
         if ($media->variantImages()->exists())
             return true;
         if ($media->reviewImages()->exists())

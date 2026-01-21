@@ -365,6 +365,52 @@ class SettingService
                     'sort_order' => 30
                 ]
             ],
+            'social' => [
+                [
+                    'key' => 'social_facebook',
+                    'label' => 'Facebook URL',
+                    'value' => '',
+                    'type' => 'text',
+                    'default' => '',
+                    'description' => 'Facebook page URL',
+                    'is_encrypted' => false,
+                    'is_public' => true,
+                    'sort_order' => 10
+                ],
+                [
+                    'key' => 'social_instagram',
+                    'label' => 'Instagram URL',
+                    'value' => '',
+                    'type' => 'text',
+                    'default' => '',
+                    'description' => 'Instagram profile URL',
+                    'is_encrypted' => false,
+                    'is_public' => true,
+                    'sort_order' => 20
+                ],
+                [
+                    'key' => 'social_twitter',
+                    'label' => 'Twitter/X URL',
+                    'value' => '',
+                    'type' => 'text',
+                    'default' => '',
+                    'description' => 'Twitter profile URL',
+                    'is_encrypted' => false,
+                    'is_public' => true,
+                    'sort_order' => 30
+                ],
+                [
+                    'key' => 'social_linkedin',
+                    'label' => 'LinkedIn URL',
+                    'value' => '',
+                    'type' => 'text',
+                    'default' => '',
+                    'description' => 'LinkedIn company page URL',
+                    'is_encrypted' => false,
+                    'is_public' => true,
+                    'sort_order' => 40
+                ]
+            ],
             'appearance' => [
                 [
                     'key' => 'theme_color',
