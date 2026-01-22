@@ -1,5 +1,5 @@
 <!-- Top Navigation -->
-<nav class="sticky top-0 right-0 left-0 bg-white shadow-sm border-b border-gray-200 px-4 py-3  z-100">
+<nav class="bg-white shadow-sm border-b border-gray-200 px-4 py-3  z-100">
     <div class="flex justify-between items-center  gap-4">
         <div class="flex items-center">
             <button id="sidebarToggle" class="text-gray-500 focus:outline-none md:hidden">

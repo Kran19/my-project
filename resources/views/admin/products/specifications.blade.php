@@ -512,6 +512,8 @@
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing specifications...');
+
         // Initialize Tabulator tables
         initializeSpecsTable([]);
         initializeGroupsTable([]);
@@ -527,6 +529,8 @@
 
     // Refresh all data
     async function refreshAllData() {
+        console.log('Refreshing all data...');
+
         try {
             await Promise.all([
                 loadSpecificationsData(),
@@ -534,6 +538,7 @@
                 loadStatistics(),
                 loadSpecificationsForSelector()
             ]);
+            console.log('All data refreshed successfully');
         } catch (error) {
             console.error('Error refreshing data:', error);
             toastr.error('Failed to load data');
@@ -542,11 +547,14 @@
 
     // Load specifications data
     async function loadSpecificationsData() {
+        console.log('Loading specifications data...');
+
         try {
             const response = await axiosInstance.get('/specifications');
 
             if (response.data.success) {
                 const specs = response.data.data.data || [];
+                console.log('Loaded', specs.length, 'specifications');
 
                 if (specsTable) {
                     specsTable.setData(specs);
@@ -560,11 +568,14 @@
 
     // Load groups data
     async function loadGroupsData() {
+        console.log('Loading groups data...');
+
         try {
             const response = await axiosInstance.get('/specification-groups');
 
             if (response.data.success) {
                 const groups = response.data.data.data || [];
+                console.log('Loaded', groups.length, 'groups');
 
                 if (groupsTable) {
                     groupsTable.setData(groups);
@@ -578,6 +589,8 @@
 
     // Load statistics
     async function loadStatistics() {
+        console.log('Loading statistics...');
+
         try {
             const response = await axiosInstance.get('/specifications/statistics');
             const groupsResponse = await axiosInstance.get('/specification-groups/statistics');
@@ -599,6 +612,8 @@
 
     // Load specifications for selector
     async function loadSpecificationsForSelector() {
+        console.log('Loading specifications for selector...');
+
         try {
             const response = await axiosInstance.get('/specifications/dropdown');
 
@@ -666,6 +681,7 @@
 
     // Initialize specifications table
     function initializeSpecsTable(data) {
+        console.log('Initializing specifications table...');
 
         specsTable = new Tabulator("#specificationsTable", {
             data: data,
@@ -726,7 +742,7 @@
                     width: 120,
                     sorter: "string",
                     hozAlign: "center",
-                    headerFilter: "list",
+                    headerFilter: "select",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -809,7 +825,7 @@
                     field: "is_filterable",
                     width: 100,
                     hozAlign: "center",
-                    headerFilter: "list",
+                    headerFilter: "select",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -833,7 +849,7 @@
                     field: "status",
                     width: 100,
                     hozAlign: "center",
-                    headerFilter: "list",
+                    headerFilter: "select",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -898,12 +914,14 @@
 
         // Setup table events
         specsTable.on("tableBuilt", function() {
+            console.log("Specifications table built successfully");
             setupSpecsTableFunctionality();
         });
     }
 
     // Initialize groups table
     function initializeGroupsTable(data) {
+        console.log('Initializing groups table...');
 
         groupsTable = new Tabulator("#groupsTable", {
             data: data,
@@ -974,7 +992,7 @@
                     field: "status",
                     width: 100,
                     hozAlign: "center",
-                    headerFilter: "list",
+                    headerFilter: "select",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -1110,7 +1128,7 @@
                     field: "status",
                     width: 100,
                     hozAlign: "center",
-                    headerFilter: "list",
+                    headerFilter: "select",
                     headerFilterParams: {
                         values: {
                             "": "All",
@@ -1418,6 +1436,7 @@
     // Edit specification
     async function editSpecification(id) {
         try {
+            console.log('Loading specification for edit:', id);
             const response = await axiosInstance.get(`/specifications/${id}`);
 
             if (response.data.success) {

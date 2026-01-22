@@ -7,8 +7,8 @@
     <title>@yield('title', 'eCommerce Admin Panel')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- TailwindCSS - Compiled CSS -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -35,9 +35,6 @@
         const BASE_URL = '{{ url('/') }}';
         const ADMIN_URL = '{{ url('/admin') }}';
         const ASSET_URL = '{{ asset('') }}';
-        
-        // API Token for authenticated requests
-        window.ADMIN_API_TOKEN = '{{ session('admin_api_token') }}';
     </script>
 </head>
 
