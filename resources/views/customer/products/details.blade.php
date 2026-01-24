@@ -580,7 +580,7 @@
                                 </div>
 
                                 <!-- Stock Status -->
-                                <div class="mb-8">
+                                <!-- <div class="mb-8">
                                     <div id="dynamicStockStatus"
                                         class="flex items-center gap-3 {{ $product['is_in_stock'] ? 'text-green-600' : 'text-red-600' }}">
                                         <i
@@ -599,7 +599,7 @@
                                             @endif
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
 
                                 <!-- Action Buttons -->
                                 <div class="flex flex-col sm:flex-row gap-4 mb-8">
