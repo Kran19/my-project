@@ -14,8 +14,13 @@
 <style>
 /* Hero Slider */
 .promo-slider {
-    height: 70vh;
-    min-height: 500px;
+    width: 100%;
+    /* Use the banner's native aspect ratio for desktop */
+    aspect-ratio: 1920 / 800;
+    /* Ensure it doesn't get too short on smaller laptops */
+    min-height: 600px; 
+    /* Cap the height so it doesn't take over huge screens */
+    max-height: 800px;
     position: relative;
     overflow: hidden;
 }
@@ -1009,8 +1014,11 @@
     
     /* Hero Banner Responsive */
     .promo-slider {
-        height: 50vh;
-        min-height: 300px;
+        /* On mobile, prioritize effective use of vertical space */
+        aspect-ratio: unset;
+        height: 65vh; /* Taller on mobile to show more image and fit content */
+        min-height: 500px; /* Absolute minimum for content */
+        max-height: none;
     }
 
     .slide-content {
