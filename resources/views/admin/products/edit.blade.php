@@ -180,20 +180,14 @@
                         <tbody class="bg-white divide-y divide-gray-200" id="variants-container">
                             <!-- PHP RENDERED VARIANTS -->
                             @foreach($product->variants as $idx => $variant)
-                                @if(!$variant->is_default || $product->variants->count() > 1) 
-                                <!-- Skip the main "shell" default variant of configurable product if it exists and we have real variants, 
-                                     BUT usually configurable product structure in DB might differ.
-                                     Assuming $product->variants returns ALL variants including the generated ones.
-                                     The default variant for configurable parent (holding main SKU/price) might be separate or one of them.
-                                     Let's list ALL valid variants.
-                                     Usually `variants` relationship returns specific combinations. -->
+                                <!-- Removing skip logic to show all variants -->
                                      
                                 <tr id="variant-row-{{ $idx }}">
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
                                         {{-- Variant Name Construction --}}
                                         @php
                                             $name = $variant->attributes->map(function($a) {
-                                                return $a->pivot->attributeValue->value ?? ''; // Accessing value via pivot relation
+                                                return $a->value ?? 'NA'; 
                                             })->join(' / ');
                                         @endphp
                                         {{ $name ?: 'Variant #' . ($idx + 1) }}
@@ -218,15 +212,20 @@
                                         <input type="number" name="variants[{{ $idx }}][stock_quantity]" value="{{ $variant->stock_quantity }}" class="w-full px-2 py-1 border rounded text-sm">
                                     </td>
                                     <td class="px-3 py-2">
-                                        <div id="variant-images-{{ $idx }}" class="flex gap-1 flex-wrap">
+                                        <div id="variant-images-{{ $idx }}" class="flex gap-1 flex-wrap items-center">
                                             {{-- Main Image --}}
-                                            @if($variant->primaryImage)
+                                            @if($variant->primaryImage && $variant->primaryImage->media)
                                                 <div class="relative w-10 h-10 variant-main-thumb border-2 border-blue-500">
                                                     <img src="{{ asset('storage/' . $variant->primaryImage->media->file_path) }}" class="w-full h-full object-cover">
+                                                </div>
+                                            @else
+                                                <div class="relative w-10 h-10 variant-main-thumb border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-50 text-xs text-gray-400">
+                                                    <span class="text-[0.6rem]">No Img</span>
                                                 </div>
                                             @endif
                                             {{-- Gallery --}}
                                             @foreach($variant->images as $vImg)
+                                                {{-- Avoid duplicating main image if we want, but keeping original logic flow is fine too --}}
                                                 <div class="relative w-10 h-10 border border-gray-200">
                                                     <img src="{{ asset('storage/' . $vImg->file_path) }}" class="w-full h-full object-cover">
                                                 </div>
@@ -235,7 +234,7 @@
                                         <button type="button" onclick="openVariantMediaModal({{ $idx }})" class="text-xs text-blue-600 hover:text-blue-800 mt-1">Manage Images</button>
                                         
                                         {{-- Hidden Inputs for Images --}}
-                                        <input type="hidden" name="variants[{{ $idx }}][main_image_id]" id="variant-main-input-{{ $idx }}" value="{{ $variant->primaryImage ? $variant->primaryImage->media_id : '' }}">
+                                        <input type="hidden" name="variants[{{ $idx }}][main_image_id]" id="variant-main-input-{{ $idx }}" value="{{ ($variant->primaryImage && $variant->primaryImage->media) ? $variant->primaryImage->media_id : '' }}">
                                         <div id="variant-gallery-inputs-{{ $idx }}">
                                             @foreach($variant->images as $vImg)
                                                 <input type="hidden" name="variants[{{ $idx }}][gallery_image_ids][]" value="{{ $vImg->id }}">
@@ -247,7 +246,6 @@
                                        <input type="hidden" id="is-default-{{ $idx }}" name="variants[{{ $idx }}][is_default]" value="{{ $variant->is_default ? '1' : '0' }}" class="is-default-input">
                                     </td>
                                 </tr>
-                                @endif
                             @endforeach
                         </tbody>
                     </table>
