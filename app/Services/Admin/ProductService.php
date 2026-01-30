@@ -999,13 +999,10 @@ if ($mainImage) {
         }
 
         // 3. Remove variants not in submission (if any deletions were intended)
-        if (!empty($submittedVariantIds)) {
-            $deletedCount = $product->variants()
+        if (isset($data['variants']) && is_array($data['variants'])) {
+            $product->variants()
                 ->whereNotIn('id', $submittedVariantIds)
                 ->delete();
-            if ($deletedCount > 0) {
-                Log::info('Deleted variants not in submission', ['product_id' => $product->id, 'count' => $deletedCount]);
-            }
         }
     }
 

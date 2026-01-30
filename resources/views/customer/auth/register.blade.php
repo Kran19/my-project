@@ -185,7 +185,7 @@
     </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
 function togglePassword(inputId) {
     const passwordInput = document.getElementById(inputId);
@@ -373,4 +373,4 @@ function showErrorToast(message) {
     }, 5000);
 }
 </script>
-@endsection
+@endpush

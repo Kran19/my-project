@@ -161,9 +161,47 @@
             @endif
 
             <!-- CONFIGURABLE VARIANTS SECTION -->
-            @if($product->product_type === 'configurable')
-            <div id="configurable-product-fields" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <!-- CONFIGURABLE VARIANTS SECTION -->
+            <div id="configurable-product-fields" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 {{ $product->product_type === 'configurable' ? '' : 'hidden' }}">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Product Variants</h3>
+                
+                <!-- Variant Generator & Adder (New) -->
+                <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h4 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Manage Variants</h4>
+                    
+                    <!-- Tabs or Sections -->
+                    <div class="space-y-6">
+                        <!-- Bulk Generator -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-gray-700">Generate Combinations</label>
+                                <button type="button" onclick="document.getElementById('bulk-generator-panel').classList.toggle('hidden')" class="text-blue-600 text-xs hover:underline">Toggle Generator</button>
+                            </div>
+                            
+                            <div id="bulk-generator-panel" class="hidden space-y-4">
+                                <div id="attributes-loading" class="text-gray-500 italic hidden">Loading attributes...</div>
+                                <div id="attributes-selector" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                     <!-- Loaded via JS -->
+                                </div>
+                                <button type="button" onclick="generateVariants()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 text-sm">
+                                    Generate All Combinations
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Single Variant Adder -->
+                        <div class="pt-4 border-t border-gray-200">
+                             <label class="block text-sm font-medium text-gray-700 mb-2">Add Single Variant</label>
+                             <div class="flex flex-wrap items-end gap-2" id="single-variant-adder">
+                                 <!-- Dynamic Selects will be injected here -->
+                                 <div id="single-adder-placeholders" class="text-sm text-gray-400 italic">Select a category to load attributes...</div>
+                             </div>
+                             <button type="button" onclick="addSingleVariant()" class="mt-2 text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded shadow transition">
+                                 + Add Variant
+                             </button>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 border">
@@ -175,10 +213,12 @@
                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Stock</th>
                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-48">Images</th>
                                 <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16">Default</th>
+                                <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16">Action</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200" id="variants-container">
                             <!-- PHP RENDERED VARIANTS -->
+                            @if($product->product_type === 'configurable')
                             @foreach($product->variants as $idx => $variant)
                                 <!-- Removing skip logic to show all variants -->
                                      
@@ -214,21 +254,23 @@
                                     <td class="px-3 py-2">
                                         <div id="variant-images-{{ $idx }}" class="flex gap-1 flex-wrap items-center">
                                             {{-- Main Image --}}
-                                            @if($variant->primaryImage && $variant->primaryImage->media)
-                                                <div class="relative w-10 h-10 variant-main-thumb border-2 border-blue-500">
+                                            <div class="relative w-10 h-10 variant-main-thumb {{ $variant->primaryImage && $variant->primaryImage->media ? 'border-2 border-blue-500' : 'border border-dashed border-gray-300' }}">
+                                                @if($variant->primaryImage && $variant->primaryImage->media)
                                                     <img src="{{ asset('storage/' . $variant->primaryImage->media->file_path) }}" class="w-full h-full object-cover">
-                                                </div>
-                                            @else
-                                                <div class="relative w-10 h-10 variant-main-thumb border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-50 text-xs text-gray-400">
-                                                    <span class="text-[0.6rem]">No Img</span>
-                                                </div>
-                                            @endif
+                                                    <button type="button" onclick="removeVariantMainImage({{ $idx }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition">x</button>
+                                                @else
+                                                     <div class="flex items-center justify-center w-full h-full bg-gray-50 text-[10px] text-gray-400">Main</div>
+                                                @endif
+                                            </div>
+
                                             {{-- Gallery --}}
                                             @foreach($variant->images as $vImg)
-                                                {{-- Avoid duplicating main image if we want, but keeping original logic flow is fine too --}}
-                                                <div class="relative w-10 h-10 border border-gray-200">
+                                                @if(!$vImg->pivot->is_primary)
+                                                <div class="relative w-10 h-10 border border-gray-200 group">
                                                     <img src="{{ asset('storage/' . $vImg->file_path) }}" class="w-full h-full object-cover">
+                                                     <button type="button" onclick="this.parentElement.remove(); removeVariantGalleryInput({{ $idx }}, {{ $vImg->id }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 shadow-sm hover:bg-red-600 transition">x</button>
                                                 </div>
+                                                @endif
                                             @endforeach
                                         </div>
                                         <button type="button" onclick="openVariantMediaModal({{ $idx }})" class="text-xs text-blue-600 hover:text-blue-800 mt-1">Manage Images</button>
@@ -245,13 +287,18 @@
                                        <input type="radio" name="default_variant_index" value="{{ $idx }}" {{ $variant->is_default ? 'checked' : '' }} onclick="document.querySelectorAll('.is-default-input').forEach(el => el.value=0); document.getElementById('is-default-{{ $idx }}').value=1;">
                                        <input type="hidden" id="is-default-{{ $idx }}" name="variants[{{ $idx }}][is_default]" value="{{ $variant->is_default ? '1' : '0' }}" class="is-default-input">
                                     </td>
+                                    <td class="px-3 py-2 text-center">
+                                         <button type="button" onclick="document.getElementById('variant-row-{{ $idx }}').remove()" class="text-red-500 hover:text-red-700 transition">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                         </button>
+                                    </td>
                                 </tr>
                             @endforeach
+                            @endif
                         </tbody>
                     </table>
                 </div>
             </div>
-            @endif
 
             <!-- Dynamic Specifications -->
             <div id="specifications-wrapper" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -311,9 +358,17 @@
                 
                 <div class="space-y-4">
                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
-                        <input type="text" value="{{ ucfirst($product->product_type) }}" disabled class="w-full px-4 py-2 border border-gray-200 bg-gray-100 rounded-lg text-gray-500 cursor-not-allowed">
-                        <input type="hidden" name="product_type" value="{{ $product->product_type }}">
+                        <label for="product_type" class="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
+                        @if($product->product_type === 'simple')
+                            <select name="product_type" id="product_type" onchange="toggleProductType()"
+                                class="w-full px-4 py-2 border border-blue-200 bg-blue-50 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="simple" selected>Simple Product</option>
+                                <option value="configurable">Configurable Product</option>
+                            </select>
+                        @else
+                            <input type="text" value="{{ ucfirst($product->product_type) }}" disabled class="w-full px-4 py-2 border border-gray-200 bg-gray-100 rounded-lg text-gray-500 cursor-not-allowed">
+                            <input type="hidden" name="product_type" id="product_type" value="{{ $product->product_type }}">
+                        @endif
                     </div>
 
                     <div>
@@ -450,6 +505,298 @@
            'custom_value' => $s->pivot->custom_value
        ];
     }));
+
+    // Prepare Global State
+    let availableAttributes = [];
+    let currentVariantCount = {{ $product->variants->count() }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleProductType(); // Init state
+        
+        // Populate single adder if configurable
+        const catId = document.getElementById('main_category_id').value;
+        const type = document.getElementById('product_type').value;
+        if(catId && type === 'configurable') {
+             fetchAttributes(catId);
+        }
+    });
+
+    // =============== PRODUCT TYPE LOGIC ===============
+    function toggleProductType() {
+        const typeInput = document.getElementById('product_type');
+        const type = typeInput ? typeInput.value : '{{ $product->product_type }}';
+        
+        const simpleFields = document.getElementById('simple-product-fields');
+        const configFields = document.getElementById('configurable-product-fields');
+        const mediaSection = document.getElementById('media-section');
+        
+        if (type === 'simple') {
+            if(simpleFields) simpleFields.classList.remove('hidden');
+            if(configFields) configFields.classList.add('hidden');
+            if(mediaSection) mediaSection.classList.remove('hidden');
+        } else {
+            if(simpleFields) simpleFields.classList.add('hidden');
+            if(configFields) configFields.classList.remove('hidden');
+            if(mediaSection) mediaSection.classList.add('hidden');
+            
+            // Trigger attribute load if needed
+            const catId = document.getElementById('main_category_id').value;
+            if(catId && availableAttributes.length === 0) fetchAttributes(catId);
+        }
+    }
+
+    function handleCategoryChange(categoryId) {
+         // Existing Logic for specs
+         fetchSpecifications(categoryId);
+         // New Logic for attributes
+         if(document.getElementById('product_type').value === 'configurable') {
+             fetchAttributes(categoryId);
+         }
+    }
+
+    // =============== ATTRIBUTES & VARIANTS LOGIC ===============
+    
+    async function fetchAttributes(categoryId) {
+        const loading = document.getElementById('attributes-loading');
+        const selector = document.getElementById('attributes-selector');
+        const singleAdder = document.getElementById('single-adder-placeholders'); // Placeholder to remove
+        const singleAdderContainer = document.getElementById('single-variant-adder');
+        
+        if(loading) loading.classList.remove('hidden');
+        if(selector) selector.innerHTML = '';
+        availableAttributes = [];
+
+        try {
+            const response = await axios.get(`{{ route('admin.products.category.attributes', ':id') }}`.replace(':id', categoryId));
+            if(loading) loading.classList.add('hidden');
+
+            if(response.data.success && response.data.data.length > 0) {
+                availableAttributes = response.data.data;
+                renderAttributeSelector(response.data.data);
+                renderSingleVariantAdder(response.data.data);
+            } else {
+                if(selector) selector.innerHTML = '<p class="text-gray-500 text-sm">No variant attributes found for this category.</p>';
+                 if(singleAdderContainer) singleAdderContainer.innerHTML = '<p class="text-gray-500 text-sm">No attributes available.</p>';
+            }
+        } catch (error) {
+            console.error('Attr fetch error:', error);
+            if(loading) loading.classList.add('hidden');
+        }
+    }
+
+    function renderAttributeSelector(attributes) {
+        const selector = document.getElementById('attributes-selector');
+        if(!selector) return;
+
+        let html = '';
+        attributes.forEach((attr, idx) => {
+            html += `
+            <div class="border rounded-lg p-3 bg-white">
+                <div class="flex items-center mb-2">
+                    <input type="checkbox" id="attr-enable-${attr.id}" class="attr-enable w-4 h-4 text-blue-600 rounded">
+                    <label for="attr-enable-${attr.id}" class="ml-2 font-medium text-gray-700">${attr.name}</label>
+                </div>
+                <select multiple id="attr-values-${attr.id}" class="w-full h-24 p-2 border rounded text-xs focus:ring-1 focus:ring-blue-500" disabled>
+                    ${attr.options.map(opt => `<option value="${opt.id}">${opt.value}</option>`).join('')}
+                </select>
+            </div>
+            `;
+        });
+        selector.innerHTML = html;
+
+        document.querySelectorAll('.attr-enable').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const attrId = this.id.replace('attr-enable-', '');
+                document.getElementById(`attr-values-${attrId}`).disabled = !this.checked;
+            });
+        });
+    }
+
+    function renderSingleVariantAdder(attributes) {
+        const container = document.getElementById('single-variant-adder');
+        if(!container) return;
+
+        let html = '';
+        attributes.forEach(attr => {
+             html += `
+             <div class="flex flex-col">
+                 <label class="text-xs text-gray-500 mb-1">${attr.name}</label>
+                 <select data-attr-id="${attr.id}" data-attr-name="${attr.name}" class="single-adder-select px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                     <option value="">Select ${attr.name}</option>
+                     ${attr.options.map(opt => `<option value="${opt.id}">${opt.value}</option>`).join('')}
+                 </select>
+             </div>
+             `;
+        });
+        container.innerHTML = html;
+    }
+
+    // --- Bulk Generation ---
+    function generateVariants() {
+        const selectedAttrs = [];
+        availableAttributes.forEach(attr => {
+             const checkbox = document.getElementById(`attr-enable-${attr.id}`);
+             if(checkbox && checkbox.checked) {
+                 const select = document.getElementById(`attr-values-${attr.id}`);
+                 const values = Array.from(select.selectedOptions).map(opt => ({
+                     id: opt.value,
+                     value: opt.text
+                 }));
+                 if(values.length > 0) selectedAttrs.push({ id: attr.id, name: attr.name, values: values });
+             }
+        });
+
+        if(selectedAttrs.length === 0) {
+            toastr.warning('Please select at least one attribute and value.');
+            return;
+        }
+
+        const combinations = cartesianProduct(selectedAttrs.map(a => a.values));
+        
+        // Append instead of replace? User might want to keep existing.
+        // We will append.
+        combinations.forEach(combo => {
+             const attributes = combo.map((c, i) => ({
+                 attribute_id: selectedAttrs[i].id,
+                 attribute_name: selectedAttrs[i].name,
+                 attribute_value_id: c.id,
+                 value: c.value
+             }));
+             addVariantRow(attributes);
+        });
+        
+        toastr.success(`${combinations.length} variants generated.`);
+        document.getElementById('product_type').disabled = true; // Lock type once variants exist
+    }
+
+    function cartesianProduct(arrays) {
+        return arrays.reduce((acc, curr) => acc.flatMap(x => curr.map(y => [...x, y])), [[]]);
+    }
+
+    // --- Single Add ---
+    function addSingleVariant() {
+        const selects = document.querySelectorAll('.single-adder-select');
+        const attributes = [];
+        let allSelected = true;
+
+        selects.forEach(select => {
+            if(!select.value) {
+                allSelected = false;
+                select.classList.add('border-red-500');
+            } else {
+                select.classList.remove('border-red-500');
+                attributes.push({
+                    attribute_id: select.getAttribute('data-attr-id'),
+                    attribute_name: select.getAttribute('data-attr-name'),
+                    attribute_value_id: select.value,
+                    value: select.options[select.selectedIndex].text
+                });
+            }
+        });
+
+        if(!allSelected) {
+            toastr.error('Please select all attributes.');
+            return;
+        }
+
+        addVariantRow(attributes);
+    }
+
+    function addVariantRow(attributes) {
+         // Check Duplicate
+         if(isDuplicateVariant(attributes)) {
+             toastr.warning('This variant combination already exists.');
+             return;
+         }
+
+         const idx = currentVariantCount++;
+         const container = document.getElementById('variants-container');
+         
+         const baseSku = document.getElementById('product_code').value || 'SKU';
+         const skuSuffix = attributes.map(a => a.value.substring(0,3).toUpperCase()).join('-');
+         const variantSku = `${baseSku}-${skuSuffix}-${idx}`;
+         
+         const variantName = attributes.map(a => a.value).join(' / ');
+
+         const tr = document.createElement('tr');
+         tr.id = `variant-row-${idx}`;
+         tr.innerHTML = `
+            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
+                ${variantName}
+                ${attributes.map((a, i) => `
+                    <input type="hidden" name="variants[${idx}][attributes][${i}][attribute_id]" value="${a.attribute_id}">
+                    <input type="hidden" name="variants[${idx}][attributes][${i}][attribute_value_id]" value="${a.attribute_value_id}">
+                `).join('')}
+            </td>
+            <td class="px-3 py-2"><input type="text" name="variants[${idx}][sku]" value="${variantSku}" class="w-full px-2 py-1 border rounded text-sm"></td>
+            <td class="px-3 py-2"><input type="number" name="variants[${idx}][price]" value="{{ $product->price }}" step="0.01" class="w-full px-2 py-1 border rounded text-sm"></td>
+            <td class="px-3 py-2"><input type="number" name="variants[${idx}][stock_quantity]" value="0" class="w-full px-2 py-1 border rounded text-sm"></td>
+            <td class="px-3 py-2">
+                <div id="variant-images-${idx}" class="flex gap-1 flex-wrap items-center">
+                     <div class="relative w-10 h-10 variant-main-thumb border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-50 text-xs text-gray-400">
+                        <span class="text-[0.6rem]">No Img</span>
+                    </div>
+                </div>
+                <button type="button" onclick="openVariantMediaModal(${idx})" class="text-xs text-blue-600 hover:text-blue-800 mt-1">Manage Images</button>
+                <input type="hidden" name="variants[${idx}][main_image_id]" id="variant-main-input-${idx}">
+                <div id="variant-gallery-inputs-${idx}"></div>
+            </td>
+            <td class="px-3 py-2 text-center">
+                <input type="radio" name="default_variant_index" value="${idx}" onclick="document.querySelectorAll('.is-default-input').forEach(el => el.value=0); document.getElementById('is-default-${idx}').value=1;">
+                <input type="hidden" id="is-default-${idx}" name="variants[${idx}][is_default]" value="0" class="is-default-input">
+            </td>
+            <td class="px-3 py-2 text-center">
+                <button type="button" onclick="document.getElementById('variant-row-${idx}').remove()" class="text-red-500 hover:text-red-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </td>
+         `;
+         container.appendChild(tr);
+    }
+
+    function isDuplicateVariant(newAttributes) {
+        // Simple check: iterate rows, check hidden inputs
+        // A robust way creates a signature (e.g. sorted value IDs)
+        // Here we can just check if we can find a row with matching value IDs
+        // NOTE: This implementation is basic. For full robustness, meaningful IDs are better.
+        
+        let isDuplicate = false;
+        // Logic to scan DOM hidden inputs is complex. 
+        // Simpler: Construct a "signature" of value IDs for the new variant
+        const newSig = newAttributes.map(a => a.attribute_value_id).sort().join('_');
+        
+        // Scan existing rows
+        document.querySelectorAll('#variants-container tr').forEach(row => {
+            const valueInputs = row.querySelectorAll('input[name*="[attribute_value_id]"]');
+            const rowValues = Array.from(valueInputs).map(i => i.value).sort().join('_');
+            if(rowValues === newSig) isDuplicate = true;
+        });
+
+        return isDuplicate;
+    }
+
+    // --- Image Removal ---
+    function removeVariantMainImage(idx) {
+        document.getElementById(`variant-main-input-${idx}`).value = '';
+        const container = document.getElementById(`variant-images-${idx}`);
+        const thumb = container.querySelector('.variant-main-thumb');
+        
+        // Reset thumb to placeholder
+        thumb.className = 'relative w-10 h-10 variant-main-thumb border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-50 text-xs text-gray-400';
+        thumb.innerHTML = '<span class="text-[0.6rem]">No Img</span>';
+    }
+    
+    function removeVariantGalleryInput(idx, imgId) {
+         // The passed imgId is the media ID.
+         // We need to find the hidden input with this value and remove it.
+         const container = document.getElementById(`variant-gallery-inputs-${idx}`);
+         if(!container) return;
+         
+         const input = container.querySelector(`input[value="${imgId}"]`);
+         if(input) input.remove();
+    }
+
+
 
     document.getElementById('name').addEventListener('input', function() {
         let slug = this.value.toLowerCase()

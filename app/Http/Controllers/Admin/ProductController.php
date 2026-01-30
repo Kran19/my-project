@@ -121,6 +121,12 @@ class ProductController extends Controller
         if (!isset($data['product_type'])) {
             $data['product_type'] = $product->product_type;
         }
+        
+        // Prevent Configurable -> Simple
+        if ($product->product_type === 'configurable' && $data['product_type'] === 'simple') {
+             return back()->withInput()->with('error', 'Cannot change Configurable product to Simple.');
+        }
+
         if (!isset($data['main_category_id'])) {
              // If disabled, we should probably keep existing.
              // But category MIGHT be editable? User said "on edit category , product type cannot be update".
