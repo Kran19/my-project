@@ -221,19 +221,13 @@ class AttributeController extends Controller
                 return $this->apiResponse(false, null, 'Attribute not found', 404);
             }
 
-            // Check if attribute has values
-            if ($attribute->values()->exists()) {
-                return $this->apiResponse(false, null, 'Cannot delete attribute. It has associated values.', 400);
-            }
+            // Soft delete associated values
+            $attribute->values()->delete();
 
-            // Check if attribute is used in categories
-            if ($attribute->categories()->exists()) {
-                return $this->apiResponse(false, null, 'Cannot delete attribute. It is assigned to categories.', 400);
-            }
-
+            // Soft delete the attribute
             $attribute->delete();
 
-            return $this->apiResponse(true, null, 'Attribute deleted successfully');
+            return $this->apiResponse(true, null, 'Attribute and its values deleted successfully');
 
         } catch (\Exception $e) {
             \Log::error('Attribute delete error: ' . $e->getMessage());
@@ -451,31 +445,27 @@ class AttributeController extends Controller
                 'ids.*' => 'integer|exists:attributes,id',
             ]);
 
-            // Check if any attribute has values
-            $attributesWithValues = Attribute::whereIn('id', $request->ids)
-                ->has('values')
-                ->count();
+            DB::beginTransaction();
 
-            if ($attributesWithValues > 0) {
-                return $this->apiResponse(false, null, "Cannot delete {$attributesWithValues} attribute(s) that have associated values", 400);
+            $attributes = Attribute::whereIn('id', $request->ids)->get();
+            $deleted = 0;
+
+            foreach ($attributes as $attribute) {
+                // Soft delete associated values
+                $attribute->values()->delete();
+                // Soft delete attribute
+                $attribute->delete();
+                $deleted++;
             }
 
-            // Check if any attribute is used in categories
-            $attributesInCategories = Attribute::whereIn('id', $request->ids)
-                ->has('categories')
-                ->count();
-
-            if ($attributesInCategories > 0) {
-                return $this->apiResponse(false, null, "Cannot delete {$attributesInCategories} attribute(s) that are assigned to categories", 400);
-            }
-
-            $deleted = Attribute::whereIn('id', $request->ids)->delete();
+            DB::commit();
 
             return $this->apiResponse(true, [
                 'deleted_count' => $deleted,
             ], "{$deleted} attribute(s) deleted successfully");
 
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error('Attribute bulk delete error: ' . $e->getMessage());
             return $this->apiResponse(false, null, 'Failed to delete attributes', 500);
         }

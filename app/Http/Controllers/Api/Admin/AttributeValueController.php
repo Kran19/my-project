@@ -200,11 +200,7 @@ class AttributeValueController extends Controller
                 return $this->apiResponse(false, null, 'Attribute value not found', 404);
             }
 
-            // Check if value is used in variant attributes
-            if ($attributeValue->variantAttributes()->exists()) {
-                return $this->apiResponse(false, null, 'Cannot delete attribute value. It is used in product variants.', 400);
-            }
-
+            // We allow soft deleting even if used in variants, as it preserves history
             $attributeValue->delete();
 
             return $this->apiResponse(true, null, 'Attribute value deleted successfully');
