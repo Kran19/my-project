@@ -506,4 +506,38 @@ class ShiprocketService
             ];
         }
     }
+
+    /**
+     * Get external postcode details (City/State)
+     */
+    public function getExternalPostcodeDetails($pincode)
+    {
+        try {
+            $response = $this->client->get($this->baseUrl . 'external/open/postcode/details', [
+                'postcode' => $pincode
+            ]);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json()
+                ];
+            }
+            
+            Log::error('Shiprocket postcode details failed', $response->json());
+            return [
+                'success' => false,
+                'message' => 'Failed to fetch postcode details'
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Shiprocket postcode details error', [
+                'error' => $e->getMessage()
+            ]);
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
 }

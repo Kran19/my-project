@@ -136,6 +136,21 @@
                     </a>
                 </div>
             @else
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    <!-- Checkout Form -->
+                    <div class="lg:col-span-2">
+                        <form id="checkoutForm" method="POST" action="{{ route('customer.checkout.process') }}" class="space-y-8">
+
+                            @if ($errors->any())
+                                <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200">
+                                    <ul class="list-disc list-inside text-red-700 text-sm">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
                             @csrf
 
                             <!-- Delivery Availability (First Block) -->

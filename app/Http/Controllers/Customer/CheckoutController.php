@@ -217,26 +217,22 @@ class CheckoutController extends Controller
         }
 
         // 3. Fetch City & State (Pincode Lookup)
-        $city = null; // Default
-        $state = null; // Default
-        try {
-            $pinResponse = \Illuminate\Support\Facades\Http::get("https://api.postalpincode.in/pincode/{$request->pincode}");
-            if ($pinResponse->successful()) {
-                $pinData = $pinResponse->json();
-                if (!empty($pinData[0]['PostOffice'][0])) {
-                    $city = $pinData[0]['PostOffice'][0]['District']; // Often 'District' maps better to City than 'Name'
-                    $state = $pinData[0]['PostOffice'][0]['State'];
-                    
-                    // Fallback for city if District is empty
-                    if (empty($city)) {
-                        $city = $pinData[0]['PostOffice'][0]['Block'] ?? $pinData[0]['PostOffice'][0]['Name'];
-                    }
-                }
+        $city = null;
+        $state = null;
+        
+        $pinResponse = $this->shiprocketService->getExternalPostcodeDetails($request->pincode);
+        
+        if ($pinResponse['success']) {
+            $details = $pinResponse['data']['data']['postcode_details'] ?? null;
+            if ($details) {
+                $city = $details['city'] ?? null;
+                $state = $details['state'] ?? null;
             }
-        } catch (\Exception $e) {
-            // Ignore lookup failure, user can manually enter
-            \Illuminate\Support\Facades\Log::error('Pincode lookup failed: ' . $e->getMessage());
         }
+        
+        // Fallback: If Shiprocket fails or returns empty, try the open API directly locally if needed, 
+        // but user requested Shiprocket data. If empty, maybe leave as null or try postalpincode as last resort.
+        // For now, we stick to Shiprocket.
 
         // 4. Apply Custom Shipping Logic
         $customCost = $this->calculateShippingCost($cart);
