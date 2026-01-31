@@ -1011,7 +1011,6 @@
     .collection-section {
         padding: 2rem 5%;
     }
-    
 @media (max-width: 768px) {
     .promo-slider {
         aspect-ratio: 16 / 9;   /* cinematic */
