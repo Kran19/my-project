@@ -1651,16 +1651,17 @@
                 const wishlistBtn = document.getElementById('wishlistBtn');
                 const wishlistText = document.getElementById('wishlistText');
                 const productId = productData.id;
+                const variantId = getSelectedVariantId();
 
                 try {
-                    const response = await axios.post('{{ route('customer.wishlist.add') }}', {
-                        product_id: productId
+                    const response = await axios.post('{{ route('customer.wishlist.toggle') }}', {
+                        product_id: productId,
+                        product_variant_id: variantId
                     });
 
                     if (response.data.success) {
-                        isInWishlist = !isInWishlist;
-
-                        if (isInWishlist) {
+                        if (response.data.status === 'added') {
+                            isInWishlist = true;
                             // Added to wishlist
                             wishlistBtn.innerHTML =
                                 '<i class="fas fa-heart text-red-500"></i> <span id="wishlistText">Added to Wishlist</span>';
@@ -1668,6 +1669,7 @@
                             wishlistBtn.classList.remove('border-amber-600', 'text-amber-600');
                             showNotification('Added to wishlist!', 'success');
                         } else {
+                            isInWishlist = false;
                             // Removed from wishlist
                             wishlistBtn.innerHTML =
                                 '<i class="fas fa-heart"></i> <span id="wishlistText">Add to Wishlist</span>';
@@ -1704,7 +1706,7 @@
                 const productId = productData.id;
 
                 try {
-                    const response = await axios.get(`/wishlist/check/${productId}`);
+                    const response = await axios.get('{{ route('customer.wishlist.check', ['productId' => ':id']) }}'.replace(':id', productId));
                     if (response.data.success) {
                         isInWishlist = response.data.in_wishlist;
                         updateWishlistButton();

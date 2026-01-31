@@ -11,8 +11,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+use App\Helpers\CartHelper;
+
 class WishlistController extends Controller
 {
+    protected $cartHelper;
+
+    public function __construct(CartHelper $cartHelper)
+    {
+        $this->cartHelper = $cartHelper;
+    }
     public function index()
     {
         $customer = Auth::guard('customer')->user();
@@ -180,14 +188,9 @@ class WishlistController extends Controller
             ], 404);
         }
 
-        // Add to cart (implement your cart logic here)
+        // Add to cart
         try {
-            // Example cart addition logic - replace with your actual cart implementation
-            // $cartItem = \App\Models\Cart::add([
-            //     'customer_id' => $customer->id,
-            //     'product_variant_id' => $wishlistItem->product_variant_id,
-            //     'quantity' => 1,
-            // ]);
+            $this->cartHelper->addToCart($wishlistItem->product_variant_id, 1, []);
 
             // Remove from wishlist after adding to cart
             $wishlistItem->delete();
@@ -230,12 +233,7 @@ class WishlistController extends Controller
         // Add all items to cart
         foreach ($items as $item) {
             try {
-                // Add to cart logic here - replace with your actual cart implementation
-                // \App\Models\Cart::add([
-                //     'customer_id' => $customer->id,
-                //     'product_variant_id' => $item->product_variant_id,
-                //     'quantity' => 1,
-                // ]);
+                $this->cartHelper->addToCart($item->product_variant_id, 1, []);
 
                 // Remove from wishlist
                 $item->delete();

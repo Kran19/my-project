@@ -669,13 +669,23 @@ function updateWishlistCount(count) {
 }
 
 function updateCartCount() {
-    // Implement cart count update based on your cart implementation
-    // Example:
-    // fetch('/cart/count')
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         // Update cart count in UI
-    //     });
+    fetch('{{ route("customer.cart.count") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const count = data.count;
+                const cartCountElements = document.querySelectorAll('.cart-count');
+                cartCountElements.forEach(el => {
+                    el.textContent = count;
+                    if (count > 0) {
+                        el.classList.remove('hidden');
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                });
+            }
+        })
+        .catch(error => console.error('Error updating cart count:', error));
 }
 
 function showNotification(message, type = 'success') {
