@@ -136,61 +136,37 @@
                     </a>
                 </div>
             @else
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    
-                    <!-- Pincode Modal Overlay -->
-                    <div id="pincodeModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center backdrop-blur-sm p-4">
-                        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative transform transition-all scale-100">
-                             <!-- Decorative Element -->
-                            <div class="absolute -top-12 left-1/2 transform -translate-x-1/2">
-                                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-amber-50">
-                                    <i class="fas fa-map-marker-alt text-4xl text-amber-600 animate-bounce"></i>
-                                </div>
-                            </div>
-                            
-                            <div class="text-center mt-8">
-                                <h3 class="text-2xl font-bold text-gray-800 mb-2">Delivery Check</h3>
-                                <p class="text-gray-600 mb-6">Please enter your delivery pincode to proceed with checkout securely.</p>
-                                
-                                <div class="relative">
-                                    <input type="text" id="modalPincode" 
-                                        class="w-full px-4 py-4 rounded-xl border-2 border-amber-100 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none text-center text-xl font-bold tracking-widest"
-                                        placeholder="000 000" maxlength="6">
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                        <i class="fas fa-truck text-gray-400"></i>
-                                    </div>
-                                </div>
-                                <div id="modalError" class="text-red-500 text-sm mt-2 hidden min-h-[20px] font-medium"></div>
-                                
-                                <button onclick="checkPincode()" id="checkPincodeBtn"
-                                    class="w-full mt-6 bg-gradient-to-r from-amber-600 to-amber-700 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
-                                    <span>Check Availability</span>
-                                    <i class="fas fa-arrow-right"></i>
-                                </button>
-                                
-                                 <p class="text-xs text-gray-400 mt-4">
-                                    <i class="fas fa-lock mr-1"></i> Verified by Shiprocket
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Checkout Form (Initially Blurred/Disabled) -->
-                    <div class="lg:col-span-2 transition-all duration-500 filter blur-sm select-none pointer-events-none" id="checkoutFormContainer">
-                        <form id="checkoutForm" method="POST" action="{{ route('customer.checkout.process') }}"
-                            class="space-y-8">
-
-                            @if ($errors->any())
-                                <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200">
-                                    <ul class="list-disc list-inside text-red-700 text-sm">
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-
                             @csrf
+
+                            <!-- Delivery Availability (First Block) -->
+                            <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 mb-8">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                                    <i class="fas fa-map-marker-alt text-amber-600 mr-2"></i>
+                                    Delivery Availability
+                                </h2>
+                                <p class="text-gray-600 mb-4">Check availability and unlock delivery options.</p>
+                                
+                                <div class="flex flex-col md:flex-row gap-4">
+                                    <div class="flex-1">
+                                        <div class="relative">
+                                            <input type="text" id="deliveryPincode" 
+                                                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none font-medium tracking-wide"
+                                                placeholder="Enter Pincode" maxlength="6">
+                                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                <i class="fas fa-truck text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                        <div id="deliveryError" class="text-red-500 text-sm mt-2 hidden font-medium"></div>
+                                        <div id="deliverySuccess" class="text-green-600 text-sm mt-2 hidden font-medium">
+                                            <i class="fas fa-check-circle mr-1"></i> Delivery available to <span id="deliveryCity"></span>, <span id="deliveryState"></span>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="checkDeliveryPincode()" id="checkDeliveryBtn"
+                                        class="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg flex-shrink-0">
+                                        Check
+                                    </button>
+                                </div>
+                            </div>
 
                             <!-- Personal Information -->
                             <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
@@ -719,25 +695,30 @@
             shippingInput.value = shippingFee;
         }
 
-        async function checkPincode() {
-            const pincodeInput = document.getElementById('modalPincode');
+        async function checkDeliveryPincode() {
+            const pincodeInput = document.getElementById('deliveryPincode');
             const pincode = pincodeInput.value.trim();
-            const btn = document.getElementById('checkPincodeBtn');
-            const errorDiv = document.getElementById('modalError');
+            const btn = document.getElementById('checkDeliveryBtn');
+            const errorDiv = document.getElementById('deliveryError');
+            const successDiv = document.getElementById('deliverySuccess');
+            const citySpan = document.getElementById('deliveryCity');
+            const stateSpan = document.getElementById('deliveryState');
+
+            // Reset UI
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            pincodeInput.classList.remove('border-red-500', 'border-green-500');
 
             if (pincode.length !== 6 || isNaN(pincode)) {
                 errorDiv.textContent = 'Please enter a valid 6-digit pincode';
                 errorDiv.classList.remove('hidden');
                 pincodeInput.classList.add('border-red-500');
-                pincodeInput.classList.remove('border-amber-100');
                 return;
             }
 
-            // Reset UI
-            errorDiv.classList.add('hidden');
-            pincodeInput.classList.remove('border-red-500');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
             try {
                 const response = await fetch('{{ route('customer.checkout.shipping.check') }}', {
@@ -755,8 +736,18 @@
 
                 if (data.success) {
                     // Success!
-                    btn.innerHTML = '<i class="fas fa-check"></i> Available!';
-                    btn.classList.add('bg-green-600');
+                    pincodeInput.classList.add('border-green-500');
+                    
+                    // Show success message
+                    if (data.city && data.state) {
+                        citySpan.textContent = data.city;
+                        stateSpan.textContent = data.state;
+                        successDiv.classList.remove('hidden');
+                    } else {
+                        citySpan.textContent = 'your location';
+                        stateSpan.textContent = '';
+                         successDiv.classList.remove('hidden');
+                    }
                     
                     // Auto-fill fields
                     const mainPincode = document.querySelector('input[name="pincode"]');
@@ -769,39 +760,28 @@
 
                     // Trigger shipping update logic
                     updateShippingOptions(data.available_couriers);
-                    showNotification('Delivery available! Please complete your details.', 'success');
-
-                    // Unlock form (smooth transition)
-                    setTimeout(() => {
-                        const modal = document.getElementById('pincodeModal');
-                        const formContainer = document.getElementById('checkoutFormContainer');
-                        
-                        modal.style.opacity = '0';
-                        setTimeout(() => modal.remove(), 500); // Remove from DOM
-                        
-                        formContainer.classList.remove('filter', 'blur-sm', 'select-none', 'pointer-events-none');
-                    }, 500);
+                    showNotification('Delivery details updated', 'success');
 
                 } else {
                     // Error
                     errorDiv.textContent = data.message || 'Delivery not available to this location';
                     errorDiv.classList.remove('hidden');
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>Check Availability</span><i class="fas fa-arrow-right"></i>';
+                    pincodeInput.classList.add('border-red-500');
                 }
             } catch (error) {
                 console.error(error);
                 errorDiv.textContent = 'Something went wrong. Please try again.';
                 errorDiv.classList.remove('hidden');
+            } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<span>Check Availability</span><i class="fas fa-arrow-right"></i>';
+                btn.innerHTML = originalBtnText;
             }
         }
         
-        // Allow "Enter" key in modal
-        document.getElementById('modalPincode')?.addEventListener('keypress', function (e) {
+        // Allow "Enter" key in delivery input
+        document.getElementById('deliveryPincode')?.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                checkPincode();
+                checkDeliveryPincode();
             }
         });
 
