@@ -547,9 +547,19 @@ if ($mainImage) {
     private function syncVariantAttributes(ProductVariant $variant, array $variantData): void
     {
         if (isset($variantData['attributes']) && is_array($variantData['attributes'])) {
+            // Delete existing attributes for this variant to avoid duplicates
+            DB::table('variant_attributes')->where('variant_id', $variant->id)->delete();
+
             $attributesData = [];
+            $processedAttributeIds = [];
+
             foreach ($variantData['attributes'] as $attributeData) {
                 if (!empty($attributeData['attribute_id'])) {
+                    // Prevent duplicate attributes for the same variant
+                    if (in_array($attributeData['attribute_id'], $processedAttributeIds)) {
+                        continue;
+                    }
+
                     $attributesData[] = [
                         'variant_id' => $variant->id,
                         'attribute_id' => $attributeData['attribute_id'],
@@ -557,6 +567,8 @@ if ($mainImage) {
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
+
+                    $processedAttributeIds[] = $attributeData['attribute_id'];
                 }
             }
 
