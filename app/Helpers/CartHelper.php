@@ -197,6 +197,24 @@ class CartHelper
             $cart = $this->createEmptyLocalCart();
         }
 
+        // Hydrate offer for consistency with DB cart response
+        if (isset($cart['offer_id'])) {
+            $offer = \App\Models\Offer::find($cart['offer_id']);
+            if ($offer) {
+                $cart['offer'] = [
+                    'id' => $offer->id,
+                    'code' => $offer->code,
+                    'name' => $offer->name,
+                    'type' => $offer->offer_type
+                ];
+            } else {
+                // Offer no longer exists
+                unset($cart['offer_id'], $cart['offer_code'], $cart['offer_type'], $cart['discount_value']);
+            }
+        } else {
+            $cart['offer'] = null;
+        }
+
         return $cart;
     }
 
