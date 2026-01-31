@@ -349,6 +349,7 @@ Route::name('customer.')->group(function () {
     Route::get('/category/{slug}', [CustomerProduct::class, 'category'])->name('category.products');
     Route::get('/product/{slug}', [CustomerProduct::class, 'details'])->name('products.details');
     Route::get('/search', [CustomerProduct::class, 'search'])->name('products.search');
+    Route::post('/products/{id}/reviews', [App\Http\Controllers\Customer\ReviewController::class, 'store'])->name('products.reviews.store');
     Route::get('/products/{slug}/quick-view', [CustomerProduct::class, 'quickView'])->name('products.quick-view');
 
     // Cart Routes

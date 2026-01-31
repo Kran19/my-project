@@ -348,12 +348,12 @@
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
                             <!-- Product Images -->
                             <div class="animate-slide-left">
-                                <div id="imageContainer">
+                                <div id="imageContainer" class="aspect-square w-full bg-gray-50 rounded-2xl overflow-hidden flex items-center justify-center relative">
                                     <!-- Main image will be updated dynamically -->
                                     <img id="mainImage"
                                         src="{{ $product['main_image'] ? asset('storage/' . $product['main_image']) : asset('images/placeholder-product.jpg') }}"
                                         alt="{{ $product['name'] }}"
-                                        class="w-full h-auto object-cover rounded-2xl transition-transform duration-700 hover:scale-105 cursor-pointer zoomable-image"
+                                        class="max-w-full max-h-full object-contain transition-transform duration-700 hover:scale-105 cursor-pointer zoomable-image"
                                         onclick="toggleZoom(this)"
                                         onerror="this.src='{{ asset('images/placeholder-product.jpg') }}'">
                                 </div>
@@ -518,36 +518,13 @@
                                     </div>
                                 @endif
 
-                                <!-- Product Highlights -->
-                                <div class="mb-8">
-                                    <h3 class="text-lg font-bold text-gray-800 mb-4">Product Highlights</h3>
-                                    <ul class="space-y-2">
-                                        @if ($product['is_featured'])
-                                            <li class="flex items-center gap-2">
-                                                <i class="fas fa-star text-amber-500"></i>
-                                                <span>Featured product from our premium collection</span>
-                                            </li>
-                                        @endif
-                                        @if ($product['is_new'])
-                                            <li class="flex items-center gap-2">
-                                                <i class="fas fa-bolt text-green-500"></i>
-                                                <span>New arrival - Latest design</span>
-                                            </li>
-                                        @endif
-                                        <li class="flex items-center gap-2">
-                                            <i class="fas fa-check-circle text-blue-500"></i>
-                                            <span>Premium quality materials</span>
-                                        </li>
-                                        <li class="flex items-center gap-2">
-                                            <i class="fas fa-shipping-fast text-purple-500"></i>
-                                            <span>Free shipping on orders above ₹999</span>
-                                        </li>
-                                        <li class="flex items-center gap-2">
-                                            <i class="fas fa-undo-alt text-green-500"></i>
-                                            <span>30-day return policy</span>
-                                        </li>
-                                    </ul>
+                            <!-- Product Description (Replacing Highlights) -->
+                            <div class="mb-8">
+                                <h3 class="text-lg font-bold text-gray-800 mb-4">Description</h3>
+                                <div class="prose prose-sm text-gray-600">
+                                    {!! $product['description'] ?? 'No description available.' !!}
                                 </div>
+                            </div>
 
                                 <!-- Quantity Selector -->
                                 <div class="mb-8">
@@ -804,41 +781,91 @@
 
                     <div class="tab-content hidden" id="reviews">
                         <div class="bg-white rounded-2xl p-8 shadow-lg">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-2xl font-bold text-gray-800">Customer Reviews</h3>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-3xl font-bold">{{ number_format($product['rating'], 1) }}</span>
-                                    <div class="flex flex-col">
-                                        <div class="star-rating">
-                                            @for ($i = 1; $i <= 5; $i++)
-                                                @if ($i <= floor($product['rating']))
-                                                    <span class="star active">★</span>
-                                                @elseif($i == ceil($product['rating']) && $product['rating'] % 1 >= 0.5)
-                                                    <span class="star half">★</span>
-                                                @else
-                                                    <span class="star">★</span>
-                                                @endif
-                                            @endfor
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                <!-- Existing Reviews -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-6">
+                                        <h3 class="text-2xl font-bold text-gray-800">Customer Reviews</h3>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-3xl font-bold">{{ number_format($product['rating'], 1) }}</span>
+                                            <div class="flex flex-col">
+                                                <div class="star-rating">
+                                                    @for ($i = 1; $i <= 5; $i++)
+                                                        @if ($i <= floor($product['rating']))
+                                                            <span class="star active">★</span>
+                                                        @elseif($i == ceil($product['rating']) && $product['rating'] % 1 >= 0.5)
+                                                            <span class="star half">★</span>
+                                                        @else
+                                                            <span class="star">★</span>
+                                                        @endif
+                                                    @endfor
+                                                </div>
+                                                <span class="text-sm text-gray-600">Based on {{ $product['review_count'] }} review{{ $product['review_count'] != 1 ? 's' : '' }}</span>
+                                            </div>
                                         </div>
-                                        <span class="text-sm text-gray-600">Based on {{ $product['review_count'] }}
-                                            review{{ $product['review_count'] != 1 ? 's' : '' }}</span>
                                     </div>
+
+                                    @if(count($reviews) > 0)
+                                        <div class="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                            @foreach($reviews as $review)
+                                            <div class="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-sm">
+                                                            {{ substr($review->user_name, 0, 1) }}
+                                                        </div>
+                                                        <span class="font-medium text-gray-800">{{ $review->user_name }}</span>
+                                                    </div>
+                                                    <span class="text-xs text-gray-400">{{ $review->created_at->diffForHumans() }}</span>
+                                                </div>
+                                                <div class="star-rating mb-2 text-sm">
+                                                    @for ($i = 1; $i <= 5; $i++)
+                                                        <span class="star {{ $i <= $review->rating ? 'active' : '' }}">★</span>
+                                                    @endfor
+                                                </div>
+                                                <p class="text-gray-600 text-sm leading-relaxed">{{ $review->review }}</p>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="text-center py-8 bg-gray-50 rounded-xl">
+                                            <i class="fas fa-comment-slash text-gray-300 text-4xl mb-3"></i>
+                                            <p class="text-gray-500">No reviews yet. Be the first to review!</p>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <!-- Review Form -->
+                                <div>
+                                    <h3 class="text-2xl font-bold text-gray-800 mb-6">Write a Review</h3>
+                                    <form id="reviewForm" onsubmit="submitReview(event)" class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                                            <input type="text" name="name" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-amber-500 focus:border-amber-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Your Email</label>
+                                            <input type="email" name="email" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-amber-500 focus:border-amber-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                                            <div class="flex items-center gap-1 star-input-group">
+                                                @for($i=1; $i<=5; $i++)
+                                                    <button type="button" onclick="setRating({{ $i }})" class="text-2xl text-gray-300 hover:text-amber-400 focus:outline-none transition-colors rating-star" data-value="{{ $i }}">★</button>
+                                                @endfor
+                                            </div>
+                                            <input type="hidden" name="rating" id="reviewRating" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Your Review</label>
+                                            <textarea name="comment" rows="4" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-amber-500 focus:border-amber-500"></textarea>
+                                        </div>
+                                        <button type="submit" id="submitReviewBtn" class="w-full bg-amber-600 text-white py-3 rounded-lg font-bold hover:bg-amber-700 transition-colors disabled:opacity-50">
+                                            Submit Review
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
-
-                            @include('customer.products.partials.reviews', ['reviews' => $reviews ?? collect()])
-
-                            @if (!isset($reviews) || $reviews->count() == 0)
-                                <div class="text-center py-12">
-                                    <i class="fas fa-comment text-gray-300 text-5xl mb-4"></i>
-                                    <h4 class="text-lg font-semibold text-gray-700 mb-2">No Reviews Yet</h4>
-                                    <p class="text-gray-600">Be the first to review this product!</p>
-                                    <button
-                                        class="mt-4 px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
-                                        Write a Review
-                                    </button>
-                                </div>
-                            @endif
                         </div>
                     </div>
                 </div>
@@ -1748,6 +1775,58 @@
                             el.classList.add('hidden');
                         }
                     });
+                }
+            }
+
+            // Review functions
+            function setRating(rating) {
+                document.getElementById('reviewRating').value = rating;
+                const stars = document.querySelectorAll('.rating-star');
+                stars.forEach(star => {
+                    const value = parseInt(star.dataset.value);
+                    if (value <= rating) {
+                        star.classList.remove('text-gray-300');
+                        star.classList.add('text-amber-400');
+                    } else {
+                        star.classList.add('text-gray-300');
+                        star.classList.remove('text-amber-400');
+                    }
+                });
+            }
+
+            async function submitReview(e) {
+                e.preventDefault();
+                const form = e.target;
+                const btn = document.getElementById('submitReviewBtn');
+                const originalText = btn.textContent;
+                
+                // Basic validation
+                const rating = document.getElementById('reviewRating').value;
+                if(!rating) {
+                    showNotification('Please select a rating', 'error');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.textContent = 'Submitting...';
+
+                try {
+                    const formData = new FormData(form);
+                    const response = await axios.post('{{ route("customer.products.reviews.store", $product["id"]) }}', Object.fromEntries(formData));
+
+                    if(response.data.success) {
+                        showNotification(response.data.message, 'success');
+                        form.reset();
+                        setRating(0); // Reset stars
+                        // Optional: Reload to show pending review or update UI
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showNotification(error.response?.data?.message || 'Failed to submit review', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
                 }
             }
 
