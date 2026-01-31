@@ -536,6 +536,13 @@
 
         setupEventListeners();
         setupModals();
+
+        // Check for URL param
+        const urlParams = new URL(window.location.href).searchParams;
+        const id = urlParams.get('id');
+        if (id) {
+            loadAttributeValues(id);
+        }
     });
 
     // ==================== DATA LOADING FUNCTIONS ====================
@@ -610,6 +617,17 @@
 
                 // Update attribute info
                 const attribute = response.data.data.attribute;
+
+                // Sync globals - CRITICAL for modals to work correctly
+                currentAttributeId = attribute.id;
+                currentAttributeCode = attribute.code;
+                currentAttributeType = attribute.type;
+
+                // Update URL to reflect current context
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('id', attribute.id);
+                window.history.pushState({}, '', newUrl);
+
                 updateElementText('valuesTitle', `Manage ${attribute.name} Values`);
                 updateElementText('valuesSubtitle', `Code: ${attribute.code} | Type: ${attribute.type} | Total: ${values.length} values`);
 
@@ -638,8 +656,8 @@
 
         attributesTable = new Tabulator("#attributesTable", {
             data: data,
-            layout: "fitColumns",
-            responsiveLayout: "hide",
+            layout: "fitDataFill",
+            responsiveLayout: "collapse",
             pagination: "local",
             paginationSize: 10,
             paginationSizeSelector: [10, 20, 50, 100],
@@ -1040,8 +1058,8 @@
 
         valuesTable = new Tabulator("#attributeValuesTable", {
             data: data,
-            layout: "fitColumns",
-            responsiveLayout: "hide",
+            layout: "fitDataFill",
+            responsiveLayout: "collapse",
             pagination: "local",
             paginationSize: 10,
             paginationSizeSelector: [10, 20, 50, 100],
@@ -1244,18 +1262,30 @@
     // Close attribute modal
     function closeAttributeModal() {
         hideElement('attributeModal');
+        // Reset state on close to be safe
+        isEditingAttribute = false;
+        currentAttributeId = null;
     }
 
+    // Edit attribute
     // Edit attribute
     async function editAttribute(id) {
         try {
             console.log('Loading attribute for edit:', id);
+            
+            // SHOW LOADING INDICATOR or disable interactions if needed
+            
             const response = await axiosInstance.get(`/attributes/${id}`);
 
             if (response.data.success) {
                 isEditingAttribute = true;
                 currentAttributeId = id;
                 const attribute = response.data.data;
+
+                // Reset form first to clear any stale state
+                const form = document.getElementById('attributeForm');
+                form.reset();
+                clearFormErrors('attributeForm');
 
                 // Fill form
                 document.getElementById('attributeId').value = attribute.id;
@@ -1402,6 +1432,7 @@
         const form = document.getElementById('valueForm');
         form.reset();
         document.getElementById('valueId').value = '';
+        // CRITICAL: Ensure we keep the current attribute ID
         document.getElementById('valueAttributeId').value = currentAttributeId;
         document.getElementById('valueSortOrder').value = 0;
         document.getElementById('valueStatus').checked = true;
@@ -1521,14 +1552,27 @@
     }
 
     // Edit value
+    // Edit value
     async function editValue(id) {
         try {
             console.log('Loading value for edit:', id);
+            
+            // Ensure we have currentAttributeId
+            if (!currentAttributeId) {
+                console.error("Missing currentAttributeId when editing value");
+                // Attempt to recover or fail gracefully
+            }
+
             const response = await axiosInstance.get(`/attributes/${currentAttributeId}/values/${id}`);
 
             if (response.data.success) {
                 isEditingValue = true;
                 const value = response.data.data;
+
+                // Reset form first
+                const form = document.getElementById('valueForm');
+                form.reset();
+                clearFormErrors('valueForm');
 
                 // Fill form
                 document.getElementById('valueId').value = value.id;
@@ -1542,16 +1586,21 @@
                 if (value.color_code) {
                     document.getElementById('valueColorCode').value = value.color_code;
                     document.getElementById('valueColorPicker').value = value.color_code.toLowerCase();
+                    // Force the color field to show if it has a color, regardless of current Type state
+                    // This handles cases where type might not be synced perfectly
+                    showElement(document.getElementById('colorCodeField'));
+                } else if (currentAttributeType === 'color') {
+                     // Set default if it's a color type but has no code for some reason
+                    document.getElementById('valueColorCode').value = '#3B82F6';
+                    document.getElementById('valueColorPicker').value = '#3b82f6';
+                    showElement(document.getElementById('colorCodeField'));
+                } else {
+                     hideElement(document.getElementById('colorCodeField'));
                 }
 
-                // Show/hide color field
-                const colorField = document.getElementById('colorCodeField');
+                // Show/hide color field - Logic duplicated above for safety but ensuring UI consistency
                 const quickAddSection = document.getElementById('quickAddValues');
-                if (currentAttributeType === 'color') {
-                    showElement(colorField);
-                } else {
-                    hideElement(colorField);
-                }
+               
                 hideElement(quickAddSection);
 
                 // Update UI
@@ -1659,6 +1708,11 @@
         currentAttributeId = null;
         currentAttributeType = null;
         currentAttributeCode = null;
+
+        // Clear URL param
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('id');
+        window.history.pushState({}, '', newUrl);
     }
 
     // ==================== QUICK ADD MODAL ====================
