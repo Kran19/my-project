@@ -347,33 +347,59 @@
                                         @endif
                                     </div>
                                     <div class="mb-6">
-                                        <!-- Available Promo Codes -->
-                                        <div id="availablePromoCodes" class="mb-4"></div>
+                                    <div class="mb-6 border-t border-amber-200/50 pt-6">
+                                        <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                            <i class="fas fa-ticket-alt text-amber-600"></i> Coupon Code
+                                        </h3>
+
+                                        <!-- Available Promo Codes (Populated via JS) -->
+                                        <div id="availablePromoCodes" class="mb-4 space-y-2"></div>
                                         
                                         @if(isset($cart['offer']) && $cart['offer'])
-                                            <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 flex justify-between items-center">
-                                                <div class="flex items-center gap-2">
-                                                    <i class="fas fa-tag text-green-600"></i>
+                                            <!-- Applied Coupon State -->
+                                            <div class="bg-green-50 border border-green-200 rounded-xl p-4 flex justify-between items-center group relative overflow-hidden transition-all hover:shadow-md">
+                                                 <div class="absolute top-0 right-0 p-2 opacity-10">
+                                                    <i class="fas fa-check-circle text-6xl text-green-600"></i>
+                                                 </div>
+                                                <div class="flex items-center gap-3 relative z-10">
+                                                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shadow-sm">
+                                                        <i class="fas fa-tag"></i>
+                                                    </div>
                                                     <div>
-                                                        <p class="text-sm font-bold text-green-800">Code: {{ $cart['offer']['code'] }}</p>
-                                                        <p class="text-xs text-green-600">Coupon Applied</p>
+                                                        <p class="font-bold text-green-800 text-base">{{ $cart['offer']['code'] }}</p>
+                                                        <p class="text-xs text-green-600 font-medium tracking-wide">COUPON APPLIED</p>
                                                     </div>
                                                 </div>
-                                                <button onclick="removeCoupon()" class="text-xs text-red-600 hover:text-red-800 font-medium hover:underline">
-                                                    Remove
+                                                <button onclick="removeCoupon()" class="relative z-10 text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-all duration-300 transform hover:rotate-90" title="Remove Coupon">
+                                                    <i class="fas fa-times text-lg"></i>
                                                 </button>
                                             </div>
                                         @else
-                                            <div class="relative">
-                                                <input type="text" id="promoCode" placeholder="Enter promo code"
-                                                    class="w-full px-4 py-3 pl-10 rounded-full border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none transition-colors">
-                                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2"><i
-                                                        class="fas fa-tag text-amber-600"></i></div>
-                                                <button onclick="applyPromoCode()"
-                                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-amber-600 text-white px-4 py-1.5 rounded-full text-sm hover:bg-amber-700 transition-colors">Apply</button>
+                                            <!-- Input State -->
+                                            <div class="relative group">
+                                                <div class="flex gap-2">
+                                                    <div class="relative flex-1">
+                                                        <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-amber-500 transition-colors">
+                                                            <i class="fas fa-tag"></i>
+                                                        </div>
+                                                        <input type="text" id="promoCode" 
+                                                            placeholder="Enter coupon code"
+                                                            class="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 focus:outline-none transition-all font-medium text-gray-700 placeholder-gray-400"
+                                                            autocomplete="off">
+                                                    </div>
+                                                    <button onclick="applyPromoCode()"
+                                                        class="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-amber-600 transition-all duration-300 shadow-lg hover:shadow-amber-500/20 active:scale-95 transform">
+                                                        Apply
+                                                    </button>
+                                                </div>
+                                                <p class="text-xs text-gray-500 mt-2 ml-1 flex items-center gap-1">
+                                                    <i class="fas fa-info-circle text-amber-500"></i> Have a promo code? Enter it here.
+                                                </p>
                                             </div>
                                         @endif
-                                        <div id="promoMessage" class="text-sm mt-2 hidden"></div>
+                                        
+                                        <!-- Inline Feedback Message -->
+                                        <div id="promoMessage" class="text-sm mt-3 hidden p-3 rounded-lg border flex items-center gap-2 animate-fade-in"></div>
                                     </div>
                                     <div class="border-t border-amber-300 pt-4 md:pt-6 mb-6">
                                         <div class="flex justify-between items-center">
@@ -566,13 +592,12 @@
         async function loadAvailablePromoCodes() {
             try {
                 const response = await axios.get('/api/customer/offers/active');
-                console.log('Offers API Response:', response.data);
                 
                 if (response.data.success && response.data.data.length > 0) {
                     const offers = response.data.data;
                     const container = document.getElementById('availablePromoCodes');
                     
-                    let html = '<div class="mb-3"><p class="text-xs font-semibold text-gray-700 mb-2">Available Offers:</p><div class="space-y-2">';
+                    let html = '<p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-1">Available Coupons</p><div class="grid gap-3">';
                     
                     offers.forEach(offer => {
                         let discount = '';
@@ -580,54 +605,57 @@
                             discount = `${offer.discount_value}% OFF`;
                         } else if (offer.offer_type === 'fixed') {
                             discount = `₹${offer.discount_value} OFF`;
-                        } else if (offer.offer_type === 'bogo') {
-                            discount = `Buy ${offer.buy_qty} Get ${offer.get_qty}`;
-                        } else if (offer.offer_type === 'buy_x_get_y') {
+                        } else if (offer.offer_type === 'buy_x_get_y' || offer.offer_type === 'bogo') {
                             discount = `Buy ${offer.buy_qty} Get ${offer.get_qty}`;
                         } else if (offer.offer_type === 'free_shipping') {
-                            discount = 'FREE SHIPPING';
+                             discount = 'Free Shipping';
                         } else {
-                            discount = 'SPECIAL OFFER';
+                            discount = 'Special Offer';
                         }
                         
                         html += `
-                            <div class="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors" 
+                            <div class="relative bg-white border border-dashed border-amber-300 rounded-lg p-3 cursor-pointer hover:border-amber-500 hover:bg-amber-50 transition-all group" 
                                  onclick="applyPromoCodeDirect('${offer.code}')">
-                                <div class="flex items-center gap-2">
-                                    <i class="fas fa-tag text-green-600 text-sm"></i>
+                                <div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-gray-50 rounded-full border-r border-amber-300 group-hover:bg-gray-100"></div>
+                                <div class="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-gray-50 rounded-full border-l border-amber-300 group-hover:bg-gray-100"></div>
+                                <div class="flex items-center justify-between pl-2 pr-1">
                                     <div>
-                                        <p class="text-xs font-bold text-green-800">${offer.code}</p>
-                                        <p class="text-xs text-green-600">${offer.name}</p>
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="font-bold text-gray-800 text-sm border border-amber-200 bg-amber-50 px-2 py-0.5 rounded text-xs tracking-wide uppercase">${offer.code}</span>
+                                            <span class="text-xs text-amber-600 font-bold bg-amber-100 px-1.5 py-0.5 rounded">${discount}</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 line-clamp-1 max-w-[200px]">${offer.name}</p>
+                                    </div>
+                                    <div class="text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 duration-300">
+                                        <button class="text-xs font-bold bg-amber-500 text-white px-3 py-1 rounded-full shadow-sm hover:bg-amber-600">APPLY</button>
                                     </div>
                                 </div>
-                                <span class="text-xs font-bold text-green-700">${discount}</span>
                             </div>
                         `;
                     });
                     
-                    html += '</div></div>';
+                    html += '</div>';
                     container.innerHTML = html;
-                } else {
-                    console.log('No offers available or API returned empty data');
                 }
             } catch (error) {
                 console.error('Failed to load promo codes:', error);
-                console.error('Error details:', error.response);
             }
         }
 
-        // Apply promo code directly (on click)
         function applyPromoCodeDirect(code) {
-            document.getElementById('promoCode').value = code;
-            applyPromoCode();
+            const input = document.getElementById('promoCode');
+            if (input) {
+                input.value = code;
+                applyPromoCode();
+            }
         }
 
-        // Apply promo code
         async function applyPromoCode() {
-            const code = document.getElementById('promoCode').value.trim();
+            const codeInput = document.getElementById('promoCode');
+            const code = codeInput ? codeInput.value.trim() : '';
             
             if (!code) {
-                showNotification('Please enter a coupon code', 'error');
+                showPromoMessage('Please enter a coupon code', 'error');
                 return;
             }
 
@@ -637,26 +665,38 @@
                 });
 
                 if (response.data.success) {
-                    showNotification(response.data.message, 'success');
-                    location.reload();
+                    showPromoMessage(response.data.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
                 }
             } catch (error) {
-                showNotification(error.response?.data?.message || 'Failed to apply coupon', 'error');
+                showPromoMessage(error.response?.data?.message || 'Failed to apply coupon', 'error');
             }
         }
 
-        // Remove coupon
-        async function removeCoupon() {
+         async function removeCoupon() {
+            if(!confirm('Are you sure you want to remove this coupon?')) return;
+            
             try {
                 const response = await axios.post('/cart/remove-coupon');
-                
                 if (response.data.success) {
-                    showNotification(response.data.message, 'success');
                     location.reload();
                 }
             } catch (error) {
                 showNotification('Failed to remove coupon', 'error');
             }
+        }
+
+        function showPromoMessage(msg, type) {
+            const el = document.getElementById('promoMessage');
+            if (!el) return;
+            
+            el.className = `text-sm mt-3 p-3 rounded-lg border flex items-center gap-2 animate-fade-in ${type === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`;
+            el.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${msg}`;
+            el.classList.remove('hidden');
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') applyPromoCode();
         }
 
         // Change quantity function
@@ -829,44 +869,7 @@
             }
         }
 
-        // Apply promo code (API call)
-        async function applyPromoCode() {
-            const promoCode = document.getElementById('promoCode').value.trim();
-            const promoMessage = document.getElementById('promoMessage');
 
-            if (!promoCode) {
-                promoMessage.className = 'text-sm mt-2 text-red-600';
-                promoMessage.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i> Please enter a promo code';
-                promoMessage.classList.remove('hidden');
-                return;
-            }
-
-            try {
-                const response = await axios.post('/cart/apply-coupon', {
-                    coupon_code: promoCode
-                });
-
-                if (response.data.success) {
-                    promoMessage.className = 'text-sm mt-2 text-green-600';
-                    promoMessage.innerHTML = `<i class="fas fa-check-circle mr-1"></i> ${response.data.message}`;
-                    promoMessage.classList.remove('hidden');
-
-                    // Reload page to show updated totals
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    promoMessage.className = 'text-sm mt-2 text-red-600';
-                    promoMessage.innerHTML = `<i class="fas fa-times-circle mr-1"></i> ${response.data.message}`;
-                    promoMessage.classList.remove('hidden');
-                }
-            } catch (error) {
-                promoMessage.className = 'text-sm mt-2 text-red-600';
-                promoMessage.innerHTML =
-                    `<i class="fas fa-times-circle mr-1"></i> ${error.response?.data?.message || 'Failed to apply promo code'}`;
-                promoMessage.classList.remove('hidden');
-            }
-        }
 
         // Add to cart from recommendation (API call)
         async function addToCartFromRecommendation(productId, event) {
