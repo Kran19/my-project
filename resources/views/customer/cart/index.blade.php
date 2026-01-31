@@ -410,7 +410,7 @@
                                         <p class="text-xs md:text-sm text-gray-600 mt-2"><i
                                                 class="fas fa-info-circle mr-1"></i> Shipping & taxes calculated at checkout</p>
                                     </div>
-                                    @if (session('customer_logged_in'))
+                                    @if (auth()->guard('customer')->check())
                                         <!-- User is logged in - Direct checkout -->
                                         <a href="{{ route('customer.checkout.index') }}"
                                             class="w-full bg-gradient-to-r from-amber-600 to-amber-800 text-white py-3 md:py-4 rounded-full font-bold text-base md:text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mb-4 flex items-center justify-center">
