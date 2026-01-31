@@ -252,36 +252,30 @@
                                         <input type="number" name="variants[{{ $idx }}][stock_quantity]" value="{{ $variant->stock_quantity }}" class="w-full px-2 py-1 border rounded text-sm">
                                     </td>
                                     <td class="px-3 py-2">
-                                        <div id="variant-images-{{ $idx }}" class="flex gap-1 flex-wrap items-center">
-                                            {{-- Main Image --}}
-                                            <div class="relative w-10 h-10 variant-main-thumb {{ $variant->primaryImage && $variant->primaryImage->media ? 'border-2 border-blue-500' : 'border border-dashed border-gray-300' }}">
-                                                @if($variant->primaryImage && $variant->primaryImage->media)
-                                                    <img src="{{ asset('storage/' . $variant->primaryImage->media->file_path) }}" class="w-full h-full object-cover">
-                                                    <button type="button" onclick="removeVariantMainImage({{ $idx }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition">x</button>
-                                                @else
-                                                     <div class="flex items-center justify-center w-full h-full bg-gray-50 text-[10px] text-gray-400">Main</div>
-                                                @endif
-                                            </div>
-
-                                            {{-- Gallery --}}
-                                            @foreach($variant->images as $vImg)
-                                                @if(!$vImg->pivot->is_primary)
-                                                <div class="relative w-10 h-10 border border-gray-200 group">
-                                                    <img src="{{ asset('storage/' . $vImg->file_path) }}" class="w-full h-full object-cover">
-                                                     <button type="button" onclick="this.parentElement.remove(); removeVariantGalleryInput({{ $idx }}, {{ $vImg->id }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 shadow-sm hover:bg-red-600 transition">x</button>
+                                            <div id="variant-images-{{ $idx }}" class="flex gap-1 flex-wrap items-center variant-images-container">
+                                                {{-- Main Image --}}
+                                                <div class="relative w-10 h-10 variant-main-thumb {{ $variant->primaryImage && $variant->primaryImage->media ? 'border-2 border-blue-500' : 'border border-dashed border-gray-300' }}">
+                                                    @if($variant->primaryImage && $variant->primaryImage->media)
+                                                        <img src="{{ asset('storage/' . $variant->primaryImage->media->file_path) }}" class="w-full h-full object-cover">
+                                                        <button type="button" onclick="removeVariantMainImage({{ $idx }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition">x</button>
+                                                    @else
+                                                         <div class="flex items-center justify-center w-full h-full bg-gray-50 text-[10px] text-gray-400">Main</div>
+                                                    @endif
+                                                    <input type="hidden" name="variants[{{ $idx }}][main_image_id]" id="variant-main-input-{{ $idx }}" value="{{ ($variant->primaryImage && $variant->primaryImage->media) ? $variant->primaryImage->media_id : '' }}">
                                                 </div>
-                                                @endif
-                                            @endforeach
-                                        </div>
-                                        <button type="button" onclick="openVariantMediaModal({{ $idx }})" class="text-xs text-blue-600 hover:text-blue-800 mt-1">Manage Images</button>
-                                        
-                                        {{-- Hidden Inputs for Images --}}
-                                        <input type="hidden" name="variants[{{ $idx }}][main_image_id]" id="variant-main-input-{{ $idx }}" value="{{ ($variant->primaryImage && $variant->primaryImage->media) ? $variant->primaryImage->media_id : '' }}">
-                                        <div id="variant-gallery-inputs-{{ $idx }}">
-                                            @foreach($variant->images as $vImg)
-                                                <input type="hidden" name="variants[{{ $idx }}][gallery_image_ids][]" value="{{ $vImg->id }}">
-                                            @endforeach
-                                        </div>
+
+                                                {{-- Gallery (Draggable) --}}
+                                                @foreach($variant->images as $vImg)
+                                                    @if(!$vImg->pivot->is_primary)
+                                                    <div class="relative w-10 h-10 border border-gray-200 group cursor-move" data-id="{{ $vImg->id }}">
+                                                        <img src="{{ asset('storage/' . $vImg->file_path) }}" class="w-full h-full object-cover">
+                                                         <button type="button" onclick="this.parentElement.remove();" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition">x</button>
+                                                         <input type="hidden" name="variants[{{ $idx }}][gallery_image_ids][]" value="{{ $vImg->id }}">
+                                                    </div>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                            <button type="button" onclick="openVariantMediaModal({{ $idx }})" class="text-xs text-blue-600 hover:text-blue-800 mt-1">Manage Images</button>
                                     </td>
                                     <td class="px-3 py-2 text-center">
                                        <input type="radio" name="default_variant_index" value="{{ $idx }}" {{ $variant->is_default ? 'checked' : '' }} onclick="document.querySelectorAll('.is-default-input').forEach(el => el.value=0); document.getElementById('is-default-{{ $idx }}').value=1;">
@@ -737,14 +731,13 @@
             <td class="px-3 py-2"><input type="number" name="variants[${idx}][price]" value="{{ $product->price }}" step="0.01" class="w-full px-2 py-1 border rounded text-sm"></td>
             <td class="px-3 py-2"><input type="number" name="variants[${idx}][stock_quantity]" value="0" class="w-full px-2 py-1 border rounded text-sm"></td>
             <td class="px-3 py-2">
-                <div id="variant-images-${idx}" class="flex gap-1 flex-wrap items-center">
+                <div id="variant-images-${idx}" class="flex gap-1 flex-wrap items-center variant-images-container">
                      <div class="relative w-10 h-10 variant-main-thumb border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-50 text-xs text-gray-400">
                         <span class="text-[0.6rem]">No Img</span>
+                        <input type="hidden" name="variants[${idx}][main_image_id]" id="variant-main-input-${idx}">
                     </div>
                 </div>
                 <button type="button" onclick="openVariantMediaModal(${idx})" class="text-xs text-blue-600 hover:text-blue-800 mt-1">Manage Images</button>
-                <input type="hidden" name="variants[${idx}][main_image_id]" id="variant-main-input-${idx}">
-                <div id="variant-gallery-inputs-${idx}"></div>
             </td>
             <td class="px-3 py-2 text-center">
                 <input type="radio" name="default_variant_index" value="${idx}" onclick="document.querySelectorAll('.is-default-input').forEach(el => el.value=0); document.getElementById('is-default-${idx}').value=1;">
@@ -757,6 +750,7 @@
             </td>
          `;
          container.appendChild(tr);
+         initSortable(); // Initialize sortable on new element
     }
 
     function isDuplicateVariant(newAttributes) {
@@ -788,18 +782,29 @@
         
         // Reset thumb to placeholder
         thumb.className = 'relative w-10 h-10 variant-main-thumb border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-50 text-xs text-gray-400';
-        thumb.innerHTML = '<span class="text-[0.6rem]">No Img</span>';
+        thumb.innerHTML = '<span class="text-[0.6rem]">No Img</span>' + 
+            `<input type="hidden" name="variants[${idx}][main_image_id]" id="variant-main-input-${idx}">`;
     }
     
-    function removeVariantGalleryInput(idx, imgId) {
-         // The passed imgId is the media ID.
-         // We need to find the hidden input with this value and remove it.
-         const container = document.getElementById(`variant-gallery-inputs-${idx}`);
-         if(!container) return;
-         
-         const input = container.querySelector(`input[value="${imgId}"]`);
-         if(input) input.remove();
+    // Sortable Initialization
+    function initSortable() {
+        document.querySelectorAll('.variant-images-container').forEach(el => {
+            if(el.sortable) return; // Already initialized
+            
+            new Sortable(el, {
+                animation: 150,
+                filter: '.variant-main-thumb', // Main image not draggable? Or can we drag main to gallery? 
+                // Let's prevent dragging main image for now as it has special logic
+                onMove: function (evt) {
+                    // Prevent swapping with main image
+                    return !evt.related.classList.contains('variant-main-thumb');
+                }
+            });
+            el.sortable = true; // Mark as initialized
+        });
     }
+    
+    document.addEventListener('DOMContentLoaded', initSortable);
 
 
 
@@ -1029,35 +1034,44 @@
 
     function setVariantMainImage(idx, id, url) {
         const container = document.getElementById(`variant-images-${idx}`);
-        const input = document.getElementById(`variant-main-input-${idx}`);
+        // Find existing thumb wrapper
+        let thumb = container.querySelector('.variant-main-thumb');
         
-        const existing = container.querySelector('.variant-main-thumb');
-        if(existing) existing.remove();
+        if(!thumb) {
+            // Should not happen if created correctly, but fallback
+            thumb = document.createElement('div');
+            thumb.className = 'relative w-10 h-10 variant-main-thumb border-2 border-blue-500';
+            container.prepend(thumb);
+        }
         
-        input.value = id;
+        // Update styling
+        thumb.className = 'relative w-10 h-10 variant-main-thumb border-2 border-blue-500 rounded';
         
-        const thumb = document.createElement('div');
-        thumb.className = 'relative w-10 h-10 variant-main-thumb border-2 border-blue-500';
-        thumb.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
-        container.prepend(thumb);
+        // Update Content
+        thumb.innerHTML = `
+            <img src="${url}" class="w-full h-full object-cover rounded">
+            <button type="button" onclick="removeVariantMainImage(${idx})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition">x</button>
+            <input type="hidden" name="variants[${idx}][main_image_id]" id="variant-main-input-${idx}" value="${id}">
+        `;
     }
 
     function addVariantGalleryImage(idx, id, url) {
         const container = document.getElementById(`variant-images-${idx}`);
-        const hiddenContainer = document.getElementById(`variant-gallery-inputs-${idx}`);
         
-        if(hiddenContainer.querySelector(`input[value="${id}"]`)) return;
+        // Check for duplicate
+        if(container.querySelector(`input[value="${id}"]`)) return;
         
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = `variants[${idx}][gallery_image_ids][]`;
-        input.value = id;
-        hiddenContainer.appendChild(input);
+        const div = document.createElement('div');
+        div.className = 'relative w-10 h-10 border border-gray-200 group cursor-move';
+        div.dataset.id = id;
         
-        const thumb = document.createElement('div');
-        thumb.className = 'relative w-10 h-10 border border-gray-200';
-        thumb.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
-        container.appendChild(thumb);
+        div.innerHTML = `
+            <img src="${url}" class="w-full h-full object-cover">
+            <button type="button" onclick="this.parentElement.remove()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition">x</button>
+            <input type="hidden" name="variants[${idx}][gallery_image_ids][]" value="${id}">
+        `;
+        
+        container.appendChild(div);
     }
     
     async function handleFileUpload(input) {
