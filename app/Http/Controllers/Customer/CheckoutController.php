@@ -52,6 +52,11 @@ class CheckoutController extends Controller
     public function processCheckout(Request $request)
     {
         $this->validateCheckout($request);
+        
+        // Enforce shipping cost calculation
+        $cart = $this->cartHelper->getCart();
+        $shippingCost = $this->calculateShippingCost($cart);
+        $request->merge(['shipping_cost' => $shippingCost]);
 
         if ($request->payment_method === 'cod') {
             return $this->processCOD($request);
@@ -65,6 +70,7 @@ class CheckoutController extends Controller
      ===================================================== */
     private function processCOD(Request $request)
     {
+        // Shipping cost is already merged in processCheckout
         $result = $this->checkoutService->placeOrder($request->all());
 
         if (!empty($result['order'])) {
@@ -83,12 +89,17 @@ class CheckoutController extends Controller
     {
         $cart = $this->cartHelper->getCart();
 
+        // Ensure shipping cost is set in request data session
+        // (It was merged in processCheckout, but good to be explicit)
+        $shippingCost = $this->calculateShippingCost($cart);
+        $data = $request->all();
+        $data['shipping_cost'] = $shippingCost;
+
         session([
-            'checkout_data' => $request->all()
+            'checkout_data' => $data
         ]);
 
         // Calculate correct total including shipping
-        $shippingCost = $request->input('shipping_cost', 0);
         $grandTotal = $cart['subtotal'] + $cart['tax_total'] + $shippingCost - ($cart['discount_total'] ?? 0);
 
         $amountInPaise = (int) round($grandTotal * 100);
@@ -187,12 +198,94 @@ class CheckoutController extends Controller
 
         $cart = $this->cartHelper->getCart();
         $weight = $this->calculateCartWeight($cart);
-
         $dimensions = $this->calculateCartDimensions($cart);
+        
+        // 1. Check Serviceability via Shiprocket
+        $serviceability = $this->shiprocketService->checkServiceability($request->pincode, $weight, $dimensions);
 
-        return response()->json(
-            $this->shiprocketService->checkServiceability($request->pincode, $weight, $dimensions)
-        );
+        if (!$serviceability['success']) {
+             return response()->json($serviceability);
+        }
+
+        // 2. Determine Best ETA (Optional: take min days from options)
+        $eta = 5; // Default fallback
+        if (!empty($serviceability['available_couriers'])) {
+            $days = array_column($serviceability['available_couriers'], 'estimated_days');
+            if (!empty($days)) {
+                $eta = min($days); // Be optimistic? Or average? Using min is good.
+            }
+        }
+
+        // 3. Apply Custom Shipping Logic
+        $customCost = $this->calculateShippingCost($cart);
+
+        // 4. Construct Single "Standard Delivery" Option
+        $customOption = [
+            'courier_id' => 'standard', // Custom ID
+            'name' => 'Standard Delivery',
+            'rate' => $customCost,
+            'estimated_days' => $eta,
+            'service_type' => 'Standard'
+        ];
+
+        return response()->json([
+            'success' => true,
+            'available_couriers' => [$customOption],
+            'estimated_delivery' => $eta,
+            // 'raw_data' => $serviceability['raw_data'] ?? null // Debugging
+        ]);
+    }
+    
+    public function createRazorpayOrder(Request $request)
+    {
+        $cart = $this->cartHelper->getCart();
+
+        if (empty($cart['items'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cart is empty'
+            ], 400);
+        }
+
+        // Calculate shipping cost securely
+        $shippingCost = $this->calculateShippingCost($cart);
+        
+        // Prepare data securely
+        $data = $request->all();
+        $data['shipping_cost'] = $shippingCost;
+
+        // Store checkout data for callback
+        session(['checkout_data' => $data]);
+
+        // Calculate correct total including shipping
+        $grandTotal = $cart['subtotal'] + $cart['tax_total'] + $shippingCost - ($cart['discount_total'] ?? 0);
+
+        // Razorpay expects paise
+        $amountInPaise = (int) round($grandTotal * 100);
+
+        $razorpayOrder = $this->razorpayService
+            ->createOrderByAmount($amountInPaise);
+
+        return response()->json($razorpayOrder);
+    }
+    
+    // --- Custom Logic ---
+    private function calculateShippingCost($cart): float
+    {
+        // Logic: Fixed 69, Free if > 1999
+        $threshold = 1999;
+        $fixedRate = 69;
+        
+        // Ensure we check numeric value
+        $subtotal = (float) $cart['subtotal'];
+        
+        // User request: "if cart value is more than 1999 then free delivery"
+        // Assuming subtotal implies cart value.
+        if ($subtotal > $threshold) {
+            return 0;
+        }
+        
+        return $fixedRate;
     }
 
     /* =====================================================
@@ -200,27 +293,12 @@ class CheckoutController extends Controller
      ===================================================== */
     private function calculateCartDimensions($cart): array
     {
-        $length = 10;
-        $width = 10;
-        $height = 10;
-        
-        // Simple bounding box logic: max dimensions
-        // A more complex logic would be volume based or 3D packing, but max of each dim 
-        // ensures the box is at least big enough for the largest item.
-        // Then we can sum heights? Or just take max of all?
-        // Let's take max of Length/Width and sum of Heights? 
-        // Shiprocket expects a single box dimension.
-        // Ideally we should sum volume and estimate box, but max(L), max(W), max(H) 
-        // is safer default than 10x10x10 if we have large items.
-        // Let's iterate.
-
         $maxLength = 10;
         $maxWidth = 10;
         $maxHeight = 10;
 
         foreach ($cart['items'] as $item) {
              $variant = ProductVariant::where('sku', $item['sku'])->first();
-             // Fallback to product if variant dims are null (which shouldn't be due to default, but safety)
              // Prioritize variant > product > default 10
              
              $l = $variant->length ?? ($item->product->length ?? 10);
@@ -229,11 +307,6 @@ class CheckoutController extends Controller
              
              if ($l > $maxLength) $maxLength = $l;
              if ($w > $maxWidth) $maxWidth = $w;
-             // Height might be additive if stacked? 
-             // For now let's just take max height too to keep shipping cost low/reasonable 
-             // unless we want to sum heights. 
-             // User requested "cheap price", so max dims is better than sum dims 
-             // (which implies stacking everything vertically).
              if ($h > $maxHeight) $maxHeight = $h;
         }
 
@@ -272,36 +345,9 @@ class CheckoutController extends Controller
         ])->validate();
     }
 
-    public function createRazorpayOrder(Request $request)
-    {
-        $cart = $this->cartHelper->getCart();
-
-        if (empty($cart['items'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cart is empty'
-            ], 400);
-        }
-
-        // Store checkout data for callback
-        session(['checkout_data' => $request->all()]);
-
-        // Calculate correct total including shipping
-        $shippingCost = $request->input('shipping_cost', 0);
-        $grandTotal = $cart['subtotal'] + $cart['tax_total'] + $shippingCost - ($cart['discount_total'] ?? 0);
-
-        // Razorpay expects paise
-        $amountInPaise = (int) round($grandTotal * 100);
-
-        $razorpayOrder = $this->razorpayService
-            ->createOrderByAmount($amountInPaise);
-
-        return response()->json($razorpayOrder);
-    }
-
     /* =====================================================
- | PAYMENT FAILED PAGE
- ===================================================== */
+     | PAYMENT FAILED PAGE
+     ===================================================== */
     public function paymentFailed()
     {
         return view('customer.checkout.payment_failed');
