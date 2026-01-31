@@ -15,6 +15,7 @@ class ShiprocketService
     protected $baseUrl;
     protected $email;
     protected $password;
+    protected $client;
     protected $tokenCacheKey = 'shiprocket_auth_token';
 
     public function __construct()
@@ -513,7 +514,7 @@ class ShiprocketService
     public function getExternalPostcodeDetails($pincode)
     {
         try {
-            $response = $this->client->get($this->baseUrl . 'external/open/postcode/details', [
+            $response = $this->client->get($this->baseUrl . 'open/postcode/details', [
                 'postcode' => $pincode
             ]);
 
