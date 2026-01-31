@@ -441,17 +441,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="mt-6 space-y-3 md:space-y-4">
-                                    <div class="flex items-start gap-3 text-sm text-gray-600"><i
-                                            class="fas fa-sync-alt text-amber-600 mt-0.5 flex-shrink-0"></i><span>30-day
-                                            return policy. Easy returns & exchanges.</span></div>
-                                    <div class="flex items-start gap-3 text-sm text-gray-600"><i
-                                            class="fas fa-headset text-amber-600 mt-0.5 flex-shrink-0"></i><span>Need help?
-                                            Call us at +91 1800-123-4567</span></div>
-                                    <div class="flex items-start gap-3 text-sm text-gray-600"><i
-                                            class="fas fa-shield-alt text-amber-600 mt-0.5 flex-shrink-0"></i><span>Secure
-                                            payment with 256-bit SSL encryption</span></div>
-                                </div>
+                              
                             </div>
                         </div>
                     </div>
