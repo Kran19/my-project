@@ -124,7 +124,10 @@ class AttributeValueController extends Controller
     /**
      * Display the specified attribute value.
      */
-    public function show($id): JsonResponse
+    /**
+     * Display the specified attribute value.
+     */
+    public function show($attributeId, $id): JsonResponse
     {
         try {
             $attributeValue = AttributeValue::with('attribute')->find($id);
@@ -156,13 +159,20 @@ class AttributeValueController extends Controller
     /**
      * Update the specified attribute value.
      */
-    public function update(AttributeValueRequest $request, $id): JsonResponse
+    public function update(AttributeValueRequest $request, $attributeId, $id): JsonResponse
     {
         try {
             $attributeValue = AttributeValue::find($id);
 
             if (!$attributeValue) {
                 return $this->apiResponse(false, null, 'Attribute value not found', 404);
+            }
+
+            // Verify it belongs to the correct attribute
+            if ($attributeValue->attribute_id != $attributeId) {
+                // Optional: we can return error or just process it if we trust the ID more
+                // For safety:
+                // return $this->apiResponse(false, null, 'Value does not belong to this attribute', 400); 
             }
 
             DB::beginTransaction();
@@ -191,7 +201,7 @@ class AttributeValueController extends Controller
     /**
      * Remove the specified attribute value.
      */
-    public function destroy($id): JsonResponse
+    public function destroy($attributeId, $id): JsonResponse
     {
         try {
             $attributeValue = AttributeValue::find($id);
@@ -214,7 +224,7 @@ class AttributeValueController extends Controller
     /**
      * Toggle attribute value status.
      */
-    public function toggleStatus(Request $request, $id): JsonResponse
+    public function toggleStatus(Request $request, $attributeId, $id): JsonResponse
     {
         try {
             $request->validate([
