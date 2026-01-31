@@ -25,6 +25,15 @@
     overflow: hidden;
 }
 
+@media (max-width: 768px) {
+    .promo-slider {
+        aspect-ratio: 16 / 9;   /* cinematic */
+        height: auto;
+        min-height: unset;
+        max-height: 70vh;       /* prevents over-tall banners */
+    }
+}
+
 .swiper {
     width: 100%;
     height: 100%;
@@ -37,20 +46,24 @@
 .swiper-slide img {
     width: 100%;
     height: 100%;
-    object-fit: cover;  /* critical for cinema feel */
+    object-fit: cover;
 }
 
-
+/* Updated Slide Content - Bottom Right CTA Only */
 .slide-content {
     position: absolute;
-    top: 50%;
-    left: 10%;
-    transform: translateY(-50%);
+    bottom: 10%; /* Adjust as per "bottom side corner" */
+    right: 5%;
+    left: auto;
+    top: auto;
+    transform: none;
     z-index: 10;
-    color: var(--white);
     max-width: 600px;
+    text-align: right;
 }
 
+/* Commented out text styles, kept for reference if uncommented */
+/*
 .slide-content h2 {
     font-size: 3.5rem;
     font-weight: 800;
@@ -64,27 +77,103 @@
     margin-bottom: 2rem;
     text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
 }
+*/
 
-.shop-btn {
-    display: inline-block;
-    padding: 1rem 2.5rem;
-    background-color: var(--primary-gold);
+/* Animated Border Button */
+.animated-btn {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 200px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
     color: var(--white);
     text-decoration: none;
-    border-radius: 50px;
-    font-weight: 700;
-    font-size: 1.1rem;
-    transition: var(--transition);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    font-size: 1.2rem;
+    font-weight: bold;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    border-radius: 5px; /* Optional rounded corners */
+    overflow: hidden;
+    transition: 0.5s;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-.shop-btn:hover {
-    background-color: var(--white);
-    color: var(--primary-blue);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+.animated-btn:hover {
+    color: var(--primary-gold);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 20px var(--primary-gold);
+}
+
+/* The moving border lines */
+.animated-btn span {
+    position: absolute;
+    display: block;
+}
+
+/* Top border */
+.animated-btn span:nth-child(1) {
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary-gold));
+    animation: btn-anim1 1s linear infinite;
+}
+
+@keyframes btn-anim1 {
+    0% { left: -100%; }
+    50%, 100% { left: 100%; }
+}
+
+/* Right border */
+.animated-btn span:nth-child(2) {
+    top: -100%;
+    right: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, transparent, var(--primary-gold));
+    animation: btn-anim2 1s linear infinite;
+    animation-delay: 0.25s;
+}
+
+@keyframes btn-anim2 {
+    0% { top: -100%; }
+    50%, 100% { top: 100%; }
+}
+
+/* Bottom border */
+.animated-btn span:nth-child(3) {
+    bottom: 0;
+    right: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(270deg, transparent, var(--primary-gold));
+    animation: btn-anim3 1s linear infinite;
+    animation-delay: 0.5s;
+}
+
+@keyframes btn-anim3 {
+    0% { right: -100%; }
+    50%, 100% { right: 100%; }
+}
+
+/* Left border */
+.animated-btn span:nth-child(4) {
+    bottom: -100%;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(360deg, transparent, var(--primary-gold));
+    animation: btn-anim4 1s linear infinite;
+    animation-delay: 0.75s;
+}
+
+@keyframes btn-anim4 {
+    0% { bottom: -100%; }
+    50%, 100% { bottom: 100%; }
 }
 
 /* Swiper Customize */
@@ -1011,14 +1100,7 @@
     .collection-section {
         padding: 2rem 5%;
     }
-@media (max-width: 768px) {
-    .promo-slider {
-        aspect-ratio: 16 / 9;   /* cinematic */
-        height: auto;
-        min-height: unset;
-        max-height: 70vh;       /* prevents over-tall banners */
-    }
-}
+
 
 
     .slide-content {
@@ -1162,20 +1244,34 @@
             <div class="swiper-slide">
                 <img src="{{ $banner->image }}" alt="{{ $banner->title }}">
                 <div class="slide-content">
+                    {{-- 
                     <h2>{{ $banner->title }}</h2>
-                    <p>{{ $banner->subtitle }}</p>
-                    @if($banner->cta_text)
-                    <a href="{{ $banner->cta_link ?? '#' }}" class="shop-btn">{{ $banner->cta_text }}</a>
-                    @endif
+                    <p>{{ $banner->subtitle }}</p> 
+                    --}}
+                    <a href="{{ $banner->cta_link ?? '#' }}" class="animated-btn">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        {{ $banner->cta_text ?: 'SHOP NOW' }}
+                    </a>
                 </div>
             </div>
             @empty
             <div class="swiper-slide">
                 <img src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1200" alt="APIQO Jewellery">
                 <div class="slide-content">
+                    {{--
                     <h2>Exquisite Jewellery</h2>
                     <p>Discover our unique collection</p>
-                    <a href="{{ route('customer.products.list') }}" class="shop-btn">Shop Now</a>
+                    --}}
+                    <a href="{{ route('customer.products.list') }}" class="animated-btn">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        SHOP NOW
+                    </a>
                 </div>
             </div>
             @endforelse
