@@ -216,10 +216,32 @@ class CheckoutController extends Controller
             }
         }
 
-        // 3. Apply Custom Shipping Logic
+        // 3. Fetch City & State (Pincode Lookup)
+        $city = null; // Default
+        $state = null; // Default
+        try {
+            $pinResponse = \Illuminate\Support\Facades\Http::get("https://api.postalpincode.in/pincode/{$request->pincode}");
+            if ($pinResponse->successful()) {
+                $pinData = $pinResponse->json();
+                if (!empty($pinData[0]['PostOffice'][0])) {
+                    $city = $pinData[0]['PostOffice'][0]['District']; // Often 'District' maps better to City than 'Name'
+                    $state = $pinData[0]['PostOffice'][0]['State'];
+                    
+                    // Fallback for city if District is empty
+                    if (empty($city)) {
+                        $city = $pinData[0]['PostOffice'][0]['Block'] ?? $pinData[0]['PostOffice'][0]['Name'];
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Ignore lookup failure, user can manually enter
+            \Illuminate\Support\Facades\Log::error('Pincode lookup failed: ' . $e->getMessage());
+        }
+
+        // 4. Apply Custom Shipping Logic
         $customCost = $this->calculateShippingCost($cart);
 
-        // 4. Construct Single "Standard Delivery" Option
+        // 5. Construct Single "Standard Delivery" Option
         $customOption = [
             'courier_id' => 'standard', // Custom ID
             'name' => 'Standard Delivery',
@@ -232,6 +254,8 @@ class CheckoutController extends Controller
             'success' => true,
             'available_couriers' => [$customOption],
             'estimated_delivery' => $eta,
+            'city' => $city,
+            'state' => $state,
             // 'raw_data' => $serviceability['raw_data'] ?? null // Debugging
         ]);
     }

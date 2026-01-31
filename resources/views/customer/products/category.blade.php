@@ -283,20 +283,39 @@
                     </div>
                 @endif
 
-                <!-- Filters (Simple version) -->
-                <div class="mb-8 p-4 bg-amber-50 rounded-2xl">
-                    <div class="flex flex-wrap gap-4">
+                <!-- Mobile Filter Toggle -->
+                <div class="lg:hidden mb-4">
+                    <button onclick="openFilters()" class="w-full py-3 bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-center text-gray-700 font-semibold hover:bg-amber-50 transition-colors">
+                        <i class="fas fa-filter mr-2 text-amber-600"></i>
+                        Filter & Sort
+                    </button>
+                </div>
+
+                <!-- Mobile Filter Overlay -->
+                <div id="filterOverlay" onclick="closeFilters()" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300 lg:hidden" aria-hidden="true"></div>
+
+                <!-- Filters Section (Sidebar on Mobile, Row on Desktop) -->
+                <div id="filterSidebar" class="mb-8 p-4 bg-amber-50 rounded-2xl fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 lg:static lg:transform-none lg:w-auto lg:bg-amber-50 lg:shadow-none lg:p-4 lg:rounded-2xl">
+                    <!-- Mobile Header -->
+                    <div class="flex justify-between items-center mb-6 lg:hidden border-b pb-4">
+                        <h3 class="text-xl font-bold text-gray-800">Filters</h3>
+                        <button onclick="closeFilters()" class="p-2 text-gray-500 hover:text-red-500 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col lg:flex-row lg:flex-wrap gap-4">
                         <!-- Price Filter -->
-                        <div>
+                        <div class="w-full lg:w-auto">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
                             <div class="flex items-center gap-2">
                                 <input type="number" id="minPrice" placeholder="Min" value="{{ $minPrice ?? '' }}"
-                                    class="w-24 px-3 py-1 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200">
+                                    class="w-full lg:w-24 px-3 py-2 lg:py-1 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200">
                                 <span class="text-gray-500">to</span>
                                 <input type="number" id="maxPrice" placeholder="Max" value="{{ $maxPrice ?? '' }}"
-                                    class="w-24 px-3 py-1 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200">
+                                    class="w-full lg:w-24 px-3 py-2 lg:py-1 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200">
                                 <button onclick="applyPriceFilter()"
-                                    class="px-4 py-1 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                                    class="px-4 py-2 lg:py-1 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
                                     Apply
                                 </button>
                             </div>
@@ -304,16 +323,23 @@
 
                         <!-- In Stock Filter -->
                         @if (isset($inStock))
-                            <div>
+                            <div class="w-full lg:w-auto">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
                                 <select id="inStock" onchange="applyInStockFilter()"
-                                    class="px-3 py-1 rounded-lg border border-amber-200">
+                                    class="w-full lg:w-auto px-3 py-2 lg:py-1 rounded-lg border border-amber-200 bg-white">
                                     <option value="">All</option>
                                     <option value="1" {{ $inStock == '1' ? 'selected' : '' }}>In Stock</option>
                                     <option value="0" {{ $inStock == '0' ? 'selected' : '' }}>Out of Stock</option>
                                 </select>
                             </div>
                         @endif
+
+                        <!-- Mobile Apply Button -->
+                        <div class="mt-auto lg:hidden pt-4">
+                             <button onclick="closeFilters()" class="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold shadow-lg">
+                                Show Results
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -520,6 +546,28 @@
     @endsection
 
     @push('scripts')
+    <script>
+        // Mobile Sidebar Functions
+        function openFilters() {
+            const sidebar = document.getElementById('filterSidebar');
+            const overlay = document.getElementById('filterOverlay');
+            
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            // Prevent body scrolling
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFilters() {
+            const sidebar = document.getElementById('filterSidebar');
+            const overlay = document.getElementById('filterOverlay');
+            
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+            // Restore body scrolling
+            document.body.style.overflow = '';
+        }
+    </script>
         <!-- Include Axios -->
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 

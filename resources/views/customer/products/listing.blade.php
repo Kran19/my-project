@@ -213,11 +213,30 @@
         @endif
 
         <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Mobile Filter Toggle -->
+            <div class="lg:hidden mb-4">
+                <button onclick="openFilters()" class="w-full py-3 bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-center text-gray-700 font-semibold hover:bg-amber-50 transition-colors">
+                    <i class="fas fa-filter mr-2 text-amber-600"></i>
+                    Filter & Sort
+                </button>
+            </div>
+
+            <!-- Mobile Filter Overlay -->
+            <div id="filterOverlay" onclick="closeFilters()" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300 lg:hidden" aria-hidden="true"></div>
+
             <!-- Sidebar Filters -->
-            <div class="lg:w-1/4">
-                <div class="bg-white rounded-xl shadow p-5 sticky top-6 filter-section">
-                    <!-- Filter Header -->
-                    <div class="flex justify-between items-center mb-5">
+            <div id="filterSidebar" class="lg:w-1/4 fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 lg:static lg:transform-none lg:w-1/4 lg:shadow-none lg:bg-transparent overflow-y-auto lg:overflow-visible">
+                <div class="bg-white rounded-xl shadow p-5 sticky top-6 filter-section min-h-screen lg:min-h-0">
+                    <!-- Mobile Sidebar Header -->
+                    <div class="flex justify-between items-center mb-5 lg:hidden border-b pb-4">
+                        <h3 class="text-xl font-bold text-gray-800">Filters</h3>
+                        <button onclick="closeFilters()" class="p-2 text-gray-500 hover:text-red-500 transition-colors">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <!-- Filter Header (Desktop) -->
+                    <div class="flex justify-between items-center mb-5 hidden lg:flex">
                         <h3 class="text-lg font-bold text-gray-800">Filters</h3>
                         @if (request()->hasAny([
                                 'search',
@@ -234,6 +253,24 @@
                                 class="text-sm text-amber-700 hover:text-amber-800">Clear All</a>
                         @endif
                     </div>
+                    
+                    <!-- Clear All for Mobile (below header) -->
+                     @if (request()->hasAny([
+                                'search',
+                                'min_price',
+                                'max_price',
+                                'category_id',
+                                'brand_id',
+                                'in_stock',
+                                'is_featured',
+                                'is_new',
+                                'is_bestseller',
+                            ]))
+                        <div class="lg:hidden mb-4">
+                            <a href="{{ route('customer.products.list') }}"
+                                class="block w-full text-center py-2 border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 text-sm">Clear All Filters</a>
+                        </div>
+                    @endif
 
                     <!-- Search Form -->
                     <form method="GET" action="{{ route('customer.products.list') }}" class="mb-5">
@@ -399,6 +436,13 @@
                                 <i class="fas fa-tag mr-1"></i> On Sale
                             </a>
                         </div>
+                    </div>
+                    
+                    <!-- Mobile Apply Button (Optional, but good for UX) -->
+                    <div class="mt-8 lg:hidden">
+                        <button onclick="closeFilters()" class="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold shadow-lg">
+                            Show Results
+                        </button>
                     </div>
                 </div>
             </div>
@@ -664,6 +708,28 @@
 @endsection
 
 @push('scripts')
+    <script>
+        // Mobile Sidebar Functions
+        function openFilters() {
+            const sidebar = document.getElementById('filterSidebar');
+            const overlay = document.getElementById('filterOverlay');
+            
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            // Prevent body scrolling
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFilters() {
+            const sidebar = document.getElementById('filterSidebar');
+            const overlay = document.getElementById('filterOverlay');
+            
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+            // Restore body scrolling
+            document.body.style.overflow = '';
+        }
+    </script>
     <!-- Include Axios -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
