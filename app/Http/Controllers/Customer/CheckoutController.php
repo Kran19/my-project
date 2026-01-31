@@ -223,7 +223,7 @@ class CheckoutController extends Controller
         $pinResponse = $this->shiprocketService->getExternalPostcodeDetails($request->pincode);
         
         if ($pinResponse['success']) {
-            $details = $pinResponse['data']['data']['postcode_details'] ?? null;
+            $details = $pinResponse['data']['postcode_details'] ?? null;
             if ($details) {
                 $city = $details['city'] ?? null;
                 $state = $details['state'] ?? null;
