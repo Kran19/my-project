@@ -531,14 +531,20 @@
 
             // Wishlist functionality
             function addToWishlist(productId) {
-                fetch('{{ route('customer.wishlist.add') }}', {
+                const isLoggedIn = {{ Auth::guard('customer')->check() ? 'true' : 'false' }};
+                if (!isLoggedIn) {
+                    showNotification('You need to login for this feature', 'info');
+                    return;
+                }
+
+                fetch('{{ route('customer.wishlist.toggle') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({
-                            product_variant_id: productId
+                            product_id: productId
                         })
                     })
                     .then(response => response.json())
@@ -546,19 +552,28 @@
                         if (data.success) {
                             const heartIcon = document.querySelector(`[data-product-id="${productId}"] i`);
                             if (heartIcon) {
-                                heartIcon.className = 'fas fa-heart text-red-500';
+                                if (data.status === 'added') {
+                                    heartIcon.className = 'fas fa-heart text-red-500';
+                                    showNotification('Added to wishlist!', 'success');
+                                } else {
+                                    heartIcon.className = 'fas fa-heart text-gray-400 group-hover:text-red-500'; 
+                                    showNotification('Removed from wishlist', 'info');
+                                }
+                            } else {
+                                showNotification(data.message, 'success');
                             }
-                            showNotification('Added to wishlist!', 'success');
+                            
                             // Update wishlist count globally if function exists
                             if (typeof updateWishlistCount === 'function') {
                                 updateWishlistCount(data.count);
                             }
                         } else {
-                            showNotification(data.message || 'Item already in wishlist', 'info');
+                            showNotification(data.message || 'Error updating wishlist', 'info');
                         }
                     })
                     .catch(error => {
-                        showNotification('Failed to add to wishlist', 'error');
+                        console.error(error);
+                        showNotification('Failed to update wishlist', 'error');
                     });
             }
 

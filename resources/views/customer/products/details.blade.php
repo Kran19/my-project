@@ -1648,6 +1648,12 @@
 
             // Toggle wishlist
             async function toggleWishlist() {
+                const isLoggedIn = {{ Auth::guard('customer')->check() ? 'true' : 'false' }};
+                if (!isLoggedIn) {
+                    showNotification('You need to login for this feature', 'warning');
+                    return;
+                }
+
                 const wishlistBtn = document.getElementById('wishlistBtn');
                 const wishlistText = document.getElementById('wishlistText');
                 const productId = productData.id;

@@ -672,15 +672,25 @@
 
     <script>
         // Wishlist functionality
+        // Wishlist functionality
         function addToWishlist(productId, variantId = null) {
-            fetch('{{ route("customer.wishlist.add") }}', {
+            const isLoggedIn = {{ Auth::guard('customer')->check() ? 'true' : 'false' }};
+            if (!isLoggedIn) {
+                showToast('You need to login for this feature', 'info');
+                return;
+            }
+
+            const variantIdToUse = variantId || document.querySelector(`[data-product-id="${productId}"]`)?.dataset?.variantId || null;
+
+            fetch('{{ route("customer.wishlist.toggle") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken
                 },
                 body: JSON.stringify({
-                    product_variant_id: productId
+                    product_id: productId,
+                    product_variant_id: variantIdToUse
                 })
             })
             .then(response => response.json())
@@ -688,18 +698,27 @@
                 if (data.success) {
                     const heartIcon = document.querySelector(`[data-product-id="${productId}"] i`);
                     if (heartIcon) {
-                        heartIcon.className = 'fas fa-heart text-red-500';
+                        if (data.status === 'added') {
+                            heartIcon.className = 'fas fa-heart text-red-500';
+                            showToast('Added to wishlist!', 'success');
+                        } else {
+                            heartIcon.className = 'far fa-heart text-gray-400'; // Or whatever the default empty state class is
+                            showToast('Removed from wishlist', 'info');
+                        }
+                    } else {
+                         showToast(data.message, 'success');
                     }
-                    showToast('Added to wishlist!', 'success');
+
                     if (typeof updateWishlistCount === 'function') {
                         updateWishlistCount(data.count);
                     }
                 } else {
-                    showToast(data.message || 'Item already in wishlist', 'info');
+                    showToast(data.message || 'Error updating wishlist', 'error');
                 }
             })
             .catch(error => {
-                showToast('Failed to add to wishlist', 'error');
+                console.error(error);
+                showToast('Failed to update wishlist', 'error');
             });
         }
 
