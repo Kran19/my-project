@@ -164,6 +164,8 @@
         .list-view .action-buttons {
             margin-top: auto;
         }
+
+
     </style>
 @endsection
 
@@ -212,23 +214,23 @@
             </div>
         @endif
 
-        <div class="flex flex-col lg:flex-row gap-8">
-            <!-- Mobile Filter Toggle -->
-            <div class="lg:hidden mb-4">
-                <button onclick="openFilters()" class="w-full py-3 bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-center text-gray-700 font-semibold hover:bg-amber-50 transition-colors">
-                    <i class="fas fa-filter mr-2 text-amber-600"></i>
-                    Filter & Sort
-                </button>
-            </div>
+        <!-- Mobile Filter Toggle -->
+        <div class="block lg:hidden mb-4">
+            <button onclick="openFilters()" class="w-full py-3 bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-center text-gray-700 font-semibold hover:bg-amber-50 transition-colors max-w-full">
+                <i class="fas fa-filter mr-2 text-amber-600"></i>
+                Filter & Sort
+            </button>
+        </div>
 
+        <div class="flex flex-col lg:flex-row gap-5">
             <!-- Mobile Filter Overlay -->
-            <div id="filterOverlay" onclick="closeFilters()" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300 lg:hidden" aria-hidden="true"></div>
+            <div id="filterOverlay" onclick="closeFilters()" class="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm z-40 hidden transition-opacity duration-300 lg:hidden" aria-hidden="true"></div>
 
             <!-- Sidebar Filters -->
-            <div id="filterSidebar" class="lg:w-1/4 fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 lg:static lg:transform-none lg:w-1/4 lg:shadow-none lg:bg-transparent overflow-y-auto lg:overflow-visible">
-                <div class="bg-white rounded-xl shadow p-5 sticky top-6 filter-section min-h-screen lg:min-h-0">
+            <div id="filterSidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 lg:relative lg:transform-none lg:translate-x-0 lg:w-44 lg:min-w-[11rem] lg:shadow-none lg:bg-transparent lg:border-r lg:border-gray-100 lg:pr-4 overflow-y-auto lg:overflow-visible">
+                <div class="bg-white rounded-xl shadow p-5 filter-section lg:shadow-none lg:p-0 lg:rounded-none lg:bg-transparent lg:relative">
                     <!-- Mobile Sidebar Header -->
-                    <div class="flex justify-between items-center mb-5 lg:hidden border-b pb-4">
+                    <div class="flex justify-between items-center mb-6 lg:hidden border-b pb-4">
                         <h3 class="text-xl font-bold text-gray-800">Filters</h3>
                         <button onclick="closeFilters()" class="p-2 text-gray-500 hover:text-red-500 transition-colors">
                             <i class="fas fa-times text-xl"></i>
@@ -236,8 +238,9 @@
                     </div>
 
                     <!-- Filter Header (Desktop) -->
-                    <div class="flex justify-between items-center mb-5 hidden lg:flex">
-                        <h3 class="text-lg font-bold text-gray-800">Filters</h3>
+                    <div class="flex justify-between items-center mb-6 hidden lg:flex border-b border-gray-100 pb-2">
+                        <!-- ... unchanged content inside ... -->
+                        <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Filters</h3>
                         @if (request()->hasAny([
                                 'search',
                                 'min_price',
@@ -250,7 +253,7 @@
                                 'is_bestseller',
                             ]))
                             <a href="{{ route('customer.products.list') }}"
-                                class="text-sm text-amber-700 hover:text-amber-800">Clear All</a>
+                                class="text-xs font-medium text-amber-600 hover:text-amber-700 transition">Clear All</a>
                         @endif
                     </div>
                     
@@ -266,38 +269,40 @@
                                 'is_new',
                                 'is_bestseller',
                             ]))
-                        <div class="lg:hidden mb-4">
+                        <div class="lg:hidden mb-6">
                             <a href="{{ route('customer.products.list') }}"
-                                class="block w-full text-center py-2 border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 text-sm">Clear All Filters</a>
+                                class="block w-full text-center py-2 border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 text-sm font-medium">Clear All Filters</a>
                         </div>
                     @endif
 
                     <!-- Search Form -->
-                    <form method="GET" action="{{ route('customer.products.list') }}" class="mb-5">
-                        <div class="relative">
+                    <form method="GET" action="{{ route('customer.products.list') }}" class="mb-8">
+                        <div class="relative group">
                             <input type="text" name="search" value="{{ $search ?? '' }}"
-                                placeholder="Search products..."
-                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
-                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                placeholder="Search..."
+                                class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition-all group-hover:bg-white">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 group-hover:text-amber-500 transition-colors text-xs"></i>
                         </div>
                     </form>
 
                     <!-- Categories -->
                     @if (isset($filters['categories']) && count($filters['categories']) > 0)
-                        <div class="mb-5">
-                            <h4 class="font-semibold text-gray-800 mb-3">Categories</h4>
-                            <div class="space-y-2 max-h-60 overflow-y-auto">
+                        <div class="mb-8">
+                            <h4 class="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">Categories</h4>
+                            <div class="space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                                 @foreach ($filters['categories'] as $category)
                                     <label
-                                        class="flex items-center justify-between p-2 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors">
+                                        class="flex items-center justify-between group cursor-pointer">
                                         <div class="flex items-center">
-                                            <input type="checkbox" name="category_id" value="{{ $category['id'] }}"
-                                                class="category-filter h-4 w-4 text-amber-600 rounded"
-                                                {{ request('category_id') == $category['id'] ? 'checked' : '' }}
-                                                onchange="this.form.submit()">
-                                            <span class="text-gray-700 ml-3">{{ $category['name'] }}</span>
+                                            <div class="relative flex items-center">
+                                                <input type="checkbox" name="category_id" value="{{ $category['id'] }}"
+                                                    class="peer h-4 w-4 border-gray-300 text-amber-600 rounded focus:ring-amber-500 transition-all cursor-pointer"
+                                                    {{ request('category_id') == $category['id'] ? 'checked' : '' }}
+                                                    onchange="this.form.submit()">
+                                            </div>
+                                            <span class="text-sm text-gray-600 ml-3 group-hover:text-amber-600 transition-colors {{ request('category_id') == $category['id'] ? 'font-medium text-amber-700' : '' }}">{{ $category['name'] }}</span>
                                         </div>
-                                        <span class="text-sm text-gray-500">{{ $category['count'] }}</span>
+                                        <span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ $category['count'] }}</span>
                                     </label>
                                 @endforeach
                             </div>
@@ -305,45 +310,48 @@
                     @endif
 
                     <!-- Price Range -->
-                    <div class="mb-5">
-                        <h4 class="font-semibold text-gray-800 mb-3">Price Range</h4>
+                    <div class="mb-8">
+                        <h4 class="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">Price Range</h4>
                         <form method="GET" action="{{ route('customer.products.list') }}" id="priceForm"
                             class="space-y-4">
-                            <div class="flex justify-between text-sm text-gray-600">
-                                <span>₹{{ number_format($filters['price_range']['min']) }}</span>
-                                <span>₹{{ number_format($filters['price_range']['max']) }}</span>
-                            </div>
-                            <div class="flex space-x-2">
-                                <input type="number" name="min_price" value="{{ $minPrice ?? '' }}" placeholder="Min"
-                                    min="0" max="{{ $filters['price_range']['max'] }}"
-                                    class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                <input type="number" name="max_price" value="{{ $maxPrice ?? '' }}" placeholder="Max"
-                                    min="0" max="{{ $filters['price_range']['max'] }}"
-                                    class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <div class="flex items-center gap-2">
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-gray-400 text-xs">₹</span>
+                                    <input type="number" name="min_price" value="{{ $minPrice ?? '' }}" placeholder="Min"
+                                        min="0" max="{{ $filters['price_range']['max'] }}"
+                                        class="w-full pl-6 pr-2 py-1.5 border border-gray-200 rounded text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none">
+                                </div>
+                                <span class="text-gray-400">-</span>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-gray-400 text-xs">₹</span>
+                                    <input type="number" name="max_price" value="{{ $maxPrice ?? '' }}" placeholder="Max"
+                                        min="0" max="{{ $filters['price_range']['max'] }}"
+                                        class="w-full pl-6 pr-2 py-1.5 border border-gray-200 rounded text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none">
+                                </div>
                             </div>
                             <button type="submit"
-                                class="w-full py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm">
-                                Apply Price
+                                class="w-full py-2 bg-gray-900 text-white rounded hover:bg-black text-xs font-bold uppercase tracking-wide transition-colors">
+                                Update Price
                             </button>
                         </form>
                     </div>
 
                     <!-- Brand Filter -->
                     @if (isset($filters['brands']) && count($filters['brands']) > 0)
-                        <div class="mb-5">
-                            <h4 class="font-semibold text-gray-800 mb-3">Brands</h4>
-                            <div class="space-y-2 max-h-60 overflow-y-auto">
+                        <div class="mb-8">
+                            <h4 class="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">Brands</h4>
+                            <div class="space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                                 @foreach ($filters['brands'] as $brand)
                                     <label
-                                        class="flex items-center justify-between p-2 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors">
+                                        class="flex items-center justify-between group cursor-pointer">
                                         <div class="flex items-center">
                                             <input type="checkbox" name="brand_id" value="{{ $brand['id'] }}"
-                                                class="brand-filter h-4 w-4 text-amber-600 rounded"
+                                                class="h-4 w-4 border-gray-300 text-amber-600 rounded focus:ring-amber-500 cursor-pointer"
                                                 {{ request('brand_id') == $brand['id'] ? 'checked' : '' }}
                                                 onchange="this.form.submit()">
-                                            <span class="text-gray-700 ml-3">{{ $brand['name'] }}</span>
+                                            <span class="text-sm text-gray-600 ml-3 group-hover:text-amber-600 transition-colors {{ request('brand_id') == $brand['id'] ? 'font-medium text-amber-700' : '' }}">{{ $brand['name'] }}</span>
                                         </div>
-                                        <span class="text-sm text-gray-500">{{ $brand['count'] }}</span>
+                                        <span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ $brand['count'] }}</span>
                                     </label>
                                 @endforeach
                             </div>
@@ -354,23 +362,23 @@
                     @if (isset($filters['attributes']) && count($filters['attributes']) > 0)
                         @foreach ($filters['attributes'] as $attribute)
                             @if (!empty($attribute['values']))
-                                <div class="mb-5">
-                                    <h4 class="font-semibold text-gray-800 mb-3">{{ $attribute['name'] }}</h4>
-                                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                                <div class="mb-8">
+                                    <h4 class="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">{{ $attribute['name'] }}</h4>
+                                    <div class="space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                                         @foreach ($attribute['values'] as $value)
                                             <label
-                                                class="flex items-center p-2 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors">
+                                                class="flex items-center group cursor-pointer">
                                                 <div class="flex items-center">
                                                     @if ($attribute['type'] == 'color' && $value['color_code'])
-                                                        <span class="color-swatch"
-                                                            style="background-color: {{ $value['color_code'] }}"></span>
+                                                        <span class="color-swatch mr-2 shadow-sm border border-gray-200"
+                                                            style="background-color: {{ $value['color_code'] }}; width: 14px; height: 14px;"></span>
                                                     @endif
                                                     <input type="checkbox" name="attribute_value"
                                                         value="{{ $value['id'] }}"
-                                                        class="attribute-filter h-4 w-4 text-amber-600 rounded"
+                                                        class="h-4 w-4 border-gray-300 text-amber-600 rounded focus:ring-amber-500 cursor-pointer"
                                                         onchange="filterByAttribute('{{ $attribute['code'] }}', '{{ $value['value'] }}')">
                                                     <span
-                                                        class="text-gray-700 ml-3">{{ $value['label'] ?? $value['value'] }}</span>
+                                                        class="text-sm text-gray-600 ml-3 group-hover:text-amber-600 transition-colors">{{ $value['label'] ?? $value['value'] }}</span>
                                                 </div>
                                             </label>
                                         @endforeach
@@ -384,18 +392,18 @@
                     @if (isset($filters['specifications']) && count($filters['specifications']) > 0)
                         @foreach ($filters['specifications'] as $spec)
                             @if (!empty($spec['values']) && in_array($spec['input_type'], ['select', 'radio']))
-                                <div class="mb-5">
-                                    <h4 class="font-semibold text-gray-800 mb-3">{{ $spec['name'] }}</h4>
-                                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                                <div class="mb-8">
+                                    <h4 class="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">{{ $spec['name'] }}</h4>
+                                    <div class="space-y-3 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                                         @foreach ($spec['values'] as $value)
                                             <label
-                                                class="flex items-center p-2 hover:bg-amber-50 rounded-lg cursor-pointer transition-colors">
+                                                class="flex items-center group cursor-pointer">
                                                 <div class="flex items-center">
                                                     <input type="checkbox" name="specification_value"
                                                         value="{{ $value['id'] }}"
-                                                        class="specification-filter h-4 w-4 text-amber-600 rounded"
+                                                        class="h-4 w-4 border-gray-300 text-amber-600 rounded focus:ring-amber-500 cursor-pointer"
                                                         onchange="filterBySpecification('{{ $spec['code'] }}', '{{ $value['value'] }}')">
-                                                    <span class="text-gray-700 ml-3">{{ $value['value'] }}</span>
+                                                    <span class="text-sm text-gray-600 ml-3 group-hover:text-amber-600 transition-colors">{{ $value['value'] }}</span>
                                                 </div>
                                             </label>
                                         @endforeach
@@ -448,7 +456,7 @@
             </div>
 
             <!-- Products Grid -->
-            <div class="lg:w-3/4">
+            <div class="flex-1">
                 <!-- Results Header -->
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div>
@@ -711,6 +719,9 @@
     <script>
         // Mobile Sidebar Functions
         function openFilters() {
+            // Desktop: do nothing
+            if (window.innerWidth >= 1024) return;
+
             const sidebar = document.getElementById('filterSidebar');
             const overlay = document.getElementById('filterOverlay');
             
@@ -721,6 +732,9 @@
         }
 
         function closeFilters() {
+            // Desktop: do nothing
+            if (window.innerWidth >= 1024) return;
+
             const sidebar = document.getElementById('filterSidebar');
             const overlay = document.getElementById('filterOverlay');
             
@@ -859,43 +873,7 @@
                 });
             });
 
-        // Wishlist functionality
-        function addToWishlist(productId, variantId = null) {
-            const variantIdToUse = variantId || document.querySelector(`[data-product-id="${productId}"]`)?.dataset?.variantId || productId;
 
-            fetch('{{ route("customer.wishlist.add") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify({
-                    product_variant_id: variantIdToUse
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Change heart to filled
-                    const heartIcon = document.querySelector(`[data-product-id="${productId}"] i`);
-                    if (heartIcon) {
-                        heartIcon.className = 'fas fa-heart text-red-500';
-                    }
-                    
-                    showToast('Added to wishlist!', 'success');
-                    
-                    // Update wishlist count globally if function exists
-                    if (typeof updateWishlistCount === 'function') {
-                        updateWishlistCount(data.count);
-                    }
-                } else {
-                    showToast(data.message || 'Item already in wishlist', 'info');
-                }
-            })
-            .catch(error => {
-                showToast('Failed to add to wishlist', 'error');
-            });
-        }
 
             // Quick view functionality
             document.querySelectorAll('.quick-view').forEach(button => {

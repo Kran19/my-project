@@ -989,9 +989,10 @@ if ($mainImage) {
                 $submittedVariantIds[] = $variant->id;
                 Log::debug('New variant created during update', ['variant_id' => $variant->id, 'sku' => $variant->sku]);
                 
-                if (isset($variantData['attributes'])) {
-                    $this->syncVariantAttributes($variant, $variantData);
-                }
+            }
+            
+            if (isset($variantData['attributes'])) {
+                $this->syncVariantAttributes($variant, $variantData);
             }
 
             // Sync Images for both New and Existing

@@ -207,9 +207,10 @@
                     <table class="min-w-full divide-y divide-gray-200 border">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Variant</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-64">Variant Attributes</th>
                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-32">SKU</th>
                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Price</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Compare</th>
                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Stock</th>
                                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-48">Images</th>
                                 <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-16">Default</th>
@@ -223,41 +224,51 @@
                                 <!-- Removing skip logic to show all variants -->
                                      
                                 <tr id="variant-row-{{ $idx }}">
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
-                                        {{-- Variant Name Construction --}}
-                                        @php
-                                            $name = $variant->attributes->map(function($a) {
-                                                return $a->value ?? 'NA'; 
-                                            })->join(' / ');
-                                        @endphp
-                                        {{ $name ?: 'Variant #' . ($idx + 1) }}
-                                        
-                                        <input type="hidden" name="variants[{{ $idx }}][id]" value="{{ $variant->id }}">
-                                        
-                                        {{-- We need to preserve attributes? Usually on Edit we don't change attribs of existing variant, just values --}}
-                                        {{-- But we need to send them back if we want to "sync"? 
-                                             Actually, ProductService update logic for existing variants might just check SKU/ID.
-                                             Let's look at ProductService::updateProduct:
-                                             It usually iterates variants.
-                                             If basic update, we just need ID.
-                                        --}}
+                                    <td class="px-3 py-2 text-sm text-gray-700 align-top">
+                                        <div class="space-y-2">
+                                            @if(isset($attributes) && count($attributes) > 0)
+                                                @foreach($attributes as $attrIndex => $attr)
+                                                    @php
+                                                        // Find current value for this attribute
+                                                        $currentVal = $variant->attributes->firstWhere('pivot.attribute_id', $attr['id']);
+                                                        $currentValId = $currentVal ? $currentVal->pivot->attribute_value_id : null;
+                                                    @endphp
+                                                    <div class="flex flex-col">
+                                                        <label class="text-[10px] text-gray-500">{{ $attr['name'] }}</label>
+                                                        <select name="variants[{{ $idx }}][attributes][{{ $attrIndex }}][attribute_value_id]" class="w-full border border-gray-300 rounded text-xs py-1 px-1 focus:ring-1 focus:ring-blue-500">
+                                                            @foreach($attr['options'] as $opt)
+                                                                <option value="{{ $opt['id'] }}" {{ $currentValId == $opt['id'] ? 'selected' : '' }}>{{ $opt['value'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        <input type="hidden" name="variants[{{ $idx }}][attributes][{{ $attrIndex }}][attribute_id]" value="{{ $attr['id'] }}">
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                {{-- Fallback if attributes not loaded --}}
+                                                {{ $variant->attributes->map(fn($a) => $a->value ?? 'NA')->join(' / ') }}
+                                            @endif
+                                            <input type="hidden" name="variants[{{ $idx }}][id]" value="{{ $variant->id }}">
+                                        </div>
                                     </td>
-                                    <td class="px-3 py-2">
+                                    <td class="px-3 py-2 align-top">
                                         <input type="text" name="variants[{{ $idx }}][sku]" value="{{ $variant->sku }}" class="w-full px-2 py-1 border rounded text-sm">
                                     </td>
-                                    <td class="px-3 py-2">
+                                    <td class="px-3 py-2 align-top">
                                         <input type="number" name="variants[{{ $idx }}][price]" value="{{ $variant->price }}" step="0.01" class="w-full px-2 py-1 border rounded text-sm">
                                     </td>
-                                    <td class="px-3 py-2">
+                                    <td class="px-3 py-2 align-top">
+                                        <input type="number" name="variants[{{ $idx }}][compare_price]" value="{{ $variant->compare_price }}" step="0.01" class="w-full px-2 py-1 border rounded text-sm placeholder-gray-400" placeholder="0.00">
+                                    </td>
+                                    <td class="px-3 py-2 align-top">
                                         <input type="number" name="variants[{{ $idx }}][stock_quantity]" value="{{ $variant->stock_quantity }}" class="w-full px-2 py-1 border rounded text-sm">
                                     </td>
-                                    <td class="px-3 py-2">
+                                    <td class="px-3 py-2 align-top">
                                             <div id="variant-images-{{ $idx }}" class="flex gap-1 flex-wrap items-center variant-images-container">
                                                 {{-- Main Image --}}
-                                                <div class="relative w-10 h-10 variant-main-thumb {{ $variant->primaryImage && $variant->primaryImage->media ? 'border-2 border-blue-500' : 'border border-dashed border-gray-300' }}">
+                                                <div class="relative w-10 h-10 variant-main-thumb group {{ $variant->primaryImage && $variant->primaryImage->media ? 'border-2 border-blue-500' : 'border border-dashed border-gray-300' }}">
                                                     @if($variant->primaryImage && $variant->primaryImage->media)
-                                                        <img src="{{ asset('storage/' . $variant->primaryImage->media->file_path) }}" class="w-full h-full object-cover">
-                                                        <button type="button" onclick="removeVariantMainImage({{ $idx }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition">x</button>
+                                                        <img src="{{ asset('storage/' . $variant->primaryImage->media->file_path) }}" class="w-full h-full object-cover transition-transform duration-200 transform group-hover:scale-[3] group-hover:z-50 group-hover:absolute group-hover:top-0 group-hover:left-0 group-hover:shadow-lg group-hover:border-2 group-hover:border-white bg-white">
+                                                        <button type="button" onclick="removeVariantMainImage({{ $idx }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center text-[10px] shadow-sm hover:bg-red-600 transition z-10">x</button>
                                                     @else
                                                          <div class="flex items-center justify-center w-full h-full bg-gray-50 text-[10px] text-gray-400">Main</div>
                                                     @endif
@@ -701,7 +712,7 @@
         addVariantRow(attributes);
     }
 
-    function addVariantRow(attributes) {
+     function addVariantRow(attributes) {
          // Check Duplicate
          if(isDuplicateVariant(attributes)) {
              toastr.warning('This variant combination already exists.');
@@ -717,33 +728,61 @@
          
          const variantName = attributes.map(a => a.value).join(' / ');
 
+         // Construct Attribute Selects
+         let attributesHtml = '<div class="space-y-2">';
+         
+         // Use availableAttributes global to render selects
+         if(availableAttributes.length > 0) {
+             availableAttributes.forEach((availAttr, attrIndex) => {
+                 const selectedAttr = attributes.find(a => a.attribute_id == availAttr.id);
+                 const selectedValueId = selectedAttr ? selectedAttr.attribute_value_id : '';
+                 
+                 attributesHtml += `
+                     <div class="flex flex-col">
+                         <label class="text-[10px] text-gray-500">${availAttr.name}</label>
+                         <select name="variants[${idx}][attributes][${attrIndex}][attribute_value_id]" class="w-full border border-gray-300 rounded text-xs py-1 px-1 focus:ring-1 focus:ring-blue-500">
+                             ${availAttr.options.map(opt => 
+                                 `<option value="${opt.id}" ${opt.id == selectedValueId ? 'selected' : ''}>${opt.value}</option>`
+                             ).join('')}
+                         </select>
+                         <input type="hidden" name="variants[${idx}][attributes][${attrIndex}][attribute_id]" value="${availAttr.id}">
+                     </div>
+                 `;
+             });
+         } else {
+             // Fallback if availableAttributes is empty (shouldn't happen here usually)
+             attributesHtml += attributes.map(a => a.value).join(' / ');
+             attributesHtml += attributes.map((a, i) => `
+                 <input type="hidden" name="variants[${idx}][attributes][${i}][attribute_id]" value="${a.attribute_id}">
+                 <input type="hidden" name="variants[${idx}][attributes][${i}][attribute_value_id]" value="${a.attribute_value_id}">
+             `).join('');
+         }
+         attributesHtml += `<input type="hidden" name="variants[${idx}][id]"></div>`;
+
          const tr = document.createElement('tr');
          tr.id = `variant-row-${idx}`;
          tr.innerHTML = `
-            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
-                ${variantName}
-                ${attributes.map((a, i) => `
-                    <input type="hidden" name="variants[${idx}][attributes][${i}][attribute_id]" value="${a.attribute_id}">
-                    <input type="hidden" name="variants[${idx}][attributes][${i}][attribute_value_id]" value="${a.attribute_value_id}">
-                `).join('')}
+            <td class="px-3 py-2 text-sm text-gray-700 align-top">
+                ${attributesHtml}
             </td>
-            <td class="px-3 py-2"><input type="text" name="variants[${idx}][sku]" value="${variantSku}" class="w-full px-2 py-1 border rounded text-sm"></td>
-            <td class="px-3 py-2"><input type="number" name="variants[${idx}][price]" value="{{ $product->price }}" step="0.01" class="w-full px-2 py-1 border rounded text-sm"></td>
-            <td class="px-3 py-2"><input type="number" name="variants[${idx}][stock_quantity]" value="0" class="w-full px-2 py-1 border rounded text-sm"></td>
-            <td class="px-3 py-2">
+            <td class="px-3 py-2 align-top"><input type="text" name="variants[${idx}][sku]" value="${variantSku}" class="w-full px-2 py-1 border rounded text-sm"></td>
+            <td class="px-3 py-2 align-top"><input type="number" name="variants[${idx}][price]" value="{{ $product->price }}" step="0.01" class="w-full px-2 py-1 border rounded text-sm"></td>
+            <td class="px-3 py-2 align-top"><input type="number" name="variants[${idx}][compare_price]" value="" step="0.01" class="w-full px-2 py-1 border rounded text-sm placeholder-gray-400" placeholder="0.00"></td>
+            <td class="px-3 py-2 align-top"><input type="number" name="variants[${idx}][stock_quantity]" value="0" class="w-full px-2 py-1 border rounded text-sm"></td>
+            <td class="px-3 py-2 align-top">
                 <div id="variant-images-${idx}" class="flex gap-1 flex-wrap items-center variant-images-container">
-                     <div class="relative w-10 h-10 variant-main-thumb border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-50 text-xs text-gray-400">
+                     <div class="relative w-10 h-10 variant-main-thumb border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-50 text-xs text-gray-400 group">
                         <span class="text-[0.6rem]">No Img</span>
                         <input type="hidden" name="variants[${idx}][main_image_id]" id="variant-main-input-${idx}">
                     </div>
                 </div>
                 <button type="button" onclick="openVariantMediaModal(${idx})" class="text-xs text-blue-600 hover:text-blue-800 mt-1">Manage Images</button>
             </td>
-            <td class="px-3 py-2 text-center">
+            <td class="px-3 py-2 text-center align-top">
                 <input type="radio" name="default_variant_index" value="${idx}" onclick="document.querySelectorAll('.is-default-input').forEach(el => el.value=0); document.getElementById('is-default-${idx}').value=1;">
                 <input type="hidden" id="is-default-${idx}" name="variants[${idx}][is_default]" value="0" class="is-default-input">
             </td>
-            <td class="px-3 py-2 text-center">
+            <td class="px-3 py-2 text-center align-top">
                 <button type="button" onclick="document.getElementById('variant-row-${idx}').remove()" class="text-red-500 hover:text-red-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>

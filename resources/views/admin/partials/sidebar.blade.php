@@ -217,7 +217,7 @@ $isActive = function ($route, $params = []) use ($currentRoute) {
                     class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600
                              bg-clip-text text-transparent transition-all duration-300
                              text-expandable whitespace-nowrap">
-                    eCommerce
+                    MyApiqo
                 </span>
             </div>
             <button id="sidebarClose" class="text-gray-500 hover:text-gray-700 md:hidden">

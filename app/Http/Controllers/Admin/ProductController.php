@@ -103,7 +103,17 @@ class ProductController extends Controller
         $taxClasses = TaxClass::all();
         $tags = Tag::all();
         
-        return view('admin.products.edit', compact('product', 'categories', 'brands', 'taxClasses', 'tags'));
+        $attributes = [];
+        if ($product->product_type === 'configurable' && $product->main_category_id) {
+             try {
+                $attributes = $this->productService->getCategoryAttributes($product->main_category_id);
+             } catch (\Exception $e) {
+                 // Log error but continue
+                 \Log::error('Failed to preload attributes for edit: ' . $e->getMessage());
+             }
+        }
+        
+        return view('admin.products.edit', compact('product', 'categories', 'brands', 'taxClasses', 'tags', 'attributes'));
     }
 
     public function update(Request $request, $id)

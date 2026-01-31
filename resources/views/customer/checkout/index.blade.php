@@ -69,50 +69,50 @@
         <div class="max-w-7xl mx-auto px-4">
             <!-- Checkout Steps -->
             <div class="mb-12">
-                <div class="">
-                    <div class="flex justify-center md:justify-center min-w-max px-4">
-                        <div class="flex items-center gap-4 md:gap-0">
+                <div class="overflow-x-auto">
+                    <div class="flex justify-between md:justify-center min-w-[320px] px-2 md:px-4">
+                        <div class="flex items-center w-full md:w-auto justify-between md:justify-start gap-0 md:gap-0">
 
                             <!-- Cart -->
                             <div class="flex flex-col items-center shrink-0">
                                 <div
-                                    class="w-10 h-10 md:w-12 md:h-12 bg-amber-600 text-white rounded-full flex items-center justify-center mb-2">
-                                    <i class="fas fa-shopping-cart text-sm md:text-base"></i>
+                                    class="w-8 h-8 md:w-12 md:h-12 bg-amber-600 text-white rounded-full flex items-center justify-center mb-2">
+                                    <i class="fas fa-shopping-cart text-xs md:text-base"></i>
                                 </div>
-                                <span class="text-xs md:text-sm font-medium text-gray-800">Cart</span>
+                                <span class="text-[10px] md:text-sm font-medium text-gray-800">Cart</span>
                             </div>
 
-                            <div class="w-12 md:w-24 h-1 bg-amber-600"></div>
+                            <div class="flex-1 md:w-24 h-0.5 md:h-1 bg-amber-600 mx-2"></div>
 
                             <!-- Details -->
                             <div class="flex flex-col items-center shrink-0">
                                 <div
-                                    class="w-10 h-10 md:w-12 md:h-12 bg-amber-600 text-white rounded-full flex items-center justify-center mb-2">
-                                    <i class="fas fa-user text-sm md:text-base"></i>
+                                    class="w-8 h-8 md:w-12 md:h-12 bg-amber-600 text-white rounded-full flex items-center justify-center mb-2">
+                                    <i class="fas fa-user text-xs md:text-base"></i>
                                 </div>
-                                <span class="text-xs md:text-sm font-medium text-gray-800">Details</span>
+                                <span class="text-[10px] md:text-sm font-medium text-gray-800">Details</span>
                             </div>
 
-                            <div class="w-12 md:w-24 h-1 bg-amber-600"></div>
+                            <div class="flex-1 md:w-24 h-0.5 md:h-1 bg-amber-600 mx-2"></div>
 
                             <!-- Shipping -->
                             <div class="flex flex-col items-center shrink-0">
                                 <div
-                                    class="w-10 h-10 md:w-12 md:h-12 bg-amber-200 text-amber-700 rounded-full flex items-center justify-center mb-2">
-                                    <i class="fas fa-truck text-sm md:text-base"></i>
+                                    class="w-8 h-8 md:w-12 md:h-12 bg-amber-200 text-amber-700 rounded-full flex items-center justify-center mb-2">
+                                    <i class="fas fa-truck text-xs md:text-base"></i>
                                 </div>
-                                <span class="text-xs md:text-sm font-medium text-gray-800">Shipping</span>
+                                <span class="text-[10px] md:text-sm font-medium text-gray-800">Shipping</span>
                             </div>
 
-                            <div class="w-12 md:w-24 h-1 bg-gray-300"></div>
+                            <div class="flex-1 md:w-24 h-0.5 md:h-1 bg-gray-300 mx-2"></div>
 
                             <!-- Payment -->
                             <div class="flex flex-col items-center shrink-0">
                                 <div
-                                    class="w-10 h-10 md:w-12 md:h-12 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center mb-2">
-                                    <i class="fas fa-credit-card text-sm md:text-base"></i>
+                                    class="w-8 h-8 md:w-12 md:h-12 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center mb-2">
+                                    <i class="fas fa-credit-card text-xs md:text-base"></i>
                                 </div>
-                                <span class="text-xs md:text-sm font-medium text-gray-600">Payment</span>
+                                <span class="text-[10px] md:text-sm font-medium text-gray-600">Payment</span>
                             </div>
 
                         </div>

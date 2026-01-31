@@ -144,6 +144,8 @@
             .hover\:scale-110:hover {
                 transform: scale(1.1);
             }
+
+
         </style>
     @endsection
 
@@ -284,67 +286,92 @@
                 @endif
 
                 <!-- Mobile Filter Toggle -->
-                <div class="lg:hidden mb-4">
-                    <button onclick="openFilters()" class="w-full py-3 bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-center text-gray-700 font-semibold hover:bg-amber-50 transition-colors">
+                <div class="block lg:hidden mb-4">
+                    <button onclick="openFilters()" class="w-full py-3 bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-center text-gray-700 font-semibold hover:bg-amber-50 transition-colors max-w-full">
                         <i class="fas fa-filter mr-2 text-amber-600"></i>
                         Filter & Sort
                     </button>
                 </div>
 
-                <!-- Mobile Filter Overlay -->
-                <div id="filterOverlay" onclick="closeFilters()" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300 lg:hidden" aria-hidden="true"></div>
+                <div class="flex flex-col lg:flex-row gap-5">
+                    <!-- Mobile Filter Overlay -->
+                    <div id="filterOverlay" onclick="closeFilters()" class="fixed inset-0 bg-black bg-opacity-20 backdrop-blur-sm z-40 hidden transition-opacity duration-300 lg:hidden" aria-hidden="true"></div>
 
-                <!-- Filters Section (Sidebar on Mobile, Row on Desktop) -->
-                <div id="filterSidebar" class="mb-8 p-4 bg-amber-50 rounded-2xl fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 lg:static lg:transform-none lg:w-auto lg:bg-amber-50 lg:shadow-none lg:p-4 lg:rounded-2xl">
-                    <!-- Mobile Header -->
-                    <div class="flex justify-between items-center mb-6 lg:hidden border-b pb-4">
-                        <h3 class="text-xl font-bold text-gray-800">Filters</h3>
-                        <button onclick="closeFilters()" class="p-2 text-gray-500 hover:text-red-500 transition-colors">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
-                    </div>
-
-                    <div class="flex flex-col lg:flex-row lg:flex-wrap gap-4">
-                        <!-- Price Filter -->
-                        <div class="w-full lg:w-auto">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
-                            <div class="flex items-center gap-2">
-                                <input type="number" id="minPrice" placeholder="Min" value="{{ $minPrice ?? '' }}"
-                                    class="w-full lg:w-24 px-3 py-2 lg:py-1 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200">
-                                <span class="text-gray-500">to</span>
-                                <input type="number" id="maxPrice" placeholder="Max" value="{{ $maxPrice ?? '' }}"
-                                    class="w-full lg:w-24 px-3 py-2 lg:py-1 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200">
-                                <button onclick="applyPriceFilter()"
-                                    class="px-4 py-2 lg:py-1 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
-                                    Apply
+                    <!-- Sidebar Filters -->
+                    <div id="filterSidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 lg:relative lg:transform-none lg:translate-x-0 lg:w-44 lg:min-w-[11rem] lg:shadow-none lg:bg-transparent lg:border-r lg:border-gray-100 lg:pr-4 overflow-y-auto lg:overflow-visible">
+                        <div class="bg-white rounded-xl shadow p-5 filter-section lg:shadow-none lg:p-0 lg:rounded-none lg:bg-transparent lg:relative">
+                            <!-- Mobile Sidebar Header -->
+                            <div class="flex justify-between items-center mb-6 lg:hidden border-b pb-4">
+                                <h3 class="text-xl font-bold text-gray-800">Filters</h3>
+                                <button onclick="closeFilters()" class="p-2 text-gray-500 hover:text-red-500 transition-colors">
+                                    <i class="fas fa-times text-xl"></i>
                                 </button>
                             </div>
-                        </div>
 
-                        <!-- In Stock Filter -->
-                        @if (isset($inStock))
-                            <div class="w-full lg:w-auto">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-                                <select id="inStock" onchange="applyInStockFilter()"
-                                    class="w-full lg:w-auto px-3 py-2 lg:py-1 rounded-lg border border-amber-200 bg-white">
-                                    <option value="">All</option>
-                                    <option value="1" {{ $inStock == '1' ? 'selected' : '' }}>In Stock</option>
-                                    <option value="0" {{ $inStock == '0' ? 'selected' : '' }}>Out of Stock</option>
-                                </select>
+                            <!-- Desktop Header -->
+                            <div class="flex justify-between items-center mb-6 hidden lg:flex border-b border-gray-100 pb-2">
+                                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Filters</h3>
+                                @if (request()->hasAny(['min_price', 'max_price', 'in_stock']))
+                                    <a href="{{ route('customer.products.category', $category->slug) }}"
+                                        class="text-xs font-medium text-amber-600 hover:text-amber-700 transition">Clear All</a>
+                                @endif
                             </div>
-                        @endif
 
-                        <!-- Mobile Apply Button -->
-                        <div class="mt-auto lg:hidden pt-4">
-                             <button onclick="closeFilters()" class="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold shadow-lg">
-                                Show Results
-                            </button>
+                            <div class="space-y-8">
+                                <!-- Price Filter -->
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">Price Range</h4>
+                                    <div class="flex items-center gap-2">
+                                        <div class="relative w-full">
+                                            <span class="absolute left-3 top-2 text-gray-400 text-xs">₹</span>
+                                            <input type="number" id="minPrice" placeholder="Min" value="{{ $minPrice ?? '' }}"
+                                                class="w-full pl-6 pr-2 py-1.5 border border-gray-200 rounded text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none">
+                                        </div>
+                                        <span class="text-gray-400">-</span>
+                                        <div class="relative w-full">
+                                            <span class="absolute left-3 top-2 text-gray-400 text-xs">₹</span>
+                                            <input type="number" id="maxPrice" placeholder="Max" value="{{ $maxPrice ?? '' }}"
+                                                class="w-full pl-6 pr-2 py-1.5 border border-gray-200 rounded text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none">
+                                        </div>
+                                    </div>
+                                    <button onclick="applyPriceFilter()"
+                                        class="mt-3 w-full py-2 bg-gray-900 text-white rounded hover:bg-black text-xs font-bold uppercase tracking-wide transition-colors">
+                                        Update Price
+                                    </button>
+                                </div>
+
+                                <!-- In Stock Filter -->
+                                @if (isset($inStock))
+                                    <div>
+                                        <h4 class="text-xs font-bold text-gray-900 uppercase tracking-wide mb-4">Stock</h4>
+                                        <div class="relative">
+                                            <select id="inStock" onchange="applyInStockFilter()"
+                                                class="w-full appearance-none px-3 py-2 border border-gray-200 rounded text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none bg-white">
+                                                <option value="">All Availability</option>
+                                                <option value="1" {{ $inStock == '1' ? 'selected' : '' }}>In Stock</option>
+                                                <option value="0" {{ $inStock == '0' ? 'selected' : '' }}>Out of Stock</option>
+                                            </select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Mobile Apply Button -->
+                                <div class="mt-auto lg:hidden pt-4">
+                                     <button onclick="closeFilters()" class="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold shadow-lg">
+                                        Show Results
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Products Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <!-- Products Content -->
+                    <div class="flex-1">
+                        <!-- Products Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     @forelse($products as $product)
                         <div
                             class="product-card bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 group h-full flex flex-col animate-scale-in">
@@ -480,6 +507,8 @@
                         </nav>
                     </div>
                 @endif
+                </div>
+              </div>
             </div>
         </section>
 
@@ -549,6 +578,9 @@
     <script>
         // Mobile Sidebar Functions
         function openFilters() {
+            // Desktop: do nothing
+            if (window.innerWidth >= 1024) return;
+
             const sidebar = document.getElementById('filterSidebar');
             const overlay = document.getElementById('filterOverlay');
             
@@ -559,6 +591,9 @@
         }
 
         function closeFilters() {
+            // Desktop: do nothing
+            if (window.innerWidth >= 1024) return;
+            
             const sidebar = document.getElementById('filterSidebar');
             const overlay = document.getElementById('filterOverlay');
             

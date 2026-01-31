@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - eCommerce Admin Panel</title>
+    <title>Login - MyApiqo Admin Panel</title>
 
     <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -62,7 +62,7 @@
             </div>
             <h1
                 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                eCommerce Admin
+                MyApiqo Admin
             </h1>
             <p class="text-gray-600">Sign in to your admin dashboard</p>
         </div>
