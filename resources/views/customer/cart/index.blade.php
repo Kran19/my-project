@@ -350,14 +350,29 @@
                                         <!-- Available Promo Codes -->
                                         <div id="availablePromoCodes" class="mb-4"></div>
                                         
-                                        <div class="relative">
-                                            <input type="text" id="promoCode" placeholder="Enter promo code"
-                                                class="w-full px-4 py-3 pl-10 rounded-full border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none transition-colors">
-                                            <div class="absolute left-3 top-1/2 transform -translate-y-1/2"><i
-                                                    class="fas fa-tag text-amber-600"></i></div>
-                                            <button onclick="applyPromoCode()"
-                                                class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-amber-600 text-white px-4 py-1.5 rounded-full text-sm hover:bg-amber-700 transition-colors">Apply</button>
-                                        </div>
+                                        @if(isset($cart['offer']) && $cart['offer'])
+                                            <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 flex justify-between items-center">
+                                                <div class="flex items-center gap-2">
+                                                    <i class="fas fa-tag text-green-600"></i>
+                                                    <div>
+                                                        <p class="text-sm font-bold text-green-800">Code: {{ $cart['offer']['code'] }}</p>
+                                                        <p class="text-xs text-green-600">Coupon Applied</p>
+                                                    </div>
+                                                </div>
+                                                <button onclick="removeCoupon()" class="text-xs text-red-600 hover:text-red-800 font-medium hover:underline">
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        @else
+                                            <div class="relative">
+                                                <input type="text" id="promoCode" placeholder="Enter promo code"
+                                                    class="w-full px-4 py-3 pl-10 rounded-full border border-gray-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none transition-colors">
+                                                <div class="absolute left-3 top-1/2 transform -translate-y-1/2"><i
+                                                        class="fas fa-tag text-amber-600"></i></div>
+                                                <button onclick="applyPromoCode()"
+                                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-amber-600 text-white px-4 py-1.5 rounded-full text-sm hover:bg-amber-700 transition-colors">Apply</button>
+                                            </div>
+                                        @endif
                                         <div id="promoMessage" class="text-sm mt-2 hidden"></div>
                                     </div>
                                     <div class="border-t border-amber-300 pt-4 md:pt-6 mb-6">
