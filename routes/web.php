@@ -407,6 +407,8 @@ Route::name('customer.')->group(function () {
         Route::get('/', [CustomerWishlist::class, 'index'])->name('index');
 
         // Item management
+        Route::post('/toggle', [CustomerWishlist::class, 'toggle'])->name('toggle');
+        Route::get('/check/{productId}', [CustomerWishlist::class, 'check'])->name('check');
         Route::post('/add', [CustomerWishlist::class, 'add'])->name('add');
         Route::post('/remove', [CustomerWishlist::class, 'remove'])->name('remove');
         Route::post('/remove-multiple', [CustomerWishlist::class, 'removeMultiple'])->name('remove.multiple');

@@ -541,4 +541,93 @@ class WishlistController extends Controller
             'item_id' => $wishlistItem->id
         ]);
     }
+    public function toggle(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required_without:product_variant_id|exists:products,id',
+            'product_variant_id' => 'required_without:product_id|exists:product_variants,id',
+        ]);
+
+        $customer = Auth::guard('customer')->user();
+
+        // Get or create default wishlist
+        $wishlist = Wishlist::firstOrCreate(
+            [
+                'customer_id' => $customer->id,
+                'name' => 'My Wishlist',
+            ],
+            [
+                'is_public' => false,
+            ]
+        );
+
+        $variantId = $request->product_variant_id;
+
+        // If only product_id is provided, find the default (first) variant
+        if (!$variantId && $request->product_id) {
+            $variant = ProductVariant::where('product_id', $request->product_id)->first();
+            if ($variant) {
+                $variantId = $variant->id;
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product variant not found'
+                ], 404);
+            }
+        }
+
+        // Check availability
+        $existingItem = WishlistItem::where('wishlist_id', $wishlist->id)
+            ->where('product_variant_id', $variantId)
+            ->first();
+
+        if ($existingItem) {
+            // Remove
+            $existingItem->delete();
+            $status = 'removed';
+            $message = 'Removed from wishlist';
+        } else {
+            // Add
+            WishlistItem::create([
+                'wishlist_id' => $wishlist->id,
+                'product_variant_id' => $variantId,
+            ]);
+            $status = 'added';
+            $message = 'Added to wishlist';
+        }
+
+        $count = $wishlist->items()->count();
+
+        return response()->json([
+            'success' => true,
+            'status' => $status,
+            'message' => $message,
+            'count' => $count
+        ]);
+    }
+
+    public function check($productId)
+    {
+        $customer = Auth::guard('customer')->user();
+        if (!$customer) {
+            return response()->json(['success' => false, 'in_wishlist' => false]);
+        }
+
+        $wishlist = Wishlist::where('customer_id', $customer->id)->first();
+        if (!$wishlist) {
+            return response()->json(['success' => true, 'in_wishlist' => false]);
+        }
+
+        // Check if any variant of this product is in the wishlist
+        $exists = WishlistItem::where('wishlist_id', $wishlist->id)
+            ->whereHas('variant', function($q) use ($productId) {
+                $q->where('product_id', $productId);
+            })
+            ->exists();
+
+        return response()->json([
+            'success' => true,
+            'in_wishlist' => $exists
+        ]);
+    }
 }
