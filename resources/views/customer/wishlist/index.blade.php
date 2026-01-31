@@ -203,15 +203,23 @@
                                 <a href="{{ route('customer.products.details', $item->variant->product->slug ?? '#') }}"
                                    class="block aspect-square overflow-hidden">
                                     @php
-                                        $image = null;
+                                        $imagePath = null;
+                                        // Try variant image first
                                         if ($item->variant && $item->variant->images) {
                                             $images = is_string($item->variant->images) ? json_decode($item->variant->images, true) : $item->variant->images;
-                                            $image = is_array($images) && !empty($images) ? $images[0] : null;
+                                            $firstImage = is_array($images) && !empty($images) ? $images[0] : null;
+                                            if ($firstImage) {
+                                                $imagePath = is_array($firstImage) ? ($firstImage['url'] ?? $firstImage) : $firstImage;
+                                            }
+                                        }
+                                        // Fallback to product main image
+                                        if (!$imagePath && $item->variant && $item->variant->product && $item->variant->product->main_image) {
+                                            $imagePath = $item->variant->product->main_image;
                                         }
                                     @endphp
 
-                                    @if($image)
-                                    <img src="{{ is_array($image) ? ($image['url'] ?? asset('storage/' . $image)) : asset('storage/' . $image) }}"
+                                    @if($imagePath)
+                                    <img src="{{ asset('storage/' . $imagePath) }}"
                                          alt="{{ $item->variant->product->name ?? 'Product' }}"
                                          class="w-full h-full object-cover product-image">
                                     @else
