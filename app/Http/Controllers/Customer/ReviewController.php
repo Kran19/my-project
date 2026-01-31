@@ -37,12 +37,12 @@ class ReviewController extends Controller
              // $review->email = $request->email; // Not in fillable
             $review->rating = $request->rating;
             $review->review = $request->comment;
-            $review->status = 0; // Default status false/pending
+            $review->status = 1; // Auto-approve
             $review->save();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Thank you! Your review has been submitted for approval.'
+                'message' => 'Thank you! Your review has been posted.'
             ]);
 
         } catch (\Exception $e) {
