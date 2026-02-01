@@ -408,7 +408,7 @@ class ProductService
     private function transformProductForListing(Product $product): array
     {
         $defaultVariant = $product->variants->where('is_default', true)->first();
-        $mainImage = '/images/placeholder-product.jpg';
+        $mainImage = 'images/placeholder-product.jpg';
 
         // Get main image
         if ($defaultVariant && $defaultVariant->images && $defaultVariant->images->isNotEmpty()) {
@@ -417,7 +417,7 @@ class ProductService
                 $primaryImage = $defaultVariant->images->first();
             }
             if ($primaryImage) {
-                $mainImage = $primaryImage->full_url ?? $primaryImage->thumb_url ?? $primaryImage->file_path;
+                $mainImage = $primaryImage->file_path;
             }
         }
 
@@ -546,7 +546,7 @@ class ProductService
             foreach ($variant->images as $image) {
                 $allImages->push([
                     'id' => $image->id,
-                    'url' => $image->full_url ?? $image->thumb_url ?? $image->file_path,
+                    'url' => $image->file_path,
                     'variant_id' => $variant->id,
                     'is_primary' => (bool) ($image->pivot->is_primary ?? false),
                 ]);
@@ -554,14 +554,14 @@ class ProductService
         }
 
         // Main image (from default variant)
-        $mainImage = '/images/placeholder-product.jpg';
+        $mainImage = 'images/placeholder-product.jpg';
         if ($defaultVariant && $defaultVariant->images && $defaultVariant->images->isNotEmpty()) {
             $primaryImage = $defaultVariant->images->where('pivot.is_primary', true)->first();
             if (!$primaryImage) {
                 $primaryImage = $defaultVariant->images->first();
             }
             if ($primaryImage) {
-                $mainImage = $primaryImage->full_url ?? $primaryImage->thumb_url ?? $primaryImage->file_path;
+                $mainImage = $primaryImage->file_path;
             }
         }
 
@@ -595,7 +595,7 @@ class ProductService
             $images = $variant->images->map(function ($image) {
                 return [
                     'id' => $image->id,
-                    'url' => $image->full_url ?? $image->thumb_url ?? $image->file_path,
+                    'url' => $image->file_path,
                     'is_primary' => (bool) ($image->pivot->is_primary ?? false),
                 ];
             })->values()->toArray();
