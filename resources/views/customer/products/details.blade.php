@@ -450,7 +450,7 @@
                                         </span>
                                     </div>
                                     <p class="text-sm text-gray-600">
-                                        Inclusive of all taxes • Free Shipping
+                                        Inclusive of all taxes • Quality Assured
                                     </p>
                                 </div>
 
