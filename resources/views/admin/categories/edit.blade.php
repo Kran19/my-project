@@ -53,12 +53,19 @@
                                     </button>
                                 </div>
 
-                                <!-- Search -->
-                                <div class="mb-6">
-                                    <div class="relative">
+                                <!-- Search and Upload -->
+                                <div class="mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                                    <div class="relative w-full md:w-1/2">
                                         <input type="text" id="mediaSearchInput" placeholder="Search media..."
                                             class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-full">
                                         <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                    </div>
+                                    <div class="flex items-center space-x-2 w-full md:w-auto">
+                                        <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow transition flex items-center justify-center w-full md:w-auto">
+                                            <i class="fas fa-upload mr-2"></i>
+                                            <span>Upload New</span>
+                                            <input type="file" id="mediaUploadInput" class="hidden" multiple onchange="handleFileUpload(this)">
+                                        </label>
                                     </div>
                                 </div>
 
@@ -139,10 +146,165 @@
     let allSpecGroups = [];
     let parentCategories = [];
 
+    // Open media library - moved up and made global
+    window.openMediaLibrary = async function(search = '', page = 1) {
+        console.log('openMediaLibrary called', { search, page });
+        try {
+            const response = await axiosInstance.get('/media', {
+                params: {
+                    per_page: 50,
+                    type: 'image',
+                    search: search,
+                    page: page
+                }
+            });
+
+            console.log('Media API Response:', response.data);
+
+            if (response.data.success) {
+                // Access the nested data.data array
+                const mediaItems = response.data.data?.data || response.data.data || [];
+
+                if (!Array.isArray(mediaItems)) {
+                    console.error('Media items is not an array:', mediaItems);
+                    toastr.error('Invalid media data format');
+                    return;
+                }
+
+                const mediaGrid = document.getElementById('mediaGrid');
+                if (!mediaGrid) {
+                    console.error('mediaGrid element not found');
+                    return;
+                }
+                
+                mediaGrid.innerHTML = '';
+
+                if (mediaItems.length === 0) {
+                    mediaGrid.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-inbox text-gray-400 text-4xl mb-3"></i>
+                            <p class="text-gray-500">No media found</p>
+                        </div>
+                    `;
+                    // Even if empty, show modal so user sees it worked
+                } else {
+                    mediaItems.forEach(media => {
+                        // Use thumbnail_url if available, fallback to url
+                        const mediaUrl = media.thumbnail_url || media.url || media.full_url || '/images/default-image.jpg';
+                        const originalUrl = media.url || media.full_url || mediaUrl;
+                        const mediaName = media.file_name || media.name || 'Untitled';
+
+                        const mediaItem = document.createElement('div');
+                        mediaItem.className = 'relative group cursor-pointer';
+                        mediaItem.dataset.id = media.id;
+                        mediaItem.dataset.url = originalUrl;
+
+                        mediaItem.innerHTML = `
+                            <div class="relative overflow-hidden rounded-lg border-2 border-transparent group-hover:border-indigo-500 transition-colors">
+                                <img src="${mediaUrl}"
+                                     alt="${mediaName}"
+                                     class="w-full h-32 object-cover"
+                                     onerror="this.src='/images/default-image.jpg'">
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity"></div>
+                                <div class="absolute top-2 right-2 hidden group-hover:block">
+                                    <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-white text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-2 text-xs text-gray-600 truncate">${mediaName}</p>
+                        `;
+
+                        mediaItem.addEventListener('click', function() {
+                            // Remove selection from all items
+                            document.querySelectorAll('#mediaGrid > div').forEach(item => {
+                                item.classList.remove('selected-media');
+                                const borderDiv = item.querySelector('.border-2');
+                                if (borderDiv) {
+                                    borderDiv.classList.remove('border-indigo-500');
+                                    borderDiv.classList.add('border-transparent');
+                                }
+                            });
+
+                            // Select this item
+                            this.classList.add('selected-media');
+                            const currentBorder = this.querySelector('.border-2');
+                            if (currentBorder) {
+                                currentBorder.classList.remove('border-transparent');
+                                currentBorder.classList.add('border-indigo-500');
+                            }
+
+                            selectedMediaId = this.dataset.id;
+                            selectedMediaUrl = this.dataset.url;
+                        });
+
+                        mediaGrid.appendChild(mediaItem);
+                    });
+                }
+
+                // Show modal
+                const modal = document.getElementById('mediaLibraryModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                } else {
+                    console.error('mediaLibraryModal element not found');
+                }
+            } else {
+                toastr.error(response.data.message || 'Failed to load media');
+            }
+        } catch (error) {
+            console.error('Error loading media:', error);
+            toastr.error('Failed to load media library');
+        }
+    }
+
+    // Handle file upload
+    window.handleFileUpload = async function(input) {
+        if (!input.files.length) return;
+        
+        console.log('Uploading files:', input.files.length);
+        const formData = new FormData();
+        for (let i = 0; i < input.files.length; i++) {
+            formData.append('files[]', input.files[i]);
+        }
+        
+        try {
+            toastr.info('Uploading media...');
+            const response = await axiosInstance.post('/media/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            if (response.data.success) {
+                toastr.success('Media uploaded successfully');
+                openMediaLibrary(); // Refresh grid
+            } else {
+                toastr.error(response.data.message || 'Upload failed');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            toastr.error(error.response?.data?.message || 'Upload failed');
+        } finally {
+            input.value = ''; // Clear input
+        }
+    }
+
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Category edit page loaded for ID:', {{ $id }});
         loadCategoryData();
+
+        // Search media
+        const searchInput = document.getElementById('mediaSearchInput');
+        if (searchInput) {
+            let debounceTimer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    openMediaLibrary(this.value);
+                }, 500);
+            });
+        }
     });
 
     // Load category data
@@ -718,92 +880,6 @@
     }
 
     // Open media library
-    async function openMediaLibrary() {
-        try {
-            const response = await axiosInstance.get('/media', {
-                params: {
-                    per_page: 50,
-                    type: 'image'
-                }
-            });
-
-            console.log('Media API Response:', response.data);
-
-            if (response.data.success) {
-                const mediaItems = response.data.data || response.data;
-
-                if (!Array.isArray(mediaItems)) {
-                    console.error('Media items is not an array:', mediaItems);
-                    toastr.error('Invalid media data format');
-                    return;
-                }
-
-                const mediaGrid = document.getElementById('mediaGrid');
-                mediaGrid.innerHTML = '';
-
-                if (mediaItems.length === 0) {
-                    mediaGrid.innerHTML = `
-                        <div class="col-span-full text-center py-12">
-                            <i class="fas fa-inbox text-gray-400 text-4xl mb-3"></i>
-                            <p class="text-gray-500">No media found</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                mediaItems.forEach(media => {
-                    const mediaUrl = media.url || media.full_url || media.thumb_url || '/images/default-image.jpg';
-
-                    const mediaItem = document.createElement('div');
-                    mediaItem.className = 'relative group cursor-pointer';
-                    mediaItem.dataset.id = media.id;
-                    mediaItem.dataset.url = mediaUrl;
-
-                    mediaItem.innerHTML = `
-                        <div class="relative overflow-hidden rounded-lg border-2 border-transparent group-hover:border-indigo-500 transition-colors">
-                            <img src="${mediaUrl}"
-                                 alt="${media.name || 'Media'}"
-                                 class="w-full h-32 object-cover"
-                                 onerror="this.src='/images/default-image.jpg'">
-                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity"></div>
-                            <div class="absolute top-2 right-2 hidden group-hover:block">
-                                <div class="w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-check text-white text-xs"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="mt-2 text-xs text-gray-600 truncate">${media.name || 'Untitled'}</p>
-                    `;
-
-                    mediaItem.addEventListener('click', function() {
-                        // Remove selection from all items
-                        document.querySelectorAll('#mediaGrid > div').forEach(item => {
-                            item.classList.remove('selected-media');
-                            item.querySelector('.border-2').classList.remove('border-indigo-500');
-                            item.querySelector('.border-2').classList.add('border-transparent');
-                        });
-
-                        // Select this item
-                        this.classList.add('selected-media');
-                        this.querySelector('.border-2').classList.remove('border-transparent');
-                        this.querySelector('.border-2').classList.add('border-indigo-500');
-
-                        selectedMediaId = this.dataset.id;
-                        selectedMediaUrl = this.dataset.url;
-                    });
-
-                    mediaGrid.appendChild(mediaItem);
-                });
-
-                // Show modal
-                document.getElementById('mediaLibraryModal').classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
-            }
-        } catch (error) {
-            console.error('Error loading media:', error);
-            toastr.error('Failed to load media library');
-        }
-    }
 
     // Close media library
     function closeMediaLibrary() {

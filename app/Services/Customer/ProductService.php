@@ -786,7 +786,8 @@ class ProductService
      */
     public function getCategoryBySlug($slug)
     {
-        return Category::where('slug', $slug)
+        return Category::with('image')
+            ->where('slug', $slug)
             ->where('status', 1)
             ->first();
     }

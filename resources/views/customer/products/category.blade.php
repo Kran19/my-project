@@ -1,4 +1,4 @@
-    @extends('customer.layouts.master')
+@extends('customer.layouts.master')
 
     @section('title', ($category->name ?? 'Products') . ' - APIQO Jewellery')
 
@@ -114,6 +114,56 @@
                 animation: heart-beat 1s ease-in-out;
             }
 
+            /* Standardized Hero Banner */
+            .category-hero-banner {
+                width: 100%;
+                position: relative;
+                overflow: hidden;
+                aspect-ratio: 1920 / 800;
+                min-height: 600px;
+                max-height: 800px;
+            }
+
+            /* When there IS a category image: keep the tall cinematic aspect ratio */
+            .category-hero-banner.has-image {
+                aspect-ratio: 1920 / 800;
+                min-height: 600px;
+                max-height: 800px;
+            }
+
+            /* When there is NO image: auto height, no forced aspect ratio */
+            .category-hero-banner.no-image {
+                aspect-ratio: unset;
+                min-height: unset;
+                max-height: unset;
+                height: auto;
+            }
+
+            @media (max-width: 768px) {
+                /* WITH image on mobile: shrink but keep cinematic crop */
+                .category-hero-banner.has-image {
+                    aspect-ratio: 16 / 9;
+                    min-height: unset;
+                    max-height: 70vh;
+                }
+
+                /* WITHOUT image on mobile: just let it be as tall as content needs */
+                .category-hero-banner.no-image {
+                    aspect-ratio: unset;
+                    min-height: unset;
+                    max-height: none;
+                    height: auto;
+                    padding-top: 7rem;   /* clear the sticky header */
+                    padding-bottom: 2rem;
+                }
+
+                /* Shrink the big title on mobile so it doesn't overflow */
+                .category-hero-banner.no-image .brand-title {
+                    font-size: 2.25rem !important;
+                    line-height: 1.2;
+                }
+            }
+
             /* Product hover effects */
             .product-card:hover img {
                 transform: scale(1.1);
@@ -144,8 +194,6 @@
             .hover\:scale-110:hover {
                 transform: scale(1.1);
             }
-
-
         </style>
     @endsection
 
@@ -153,90 +201,106 @@
         <!-- ============================================
             CATEGORY HERO SECTION
             ============================================ -->
-        <section class="relative bg-gradient-to-b from-amber-50 to-beige-100 py-16 overflow-hidden">
-            <!-- Background Elements -->
-            <div class="absolute inset-0 pointer-events-none">
-                <div class="absolute top-0 left-0 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl"></div>
-                <div class="absolute bottom-0 right-0 w-80 h-80 bg-amber-300/10 rounded-full blur-3xl"></div>
-            </div>
-
-            <div class="max-w-7xl mx-auto px-4 relative z-10">
-                <!-- Breadcrumb -->
-                <div class="mb-8">
-                    <nav class="flex" aria-label="Breadcrumb">
-                        <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                            <li class="inline-flex items-center">
-                                <a href="{{ route('customer.home.index') }}"
-                                    class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors">
-                                    <i class="fas fa-home mr-2"></i>
-                                    Home
-                                </a>
-                            </li>
-                            <li>
-                                <div class="flex items-center">
-                                    <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                                    <a href="{{ route('customer.products.list') }}"
-                                        class="ml-1 text-sm font-medium text-gray-700 hover:text-amber-600 md:ml-2 transition-colors">
-                                        Categories
-                                    </a>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="flex items-center">
-                                    <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                                    <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">
-                                        {{ $category->name ?? 'Category' }}
-                                    </span>
-                                </div>
-                            </li>
-                        </ol>
-                    </nav>
+        <section class="category-hero-banner {{ $category->image ? 'has-image' : 'no-image' }} {{ $category->image ? 'bg-gray-900 border-b border-gray-800' : 'bg-gradient-to-b from-amber-50 to-beige-100' }} flex items-center justify-center w-full overflow-hidden">
+            @if($category->image)
+                <!-- Category Image Background -->
+                <div class="absolute inset-0 z-0">
+                    <img src="{{ $category->image->url }}" alt="{{ $category->name }}" class="w-full h-full object-cover opacity-40">
+                    <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent"></div>
                 </div>
+            @else
+                <!-- Original Background Elements -->
+                <div class="absolute inset-0 pointer-events-none">
+                    <div class="absolute top-0 left-0 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl"></div>
+                    <div class="absolute bottom-0 right-0 w-80 h-80 bg-amber-300/10 rounded-full blur-3xl"></div>
+                </div>
+            @endif
+
+            <div class="max-w-7xl mx-auto w-full px-4 relative z-10">
+                @if(!$category->image)
+                    <!-- Breadcrumb -->
+                    <div class="mb-8">
+                        <nav class="flex" aria-label="Breadcrumb">
+                            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                                <li class="inline-flex items-center">
+                                    <a href="{{ route('customer.home.index') }}"
+                                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors">
+                                        <i class="fas fa-home mr-2"></i>
+                                        Home
+                                    </a>
+                                </li>
+                                <li>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                                        <a href="{{ route('customer.products.list') }}"
+                                            class="ml-1 text-sm font-medium text-gray-700 hover:text-amber-600 md:ml-2 transition-colors">
+                                            Categories
+                                        </a>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">
+                                            {{ $category->name ?? 'Category' }}
+                                        </span>
+                                    </div>
+                                </li>
+                            </ol>
+                        </nav>
+                    </div>
+                @endif
 
                 <!-- Hero Content -->
                 <div class="text-center">
-                    <div class="inline-flex items-center justify-center gap-3 mb-6 animate-fade-in-up">
-                        <div class="w-16 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
-                        <span class="text-sm font-semibold tracking-widest text-amber-700">CATEGORY</span>
-                        <div class="w-16 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
-                    </div>
+                    @if(!$category->image)
+                        <div class="inline-flex items-center justify-center gap-3 mb-6 animate-fade-in-up">
+                            <div class="w-16 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+                            <span class="text-sm font-semibold tracking-widest text-amber-700">CATEGORY</span>
+                            <div class="w-16 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+                        </div>
+                    @endif
 
                     <div class="flex flex-col items-center justify-center mb-8">
-                        <div
-                            class="w-24 h-24 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full flex items-center justify-center shadow-lg mb-6 animate-bounce-in">
-                            @if ($category->icon ?? false)
-                                <i class="{{ $category->icon }} text-4xl text-amber-700"></i>
-                            @else
-                                <i class="fas fa-gem text-4xl text-amber-700"></i>
+                        @if(!$category->image)
+                            <div
+                                class="w-24 h-24 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full flex items-center justify-center shadow-lg mb-6 animate-bounce-in">
+                                @if ($category->icon ?? false)
+                                    <i class="{{ $category->icon }} text-4xl text-amber-700"></i>
+                                @else
+                                    <i class="fas fa-gem text-4xl text-amber-700"></i>
+                                @endif
+                            </div>
+                            <h1 class="brand-title text-5xl md:text-6xl text-gray-800 mb-4 animate-fade-in-up"
+                                style="animation-delay: 0.2s;">
+                                {{ $category->name ?? 'Collection' }}
+                            </h1>
+                            @if ($category->description ?? false)
+                                <p class="text-xl text-gray-600 max-w-2xl animate-fade-in-up" style="animation-delay: 0.4s;">
+                                    {{ $category->description }}
+                                </p>
                             @endif
-                        </div>
-                        <h1 class="brand-title text-5xl md:text-6xl text-gray-800 mb-4 animate-fade-in-up"
-                            style="animation-delay: 0.2s;">
-                            {{ $category->name ?? 'Collection' }}
-                        </h1>
-                        @if ($category->description ?? false)
-                            <p class="text-xl text-gray-600 max-w-2xl animate-fade-in-up" style="animation-delay: 0.4s;">
-                                {{ $category->description }}
-                            </p>
                         @endif
                     </div>
 
-                    <!-- Category Stats -->
-                    <div class="flex flex-wrap justify-center gap-8 mb-12 animate-fade-in-up"
-                        style="animation-delay: 0.6s;">
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-amber-700 mb-2">{{ $paginator['total'] ?? 0 }}</div>
-                            <div class="text-sm text-gray-600">Products</div>
+                    @if(!$category->image)
+                        <!-- Category Stats -->
+                        <div class="flex flex-wrap justify-center gap-8 mb-12 animate-fade-in-up"
+                            style="animation-delay: 0.6s;">
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-amber-700 mb-2">{{ $paginator['total'] ?? 0 }}</div>
+                                <div class="text-sm text-gray-600">Products</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-amber-700 mb-2">4.8</div>
+                                <div class="text-sm text-gray-600">Average Rating</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl font-bold text-amber-700 mb-2">98%</div>
+                                <div class="text-sm text-gray-600">Happy Customers</div>
+                            </div>
                         </div>
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-amber-700 mb-2">4.8</div>
-                            <div class="text-sm text-gray-600">Average Rating</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-3xl font-bold text-amber-700 mb-2">98%</div>
-                            <div class="text-sm text-gray-600">Happy Customers</div>
-                        </div>
-                    </div>
+                    @endif
                 </div>
             </div>
         </section>

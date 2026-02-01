@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @mixin IdeHelperMedia
@@ -64,5 +65,26 @@ class Media extends Model
     public function reviewImages(): HasMany
     {
         return $this->hasMany(ReviewImage::class);
+    }
+
+    /**
+     * Accessors
+     */
+    public function getUrlAttribute(): ?string
+    {
+        return $this->file_path ? asset(Storage::url($this->file_path)) : null;
+    }
+
+    public function getFullUrlAttribute(): ?string
+    {
+        return $this->url;
+    }
+
+    public function getThumbUrlAttribute(): ?string
+    {
+        if ($this->thumbnails && isset($this->thumbnails['small'])) {
+            return asset(Storage::url($this->thumbnails['small']));
+        }
+        return $this->url;
     }
 }
