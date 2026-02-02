@@ -505,18 +505,11 @@
             <div class="footer-section">
                 <h4 class="font-bold mb-6 text-lg tracking-wider">SHOP</h4>
                 <ul class="space-y-3">
-                    <li>
-                        <a href="{{ route('customer.products.list') }}" class="footer-link text-sm text-gray-400">New Arrivals</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('customer.products.list') }}?filter=best_sellers" class="footer-link text-sm text-gray-400">Best Sellers</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('customer.category.products', ['slug' => 'wedding-collection']) }}" class="footer-link text-sm text-gray-400">Wedding Collection</a>
-                    </li>
-                    
-                   
-                   
+                    @foreach($navCategories->take(6) as $category)
+                        <li>
+                            <a href="{{ route('customer.category.products', $category->slug) }}" class="footer-link text-sm text-gray-400">{{ $category->name }}</a>
+                        </li>
+                    @endforeach
                 </ul>
             </div>
 
