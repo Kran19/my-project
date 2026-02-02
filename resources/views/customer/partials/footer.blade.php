@@ -492,11 +492,11 @@
                 <div class="flex flex-wrap gap-3">
                     <span class="feature-badge text-xs text-gray-300">
                         <i class="fas fa-shield-alt mr-1 text-amber-400"></i>
-                        Certified Authentic
+                        Quality Assured
                     </span>
                     <span class="feature-badge text-xs text-gray-300">
                         <i class="fas fa-shipping-fast mr-1 text-amber-400"></i>
-                        Free Shipping on orders over 1499
+                        Free Shipping on orders over 999
                     </span>
                 </div>
             </div>
