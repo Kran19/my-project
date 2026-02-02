@@ -303,7 +303,7 @@
                     <!-- Breadcrumb -->
                     <div class="mb-8 animate-fade-in">
                         <nav class="flex" aria-label="Breadcrumb">
-                            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                            <ol class="inline-flex flex-wrap items-center space-x-1 md:space-x-3">
                                 <li class="inline-flex items-center">
                                     <a href="{{ route('customer.home.index') }}"
                                         class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors">
