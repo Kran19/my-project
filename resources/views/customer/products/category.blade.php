@@ -350,12 +350,12 @@
                 @endif
 
                 <!-- Mobile Filter Toggle -->
-                <div class="block lg:hidden mb-4">
+                <!-- <div class="block lg:hidden mb-4">
                     <button onclick="openFilters()" class="w-full py-3 bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-center text-gray-700 font-semibold hover:bg-amber-50 transition-colors max-w-full">
                         <i class="fas fa-filter mr-2 text-amber-600"></i>
                         Filter & Sort
                     </button>
-                </div>
+                </div> -->
 
                 <div class="flex flex-col lg:flex-row gap-5">
                     <!-- Mobile Filter Overlay -->
