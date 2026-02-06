@@ -492,11 +492,11 @@
                 <div class="flex flex-wrap gap-3">
                     <span class="feature-badge text-xs text-gray-300">
                         <i class="fas fa-shield-alt mr-1 text-amber-400"></i>
-                        Certified Authentic
+                        Quality Assured
                     </span>
                     <span class="feature-badge text-xs text-gray-300">
                         <i class="fas fa-shipping-fast mr-1 text-amber-400"></i>
-                        Free Shipping on orders over 1499
+                        Free Shipping on orders over 999
                     </span>
                 </div>
             </div>
@@ -505,18 +505,11 @@
             <div class="footer-section">
                 <h4 class="font-bold mb-6 text-lg tracking-wider">SHOP</h4>
                 <ul class="space-y-3">
-                    <li>
-                        <a href="{{ route('customer.products.list') }}" class="footer-link text-sm text-gray-400">New Arrivals</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('customer.products.list') }}?filter=best_sellers" class="footer-link text-sm text-gray-400">Best Sellers</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('customer.category.products', ['slug' => 'wedding-collection']) }}" class="footer-link text-sm text-gray-400">Wedding Collection</a>
-                    </li>
-                    
-                   
-                   
+                    @foreach($navCategories->take(6) as $category)
+                        <li>
+                            <a href="{{ route('customer.category.products', $category->slug) }}" class="footer-link text-sm text-gray-400">{{ $category->name }}</a>
+                        </li>
+                    @endforeach
                 </ul>
             </div>
 

@@ -10,11 +10,64 @@
             </h1>
         </div>
         <div class="flex items-center space-x-4">
-            <div class="relative hidden sm:block">
-                <input type="text" placeholder="Search..."
-                    class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+            <div class="relative hidden sm:flex items-center space-x-2 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100" title="Session Timeout">
+                <i class="fas fa-hourglass-half text-rose-500"></i>
+                <span class="text-xs text-rose-600 font-medium mr-1">Session expires in:</span>
+                <span id="session-timer" class="font-mono text-rose-700 font-bold">--:--:--</span>
             </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Session lifetime in minutes to seconds
+                    let timeLeft = {{ config('session.lifetime') }} * 60; 
+                    
+                    const timerDisplay = document.getElementById('session-timer');
+                    const logoutForm = document.getElementById('logoutForm'); // Ensure this ID exists in your logout form
+
+                    function formatTime(seconds) {
+                        const h = Math.floor(seconds / 3600);
+                        const m = Math.floor((seconds % 3600) / 60);
+                        const s = seconds % 60;
+                        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                    }
+
+                    function updateTimer() {
+                        if (timeLeft <= 0) {
+                            timerDisplay.textContent = "00:00:00";
+                            
+                            // Perform logout via fetch to handle 419 (CSRF token mismatch) nicely
+                            if (logoutForm) {
+                                const formData = new FormData(logoutForm);
+                                fetch(logoutForm.action, {
+                                    method: 'POST',
+                                    body: formData,
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                })
+                                .then(response => {
+                                    // Whether success (200) or error (419/500), we redirect to login
+                                    window.location.href = "{{ route('admin.login') }}";
+                                })
+                                .catch(error => {
+                                    // Network error or other issue, still force redirect
+                                    window.location.href = "{{ route('admin.login') }}";
+                                });
+                            } else {
+                                window.location.href = "{{ route('admin.login') }}";
+                            }
+                            return;
+                        }
+
+                        timerDisplay.textContent = formatTime(timeLeft);
+                        timeLeft--;
+                    }
+
+                    // Run immediately and then every second
+                    updateTimer();
+                    setInterval(updateTimer, 1000);
+                });
+            </script>
             <!-- <div class="relative block">
                 <a href="{{ route('admin.notifications.index') }}"
                     class="text-gray-500 hover:text-gray-700 relative">
