@@ -211,10 +211,11 @@ class ProductController extends Controller
         $query = Product::with(['defaultVariant.images', 'variants.images']);
 
         if ($request->filled('q')) {
-            $search = $request->q;
+            $search = trim($request->q);
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('product_code', 'like', "%{$search}%")
+                  ->orWhere('id', $search)
                   ->orWhereHas('variants', function($qv) use ($search) {
                         $qv->where('sku', 'like', "%{$search}%");
                   });

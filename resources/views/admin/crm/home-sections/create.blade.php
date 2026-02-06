@@ -192,15 +192,25 @@ async function loadPreset(type) {
     }
 }
 
-searchInput.addEventListener('input', _.debounce(async function() {
-    const query = this.value;
+// Utility: Debounce function to replace lodash
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+searchInput.addEventListener('input', debounce(async function() {
+    const query = this.value.trim();
     if (query.length < 2) {
         resultsDiv.classList.add('hidden');
         return;
     }
 
     try {
-        const response = await axios.get(`{{ route('admin.products.search') }}?q=${query}`);
+        const response = await axios.get(`{{ route('admin.products.search') }}?q=${encodeURIComponent(query)}`);
         if (response.data.success) {
             renderSearchResults(response.data.data);
         }
