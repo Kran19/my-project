@@ -212,12 +212,17 @@ class ProductController extends Controller
 
         if ($request->filled('q')) {
             $search = $request->q;
-            $query->where('name', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('product_code', 'like', "%{$search}%")
-                  ->orWhereHas('defaultVariant', function($q) use ($search) {
-                        $q->where('sku', 'like', "%{$search}%");
+                  ->orWhereHas('variants', function($qv) use ($search) {
+                        $qv->where('sku', 'like', "%{$search}%");
                   });
+            });
         }
+        
+        // Optional: Filter active products if needed, but user might want to see drafts in admin.
+        // $query->where('status', '!=', 'archived'); 
 
         $products = $query->latest()->limit(20)->get();
 
@@ -227,23 +232,41 @@ class ProductController extends Controller
                 // Determine image: try default variant, then first variant, then placeholder
                 $imagePath = null;
                 
-                if ($product->main_image) {
-                     $imagePath = $product->main_image;
-                } else {
-                    // Try to find any variant with an image
+                // 1. Try Main Image Accessor (usually default variant's primary image)
+                try {
+                     if ($product->main_image) {
+                         $imagePath = $product->main_image;
+                     }
+                } catch (\Exception $e) {
+                    // ignore accessor errors
+                }
+
+                // 2. Fallback: Try to find any variant with an image if main_image failed
+                if (!$imagePath) {
                     $firstVariantWithImage = $product->variants->first(function($variant) {
                         return $variant->images->isNotEmpty();
                     });
                     
                     if ($firstVariantWithImage) {
-                        $imagePath = $firstVariantWithImage->images->first()->file_path;
+                         $imagePath = $firstVariantWithImage->images->first()->file_path;
                     }
+                }
+                
+                // 3. Construct URL
+                $imageUrl = asset('assets/img/placeholder.png');
+                if ($imagePath) {
+                     // Check if path is absolute or needs storage prefix
+                     if (str_starts_with($imagePath, 'http')) {
+                         $imageUrl = $imagePath;
+                     } else {
+                         $imageUrl = asset('storage/' . $imagePath);
+                     }
                 }
 
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'image' => $imagePath ? asset('storage/' . $imagePath) : asset('assets/img/placeholder.png'),
+                    'image' => $imageUrl,
                 ];
             })
         ]);
@@ -252,7 +275,7 @@ class ProductController extends Controller
     public function getPresetProducts(Request $request)
     {
         $type = $request->type; // 'featured' or 'bestseller'
-        $query = Product::with(['defaultVariant.images', 'variants.images'])->where('status', 1);
+        $query = Product::with(['defaultVariant.images', 'variants.images'])->where('status', 'active'); // 'active' enum matches migration
 
         if ($type === 'featured') {
             $query->where('is_featured', 1);
@@ -269,13 +292,16 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'data' => $products->map(function ($product) {
-                // Determine image: try default variant, then first variant, then placeholder
+                // Determine image
                 $imagePath = null;
                 
-                if ($product->main_image) {
-                     $imagePath = $product->main_image;
-                } else {
-                    // Try to find any variant with an image
+                try {
+                     if ($product->main_image) {
+                         $imagePath = $product->main_image;
+                     }
+                } catch (\Exception $e) {}
+
+                if (!$imagePath) {
                     $firstVariantWithImage = $product->variants->first(function($variant) {
                          return $variant->images->isNotEmpty();
                     });
@@ -285,10 +311,19 @@ class ProductController extends Controller
                     }
                 }
 
+                $imageUrl = asset('assets/img/placeholder.png');
+                if ($imagePath) {
+                     if (str_starts_with($imagePath, 'http')) {
+                         $imageUrl = $imagePath;
+                     } else {
+                         $imageUrl = asset('storage/' . $imagePath);
+                     }
+                }
+
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'image' => $imagePath ? asset('storage/' . $imagePath) : asset('assets/img/placeholder.png'),
+                    'image' => $imageUrl,
                 ];
             })
         ]);
