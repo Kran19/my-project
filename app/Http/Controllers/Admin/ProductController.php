@@ -208,7 +208,7 @@ class ProductController extends Controller
 
     public function search(Request $request)
     {
-        $query = Product::with(['defaultVariant.images']);
+        $query = Product::with(['defaultVariant.images', 'variants.images']);
 
         if ($request->filled('q')) {
             $search = $request->q;
@@ -224,10 +224,26 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'data' => $products->map(function ($product) {
+                // Determine image: try default variant, then first variant, then placeholder
+                $imagePath = null;
+                
+                if ($product->main_image) {
+                     $imagePath = $product->main_image;
+                } else {
+                    // Try to find any variant with an image
+                    $firstVariantWithImage = $product->variants->first(function($variant) {
+                        return $variant->images->isNotEmpty();
+                    });
+                    
+                    if ($firstVariantWithImage) {
+                        $imagePath = $firstVariantWithImage->images->first()->file_path;
+                    }
+                }
+
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'image' => $product->main_image ? asset('storage/' . $product->main_image) : asset('assets/img/placeholder.png'),
+                    'image' => $imagePath ? asset('storage/' . $imagePath) : asset('assets/img/placeholder.png'),
                 ];
             })
         ]);
@@ -236,7 +252,7 @@ class ProductController extends Controller
     public function getPresetProducts(Request $request)
     {
         $type = $request->type; // 'featured' or 'bestseller'
-        $query = Product::with(['defaultVariant.images'])->where('status', 1);
+        $query = Product::with(['defaultVariant.images', 'variants.images'])->where('status', 1);
 
         if ($type === 'featured') {
             $query->where('is_featured', 1);
@@ -245,7 +261,7 @@ class ProductController extends Controller
         } elseif ($type === 'new_arrival') {
             $query->where('is_new', 1);
         } elseif ($type === 'on_sale') {
-             $query->where('discount', '>', 0); // Assuming discount logic, or maybe just leave it for now if user didn't ask, but "New Arrival" was asked.
+             $query->where('discount', '>', 0);
         }
 
         $products = $query->latest()->limit(50)->get();
@@ -253,10 +269,26 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'data' => $products->map(function ($product) {
+                // Determine image: try default variant, then first variant, then placeholder
+                $imagePath = null;
+                
+                if ($product->main_image) {
+                     $imagePath = $product->main_image;
+                } else {
+                    // Try to find any variant with an image
+                    $firstVariantWithImage = $product->variants->first(function($variant) {
+                         return $variant->images->isNotEmpty();
+                    });
+                    
+                    if ($firstVariantWithImage) {
+                         $imagePath = $firstVariantWithImage->images->first()->file_path;
+                    }
+                }
+
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'image' => $product->main_image ? asset('storage/' . $product->main_image) : asset('assets/img/placeholder.png'),
+                    'image' => $imagePath ? asset('storage/' . $imagePath) : asset('assets/img/placeholder.png'),
                 ];
             })
         ]);
