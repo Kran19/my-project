@@ -119,6 +119,7 @@ Route::prefix('admin')->group(function () {
             Route::get('/category/{category}/specifications', [AdminProduct::class, 'getCategorySpecifications'])->name('admin.products.category.specifications');
             Route::get('/category/{category}/attributes', [AdminProduct::class, 'getCategoryAttributes'])->name('admin.products.category.attributes');
             Route::get('/search', [AdminProduct::class, 'search'])->name('admin.products.search');
+            Route::get('/preset', [AdminProduct::class, 'getPresetProducts'])->name('admin.products.preset');
         });
 
         /*

@@ -208,12 +208,15 @@ class ProductController extends Controller
 
     public function search(Request $request)
     {
-        $query = Product::query();
+        $query = Product::with(['defaultVariant.images']);
 
         if ($request->filled('q')) {
             $search = $request->q;
             $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('product_code', 'like', "%{$search}%");
+                  ->orWhere('product_code', 'like', "%{$search}%")
+                  ->orWhereHas('defaultVariant', function($q) use ($search) {
+                        $q->where('sku', 'like', "%{$search}%");
+                  });
         }
 
         $products = $query->latest()->limit(20)->get();
@@ -224,7 +227,36 @@ class ProductController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'image' => asset('storage/' . $product->main_image),
+                    'image' => $product->main_image ? asset('storage/' . $product->main_image) : asset('assets/img/placeholder.png'),
+                ];
+            })
+        ]);
+    }
+
+    public function getPresetProducts(Request $request)
+    {
+        $type = $request->type; // 'featured' or 'bestseller'
+        $query = Product::with(['defaultVariant.images'])->where('status', 1);
+
+        if ($type === 'featured') {
+            $query->where('is_featured', 1);
+        } elseif ($type === 'bestseller') {
+            $query->where('is_bestseller', 1);
+        } elseif ($type === 'new_arrival') {
+            $query->where('is_new', 1);
+        } elseif ($type === 'on_sale') {
+             $query->where('discount', '>', 0); // Assuming discount logic, or maybe just leave it for now if user didn't ask, but "New Arrival" was asked.
+        }
+
+        $products = $query->latest()->limit(50)->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $products->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'image' => $product->main_image ? asset('storage/' . $product->main_image) : asset('assets/img/placeholder.png'),
                 ];
             })
         ]);

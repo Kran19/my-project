@@ -87,6 +87,18 @@
                 <div id="products-field-container" class="md:col-span-2 {{ old('type') == 'custom_products' ? '' : 'hidden' }}">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Select Products <span class="text-rose-500">*</span></label>
                     
+                    <div class="flex gap-4 mb-4">
+                        <button type="button" onclick="loadPreset('featured')" class="text-sm px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition flex items-center gap-2">
+                             <i class="fas fa-bolt"></i> Load Featured
+                        </button>
+                        <button type="button" onclick="loadPreset('bestseller')" class="text-sm px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition flex items-center gap-2">
+                             <i class="fas fa-award"></i> Load Bestsellers
+                        </button>
+                        <button type="button" onclick="loadPreset('new_arrival')" class="text-sm px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition flex items-center gap-2">
+                             <i class="fas fa-clock"></i> Load New Arrivals
+                        </button>
+                    </div>
+
                     <div class="relative mb-4">
                         <input type="text" id="product-search" placeholder="Search products by name or code..." 
                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
@@ -155,6 +167,31 @@ const searchInput = document.getElementById('product-search');
 const resultsDiv = document.getElementById('search-results');
 const selectedList = document.getElementById('selected-products-list');
 
+async function loadPreset(type) {
+    if(!confirm('This will append products to your current selection. Continue?')) return;
+    
+    try {
+        // Show loading state if desired
+        const response = await axios.get(`{{ route('admin.products.preset') }}?type=${type}`);
+        if (response.data.success) {
+            const newProducts = response.data.data;
+            let addedCount = 0;
+            
+            newProducts.forEach(p => {
+                if (!selectedProducts.some(sp => sp.id === p.id)) {
+                    selectedProducts.push(p);
+                    addedCount++;
+                }
+            });
+            
+            renderSelectedProducts();
+        }
+    } catch (error) {
+        console.error('Preset loading error:', error);
+        alert('Failed to load products');
+    }
+}
+
 searchInput.addEventListener('input', _.debounce(async function() {
     const query = this.value;
     if (query.length < 2) {
@@ -177,7 +214,7 @@ function renderSearchResults(products) {
         resultsDiv.innerHTML = '<div class="p-4 text-gray-500 text-sm">No products found</div>';
     } else {
         resultsDiv.innerHTML = products.map(p => `
-            <div onclick="selectProduct(${p.id}, '${p.name}', '${p.image}')" 
+            <div onclick="selectProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.image}')" 
                  class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0 transition">
                 <img src="${p.image}" class="w-10 h-10 object-cover rounded mr-3">
                 <div>
@@ -213,7 +250,7 @@ function renderSelectedProducts() {
         selectedList.innerHTML = selectedProducts.map(p => `
             <div class="relative group bg-gray-50 rounded-lg p-2 border border-gray-200">
                 <img src="${p.image}" class="w-full h-24 object-cover rounded mb-2">
-                <div class="text-[10px] font-bold text-gray-800 truncate" title="${p.name}">${p.name}</div>
+                <div class="text-[10px] font-bold text-gray-800 truncate" title="${p.name.replace(/"/g, '&quot;')}">${p.name}</div>
                 <input type="hidden" name="product_ids[]" value="${p.id}">
                 <button type="button" onclick="removeProduct(${p.id})" 
                         class="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-md">
