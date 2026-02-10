@@ -76,6 +76,9 @@ Route::prefix('admin')->group(function () {
         // Add this route in your admin routes group
         Route::get('/dashboard/data', [AdminDashboard::class, 'getChartData'])->name('admin.dashboard.data');
 
+        // Admin Help / Info Page
+        Route::get('/help', [AdminDashboard::class, 'help'])->name('admin.help');
+
         /*
         |--------------------------------------------------------------------------
         | CATEGORY MANAGEMENT

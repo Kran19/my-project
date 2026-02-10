@@ -829,33 +829,46 @@
     }
 
     function printTable() {
-        const printContent = document.getElementById('ordersTable').outerHTML;
-        const originalContent = document.body.innerHTML;
-
-        document.body.innerHTML = `
+        const printTable = document.getElementById('ordersTable').cloneNode(true);
+        
+        // Remove actions column and checkboxes for print
+        printTable.querySelectorAll('th:first-child, td:first-child, th:last-child, td:last-child').forEach(el => el.remove());
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
             <html>
                 <head>
-                    <title>Orders Report</title>
-                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+                    <title>Orders Report - ${new Date().toLocaleDateString()}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #f8f9fa; }
-                        .status-badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+                        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; color: #333; }
+                        h2 { color: #111; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 1px solid #e5e7eb; padding: 12px 8px; text-align: left; font-size: 13px; }
+                        th { background-color: #f9fafb; font-weight: 600; text-transform: uppercase; color: #6b7280; }
+                        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+                        .payment-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+                        @media print {
+                            .no-print { display: none; }
+                            body { padding: 0; }
+                        }
                     </style>
                 </head>
                 <body>
                     <h2>Orders Report</h2>
-                    <p>Generated on: ${new Date().toLocaleDateString()}</p>
-                    ${printContent}
+                    <p style="margin-bottom: 20px; font-size: 14px; color: #666;">
+                        Generated on: ${new Date().toLocaleString()}
+                    </p>
+                    ${printTable.outerHTML}
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            // window.close(); // Optional: close the tab after print
+                        };
+                    <\/script>
                 </body>
             </html>
-        `;
-
-        window.print();
-        document.body.innerHTML = originalContent;
-        location.reload();
+        `);
+        printWindow.document.close();
     }
 
     function showLoading() {

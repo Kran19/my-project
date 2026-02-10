@@ -282,15 +282,15 @@ class OrderController extends Controller
         $query = Order::with(['customer', 'items']);
 
         // Apply filters
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->has('payment_status')) {
+        if ($request->filled('payment_status')) {
             $query->where('payment_status', $request->payment_status);
         }
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
@@ -302,35 +302,13 @@ class OrderController extends Controller
             });
         }
 
-        $orders = $query->get()->map(function ($order) {
-            return [
-                'Order ID' => $order->order_number,
-                'Customer' => $order->customer->name ?? 'N/A',
-                'Email' => $order->customer->email ?? 'N/A',
-                'Phone' => $order->customer->mobile ?? 'N/A',
-                'Order Date' => $order->created_at->format('Y-m-d H:i'),
-                'Status' => ucfirst($order->status),
-                'Payment Status' => ucfirst(str_replace('_', ' ', $order->payment_status)),
-                'Payment Method' => match ($order->payment_method) {
-                    'cod' => 'Cash on Delivery',
-                    'online' => 'Online Payment',
-                    default => 'N/A',
-                },
-
-                'Items Count' => $order->items->count(),
-                'Subtotal' => number_format((float) $order->subtotal, 2),
-                'Tax' => number_format((float) $order->tax_total, 2),
-                'Shipping' => number_format((float) $order->shipping_total, 2),
-                'Discount' => number_format((float) $order->discount_total, 2),
-                'Grand Total' => number_format((float) $order->grand_total, 2),
-                'Shipping Address' => $order->shipping_address ? implode(', ', array_filter($order->shipping_address)) : 'N/A',
-            ];
-        });
-
-        $filename = 'orders_' . date('Y-m-d_H-i') . '.csv';
+        $orders = $query->get();
+        $exportType = $request->get('export', 'csv');
+        $extension = $exportType === 'excel' ? 'xls' : 'csv';
+        $filename = 'orders_' . date('Y-m-d_H-i') . '.' . $extension;
 
         $headers = array(
-            "Content-type" => "text/csv",
+            "Content-type" => $exportType === 'excel' ? "application/vnd.ms-excel" : "text/csv",
             "Content-Disposition" => "attachment; filename=$filename",
             "Pragma" => "no-cache",
             "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
@@ -341,13 +319,36 @@ class OrderController extends Controller
             $file = fopen('php://output', 'w');
 
             // Add CSV headers
-            if (count($orders) > 0) {
-                fputcsv($file, array_keys($orders[0]));
-            }
+            $csvHeaders = [
+                'Order ID', 'Customer', 'Email', 'Phone', 'Order Date', 'Status',
+                'Payment Status', 'Payment Method', 'Items Count', 'Subtotal',
+                'Tax', 'Shipping', 'Discount', 'Grand Total', 'Shipping Address'
+            ];
+            fputcsv($file, $csvHeaders);
 
             // Add data rows
-            foreach ($orders as $row) {
-                fputcsv($file, $row);
+            foreach ($orders as $order) {
+                fputcsv($file, [
+                    $order->order_number,
+                    $order->customer->name ?? 'N/A',
+                    $order->customer->email ?? 'N/A',
+                    $order->customer->mobile ?? 'N/A',
+                    $order->created_at->format('Y-m-d H:i'),
+                    ucfirst($order->status),
+                    ucfirst(str_replace('_', ' ', $order->payment_status)),
+                    match ($order->payment_method) {
+                        'cod' => 'Cash on Delivery',
+                        'online' => 'Online Payment',
+                        default => 'N/A',
+                    },
+                    $order->items->count(),
+                    number_format((float) $order->subtotal, 2, '.', ''),
+                    number_format((float) $order->tax_total, 2, '.', ''),
+                    number_format((float) $order->shipping_total, 2, '.', ''),
+                    number_format((float) $order->discount_total, 2, '.', ''),
+                    number_format((float) $order->grand_total, 2, '.', ''),
+                    $order->shipping_address ? implode(', ', array_filter((array)$order->shipping_address)) : 'N/A',
+                ]);
             }
 
             fclose($file);

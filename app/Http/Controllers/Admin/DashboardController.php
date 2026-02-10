@@ -312,6 +312,11 @@ class DashboardController extends Controller
             ->with('salesByPaymentMethod', $salesByPaymentMethod);
     }
 
+    public function help()
+    {
+        return view('admin.help.index');
+    }
+
     public function getChartData(Request $request)
     {
         // Handle Chart Data Request

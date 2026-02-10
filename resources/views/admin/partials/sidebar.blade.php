@@ -190,6 +190,12 @@ $navItems = [
         'icon' => 'fas fa-cog',
         'route' => 'admin.settings.index',
     ],
+    
+    'help' => [
+        'title' => 'Admin Guide',
+        'icon' => 'fas fa-question-circle',
+        'route' => 'admin.help',
+    ],
 ];
 
 // Get current route
