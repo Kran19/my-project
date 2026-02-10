@@ -1601,8 +1601,8 @@
             <span>Same Day Dispatch</span>
         </div>
         <div class="feature-item">
-            <i class="fas fa-gift"></i>
-            <span>Gift Packaging</span>
+            <i class="fas fa-hand-holding-heart"></i>
+            <span>Skin Friendly</span>
         </div>
         <div class="feature-item">
             <i class="fas fa-headset"></i>

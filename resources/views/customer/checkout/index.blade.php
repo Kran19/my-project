@@ -471,10 +471,7 @@
                                     <i class="fas fa-headset text-amber-600 mt-0.5"></i>
                                     <span>Need help? Call us at +91 1800-123-4567</span>
                                 </div>
-                                <div class="flex items-start gap-3 text-sm text-gray-600">
-                                    <i class="fas fa-gift text-amber-600 mt-0.5"></i>
-                                    <span>Free gift wrapping available</span>
-                                </div>
+
                             </div>
                         </div>
                     </div>
