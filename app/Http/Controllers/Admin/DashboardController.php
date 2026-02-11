@@ -128,6 +128,16 @@ class DashboardController extends Controller
             ->where('updated_at', '<', Carbon::now()->subHours(24))
             ->count();
 
+        // Visitor Stats
+        $totalUniqueVisitors = DB::table('visitors')->count();
+        $todayVisitors = DB::table('visitors')
+            ->whereDate('visit_date', $today)
+            ->count();
+        $thisMonthVisitors = DB::table('visitors')
+            ->whereMonth('visit_date', now()->month)
+            ->whereYear('visit_date', now()->year)
+            ->count();
+
         // Dashboard statistics
         $stats = [
             'total_revenue' => $currentMonthRevenue,
@@ -146,6 +156,9 @@ class DashboardController extends Controller
             'low_stock_products' => $lowStockProducts,
             'out_of_stock_products' => $outOfStockProducts,
             'abandoned_carts' => $abandonedCarts,
+            'total_unique_visitors' => $totalUniqueVisitors,
+            'today_visitors' => $todayVisitors,
+            'month_visitors' => $thisMonthVisitors,
         ];
 
         // ==================== RECENT ORDERS ====================
