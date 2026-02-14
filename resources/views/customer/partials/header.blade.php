@@ -255,9 +255,9 @@
 
             <!-- Contact Info -->
             <div class="px-4 py-3">
-                <a href="tel:+911234567890" class="text-sm text-gray-600 hover:text-amber-700 block mb-2">
+                <a href="tel:+917490003767" class="text-sm text-gray-600 hover:text-amber-700 block mb-2">
                     <i class="fas fa-phone mr-2 text-amber-600"></i>
-                    +91 1234567890
+                    +91 7490003767
                 </a>
                 <a href="mailto:info@apiqo.com" class="text-sm text-gray-600 hover:text-amber-700 block">
                     <i class="fas fa-envelope mr-2 text-amber-600"></i>
